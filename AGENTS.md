@@ -45,6 +45,8 @@ Python 3.12, type hints, pydantic v2, psycopg 3, ruff pinned. tests/test_boundar
 
 ## Slices and done-when
 
+Status: slices 0–9 built (v0.9). Left: 10 real users, 11 demo rehearsals on the VPS, plus the live checks in BUILD_NOTES §5.
+
 4 Tracker UI + DB store; /applications, /applications/{id}, /timeline; seeded histories read like a diary; illegal transitions raise.
 5 Documents: pipeline → vision (FakeClaude) → mask → name match → status; 20 specimen fixtures scored; no 12-digit number survives.
 6 Clock: claim loop (skip locked), backoff, sweeper, handlers; two workers never double-claim; deferred brain_run jobs execute.

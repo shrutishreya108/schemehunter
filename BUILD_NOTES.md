@@ -1,4 +1,4 @@
-# BUILD_NOTES: Scheme Hunter v0.5 (slices 0–5 + hackathon environment)
+# BUILD_NOTES: Scheme Hunter v0.9 (slices 0–9 + PIN, admin pages, demo hardening; nothing deployed yet)
 
 Sources: Notion **HLD - Hackathon**, **File Structure**, **LLD v1.1**; curator decisions in the v0.2 and v0.3
 briefs. v0.3 = Part A (decisions confirmed) + Part B (GoDaddy/Titan/$100-credit environment) + Part C (slice 3).
@@ -22,6 +22,12 @@ briefs. v0.3 = Part A (decisions confirmed) + Part B (GoDaddy/Titan/$100-credit 
 | **v0.5 · Slice 5:** `docs/pipeline.py`, `docs/requirements.py`, `check_document` + `list_required_documents` tools, `/documents` (+ decrypt-in-memory download), 20 specimen fixtures | LLD §22 slice 5 |
 | **`schedule()` and `create_pending()` are real now** (rows in `jobs` / `pending_actions`) | The tracker's effects need them; slices 6 and 7 build on them |
 | **`AGENTS.md`** added | Cost rules and repo map for future sessions |
+| **v0.9 · Slice 6:** `clock/worker.py` (claim loop, backoff, sweeper, housekeeping), `clock/handlers.py` (all 8 job types), `status/` checkers | LLD §22 slice 6 |
+| **v0.9 · Slice 7:** Guard lifecycle (`guard/actions.py`, `guard/executors.py`), `draft_message` + `request_submit` + `schedule` tools, `/approvals`, `/webhooks/telegram`, `mouth/telegram.py`, `mouth/outbox.py`, migration `005_pending_attempts.sql` | LLD §22 slice 7 |
+| **v0.9 · Slice 8:** `interpret_response` tool (confidence gate, application matching, legal moves only), `UserForwardsChecker` | LLD §22 slice 8 |
+| **v0.9 · Slice 9:** `build_project_report`, `prefill_form`, PDF layer (`pdf/render.py`), report/pack templates, cost sheets seeded as artifacts | LLD §22 slice 9 |
+| **v0.9 · Slice 10/11 items:** `/admin/jobs`, `/admin/actions` (+ unsent contact messages, T10), optional PIN (T9), friendly 500 page, user buttons "I pressed submit" / "I sent the papers", vendored `htmx.min.js` and the Devanagari font (T6, T7) | LLD §22 slices 10–11 |
+| **Docs repaired:** `docs/LLD.md` restored in full with headings, `docs/HLD.md` de-duplicated and renumbered | The Notion exports were truncated or duplicated |
 
 ## 1. Status
 
@@ -33,23 +39,27 @@ briefs. v0.3 = Part A (decisions confirmed) + Part B (GoDaddy/Titan/$100-credit 
 | 3 | 3 phrasings → same matches; every FIT has a citation | ✅ with FakeClaude. "Every FIT has a citation" is asserted **for schemes whose pages exist**; without pages the explanation is stored `source_status: "pending"` and the UI shows a grey **"source pending"** badge. The three-phrasings check is covered at the engine level (same facts → same matches); a real-model phrasing test needs the API, so it's in TODO T16 |
 | 4 | illegal transitions raise; timeline reads like a diary | ✅ every legal transition through the DB store (30 pairs), illegal ones leave no row, ref_number and docs guards, effects → jobs/pending actions, demo clock `days=1` → +1 min, Brain creates Meena's application after a FIT (FakeClaude). Seeded diaries are checked for raw state codes in both languages |
 | 5 | rates reported; mask test green | ✅ 20/20 fixtures: **10 OK, 6 RETAKE, 4 PROBLEM**; no 12-digit number reaches `documents`, `events`, `messages`, `profile_answers`, `jobs` or the case file; duplicate upload returns the existing row; passbook name mismatch → PROBLEM; decrypted bytes never written to disk. **Caveat:** these rates test our code (decision rules, masking, name match) against what FakeClaude is told it sees. They say nothing about real vision accuracy; that needs one live run (T19) |
+| 6 | no double-claims; chase fires on the demo clock | ✅ two threads claim 60 jobs, each exactly once (`FOR UPDATE SKIP LOCKED`); backoff 1 m / 10 m / 1 h / 6 h then DEAD + alert; sweeper; a failing handler leaves no half-written rows; Ravi's seeded chase fires ~2 min after reset and drafts a follow-up (FakeClaude); deferred `brain_run` jobs execute; API failure → retry with backoff |
+| 7 | YES twice → one email; "guaranteed" bounced | ✅ double approve and a repeated Telegram YES send exactly one email with the user CC'd; the row is claimed before the provider is called; 3 tries then FAILED; expiry; ownership checks; "guarantee" and an invented scheme name are bounced and rewritten, 3 bad drafts are parked for the curator and never shown to the user; recipient comes from `contacts.yaml`, never from the model |
+| 8 | all 15 intents right; vague → clarification | ✅ all 15 portal messages produce the right *effect* (state move, deadline, reference number, or no change); confidence < 0.7 changes nothing and asks; two open applications with no reference → asks which. **Caveat:** the model is FakeClaude, so this proves our handling of each intent, not a real model's classification (T19b) |
+| 9 | EMI/break-even to the rupee; "press submit" gate appears | ✅ Meena/Ravi/Fatima numbers checked against hand calculations (e.g. Meena EMI ₹7,609.85, break-even 225 units, DSCR 5.02); Indian digit grouping; seeded narrative used without a Claude call; a narrative with a promise is replaced by plain facts; the pack marks missing fields instead of inventing them; `request_submit` creates the `instruct_submit` action and submits nothing. **The real PDF could not be rendered on this machine** (WeasyPrint needs Pango): the two real-PDF tests are skipped here and must be run on Linux/Docker (T22) |
 
-Stubbed and returning 501 until built: worker/handlers (6),
-approvals/Telegram (7), interpret_response (8), report/prefill (9), admin jobs/actions (10).
+Stubbed and returning 501 until built: (nothing: every route and tool is built; WhatsApp and the portal scraper are deliberate stubs).
 
 ### Test results (FakeClaude for every test, no network; Python 3.12.16 via uv, Postgres via `pgserver`, Windows 11)
 
 ```
 $ DATABASE_URL=postgresql://… python -m pytest -q
-329 passed, 2 skipped, 1 failed
-  SKIPPED tests/clock/test_claim.py: slice 6
-  SKIPPED tests/e2e/test_happy_path.py: slices 3-9
-  FAILED  tests/test_scripts.py::test_smtp_password_value_in_tree_fails   (Windows only: see §3 item 47)
+499 passed, 2 skipped, 1 failed
+  SKIPPED tests/e2e/test_report_prefill.py::test_real_pdf_renders_in_both_languages[en|hi]   (no WeasyPrint/Pango on Windows)
+  FAILED  tests/test_scripts.py::test_smtp_password_value_in_tree_fails                      (Windows only: see §3 item 47)
 $ ruff check . && ruff format --check .   → All checks passed
 $ make check-secrets                      → check-secrets: ok
 ```
 
-Before this session (v0.3, Linux): 261 passed, 3 skipped. This session adds 69 tests.
+History: v0.3 (Linux) 261 passed, 3 skipped → v0.5 329 → v0.9 499 passed.
+
+New suites (v0.9): `tests/clock/test_claim.py`, `tests/clock/test_handlers.py`, `tests/guard/test_lifecycle.py`, `tests/mouth/test_telegram.py`, `tests/e2e/test_approvals_webhook.py`, `tests/e2e/test_inbound.py`, `tests/e2e/test_report_prefill.py`, `tests/e2e/test_happy_path.py`, `tests/e2e/test_pin.py`, `tests/finance/test_demo_reports.py`.
 
 New suites (v0.5): `tests/tracker/test_store.py`, `tests/e2e/test_tracker_pages.py`, `tests/docs/test_pipeline.py`, `tests/e2e/test_documents_routes.py`.
 
@@ -204,6 +214,41 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 47. **Windows test environment:** the box has no Docker, Postgres or Python 3.12, so I used `uv` (Python 3.12.16) and the `pgserver` wheel (embedded Postgres) in `.venv`. Known Windows-only failure: `test_smtp_password_value_in_tree_fails` runs `scripts/check_secrets.sh` via `sh` with a Windows temp path, and the script doesn't find the planted password. It passes on Linux (v0.3 notes). `PYTHONUTF8=1` is needed for `estimate_costs.py` output on a cp1252 console.
 48. **`estimate_costs.py`** now prints the image-token line (4000×3000 photo → 1568×1176 → ≈ 2,459 tokens by the w×h/750 rule) and the journey uses image + 500 tokens per vision check. It is arithmetic on the real downscale, not a measurement (T13/T19). Journey ≈ $0.36, demo ≈ $0.17 (unchanged to the cent).
 
+### v0.9: slice 6 (clock)
+49. **Who gets which message:** templated nudges and reminders to the user themself (doc nudge, deadline reminder, "forward the SMS", "they asked for X") are sent directly (`mouth/outbox.notify_user`: web chat, plus Telegram if linked). **Anything to a bank or officer is a pending action a human approves.** LLD §11 lists email/bank/officer/"submit now" as gated; a nudge to the person who owns the case has no third party to protect, and the demo shows the nudge arriving without a tap.
+50. **Demo-clock days:** every "N days" test in a handler (chase after 10 idle days, one nudge per day) uses real elapsed time × `DEMO_CLOCK_SCALE`, so at 1440 a day is a minute everywhere, not just when scheduling.
+51. **`status_check`:** reads the latest unread forwarded message (`UserForwardsChecker`: mentions the reference number, its last digits or the scheme id; or the only open application), classifies it (Haiku) inside a metered `brain_runs` row (`trigger=clock`), applies it, and checks again in 1 day (3 if nothing came). After 2 quiet checks it asks the user to forward the SMS. Over budget → the message stays unread until tomorrow. Once an application leaves SUBMITTED/UNDER_REVIEW/RESUBMITTED the job stops rescheduling (a query moves the wait to the user, so `doc_nudge` takes over).
+52. **`chase`:** only after ≥ 10 idle demo-days; runs the Brain with a fixed task (draft a bank follow-up via `draft_message`), then chases again in 7 days. If the Brain run errors (API trouble) the job is retried with backoff.
+53. **`deadline_reminders`:** reminders at T-7 and T-2 (once each, tracked in events), past deadline → MISSED by the clock → `retry_cycle`. Rolling-window schemes have no deadline, so nothing is sent. Next run is scheduled at the next threshold (03:00 UTC).
+54. **`retry_cycle`:** starts a new ELIGIBLE application (actor `agent`, since the tracker only lets the agent make that move) and reuses the papers already in the vault.
+55. **`offer_domain`** finishes quietly (flag off or not built) instead of failing into DEAD. **`retention_cleanup`** deletes documents (file and row) of CLOSED cases quiet for `RETENTION_DAYS`; the cron script now calls `run_retention()`.
+56. **Housekeeping** (every 10 min in the worker): sweeper, expire approvals older than 7 days, retry sends whose last try failed, delete `rate_limits` rows older than a day (T17).
+
+### v0.9: slice 7 (Guard + Mouth)
+57. **Execution order:** `execute()` claims the row (`EXECUTED`, `executed_at`, `attempts + 1`) and commits **before** calling the provider. A provider failure puts it back to `APPROVED` for another try; the 3rd failure makes it `FAILED` with the error. A crash between claim and send leaves it `EXECUTED` and it is never resent (we accept a possible non-send over a possible double send). Migration 005 adds `pending_actions.attempts`.
+58. **Approval is idempotent:** approving or declining an action that is no longer PENDING returns it unchanged, so the double tap, the late YES and Telegram's redelivery all do nothing.
+59. **Telegram binding:** the case link token is only stored hashed, so the deep link carries a signed bind token instead (`access.bind_token`, HMAC of the case id; shown on `/approvals` when `TELEGRAM_BOT_USERNAME` is set). `/start <token>` binds the chat; re-binding a chat moves it. New setting `TELEGRAM_BOT_USERNAME`.
+60. **Webhook:** secret header checked in constant time (an empty `TELEGRAM_WEBHOOK_SECRET` closes the endpoint); duplicates dropped via `messages.external_id` (`tg:<update_id>`); a YES/NO for a code that isn't pending (late, repeated, or from another person's chat) says "that request isn't waiting any more" and changes nothing; anything else is stored and queued as a `brain_run` job ("interpret inbound message <id>").
+61. **`draft_message`:** the recipient address comes from `seed/contacts.yaml` (never the model); official audiences need an application and the user's email saved (they are CC'd), else the tool tells the model to `ask_user` first and no model call is made. The scanner covers subject and body; the signature added by the email template is ours. After 2 failed rewrites the draft is saved as `FAILED` with `error` starting `guard:`: the curator sees it in `/admin/actions`, the user never does. The user's email is saved with `update_profile(key=email)` (stored on the case, kept out of the timeline).
+62. **`instruct_submit` approval** means "I'll do it now": it sends the portal steps (and the pre-filled pack as a Telegram document, from memory) to the user. The user then presses the real Submit and tells us the number.
+63. **User buttons** (they are the user's own moves, same guarded `transition()`): "I pressed submit" with the reference number (AWAITING_HUMAN_SUBMIT → SUBMITTED) and "I sent the papers" (DOCS_PENDING → RESUBMITTED). Out-of-order presses return 409.
+64. **Admin:** `/admin/jobs` (counts, DEAD jobs, upcoming), `/admin/actions` (FAILED actions incl. guard-blocked drafts, waiting approvals, and contact-form messages that were stored but never emailed: T10).
+
+### v0.9: slice 8 (inbound)
+65. **`interpret_response`** classifies with MODEL_CHEAP (forced schema, 600 tokens). Code then applies it: confidence ≥ 0.7, application resolved (explicit id → model's guess → reference number → the only open application; ids from another case are ignored), then a short legal path as the agent: status_update moves SUBMITTED/RESUBMITTED → UNDER_REVIEW; query_raised goes UNDER_REVIEW → QUERY_RAISED → DOCS_PENDING and tells the user what they asked for; rejected and sanctioned go through UNDER_REVIEW. question / approval_reply / other change nothing. A reference number fills in only if the application has none. A bad date or a malformed id from the model is ignored, not stored.
+
+### v0.9: slice 9 (report + prefill)
+66. **Cost inputs** for the report live in an artifact (`kind=cost_inputs`), seeded per persona from `seed/costs/*.yaml`. Real users have none yet: `build_project_report` answers "no cost sheet" until something creates one (T24).
+67. **Narrative:** the seeded/stored `report_narrative` artifact first; otherwise one forced-schema Sonnet call, scanned by the Guard (a failing narrative is replaced by plain facts) and stored so a second build costs nothing.
+68. **Percentages** (subsidy, own contribution) come from the stored rules-engine match, never from the model; the report refuses a scheme that isn't FIT.
+69. **PDF:** `render_html()` always works; `render()` needs WeasyPrint's native libraries and raises `PdfUnavailable` where they are missing, which the tools report cleanly. Hindi falls back to English if the Devanagari font is missing or tiny (`MIN_FONT_BYTES`). Generated PDFs are encrypted into the vault like uploads (`docs/generated.py`).
+70. **Prefill:** each mapped field is filled or marked missing, never guessed; a join can `require` a fact (a district and state alone are not an address). The `pmegp.yaml` mapping gained labels and five steps.
+
+### v0.9: slices 10–11 items
+71. **Optional PIN:** 4 ASCII digits (Arabic-Indic digits are refused), stored as a keyed hash, asked on each new device after the link opens (the link alone then gives no session), 5 wrong tries per 10 minutes then locked even for the right PIN, set or cleared from the `/approvals` page. The "link opened, PIN pending" cookie is separate from a session and lasts 10 minutes.
+72. **Friendly 500:** any unhandled error shows "I'll get back to you shortly" to browsers and `{"error": ...}` to API clients, never a stack trace.
+73. **Flaky test fixed:** the 12-digit scan in `tests/docs/test_pipeline.py` could match a random UUID (`7019-4320-9714`); UUIDs are now stripped first.
+
 ## 4. TODO / verify list
 
 ### Curator: guideline verification (unchanged from v0.2)
@@ -219,69 +264,55 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 - **G4 Demo clock:** set `DEMO_CLOCK_SCALE=1440` in `.env` for the demo.
 
 ### Placeholders
-- **T6:** `htmx.min.js` is still a placeholder. Vendor it; `/chat` already works without JS through normal form posts.
-- **T7:** the Devanagari font file is 0 bytes (needed by slice 9).
+- ~~**T6**~~ done: `htmx.min.js` 1.9.12 vendored (48 KB). `/chat` also works without JS.
+- ~~**T7**~~ done: Noto Sans Devanagari Regular vendored (243 KB, SIL OFL). Check the licence file travels with it if you redistribute.
 - **T8:** `seed/contacts.yaml` should point at your inboxes.
 - **Persona emails:** not set (needed in slice 7).
 
 ### Engineering
-- **T9:** optional PIN (`access.check_pin`).
-- **T10:** an admin view of `messages` with `processed=false` (contact emails that failed to send).
+- ~~**T9**~~ done (§3 item 71). ~~**T10**~~ done (`/admin/actions`).
 - **T11:** confirm Caddy replaces a client-sent `X-Forwarded-For` (send a spoofed XFF and check the rate-limit key).
 - **T12:** check the price table against platform.claude.com.
 - **T13:** replace the `estimate_costs.py` token counts with measured ones from `/admin/runs`.
 - **T14:** regenerate Ravi's seeded explanation with citations once the PMEGP pages exist (one live call, ≈ $0.03).
-- **T15:** slice 9's `build_project_report` must use the seeded `report_narrative` artifact first.
+- ~~**T15**~~ done (§3 item 67).
 - **T16:** live smoke test with the real API: three phrasings of Meena's answers → same matches, run **once** by hand (≈ $0.30). It's deliberately not part of pytest.
-- **T17:** add a cleanup job for old `rate_limits` rows (slice 6 worker).
-- **T18:** deferred `brain_run` jobs need the slice 6 worker to run them.
+- ~~**T17**~~ done (housekeeping). ~~**T18**~~ done (`brain_run` handler).
 
 - **T19:** one live vision run on real specimen photos (≈ $0.02 each) to get real RETAKE/PROBLEM/correct rates and a measured image-token count. Not part of pytest.
 - **T20:** real `window` dates for schemes, then replace `NEXT_WINDOW_DAYS`.
-- **T21:** `docs/LLD.md` is truncated (stops after §0); re-export it from Notion. `docs/HLD.md` has a duplicated block and every heading numbered `1.`.
-- **T22:** Linux CI (or the VPS) must run the full suite once, since the Windows run has the T-script failure in §3 item 47.
+- ~~**T21**~~ done: `docs/LLD.md` restored in full, `docs/HLD.md` de-duplicated and renumbered. The Notion export `docs/LLD 418f….md` is a duplicate with Notion's auto-links and can be deleted.
+- **T22:** run the full suite once on Linux or in the Docker image (the VPS): it covers the Windows-only failure (§3 item 47) **and the two real-PDF tests**, the only place WeasyPrint's output (English and Hindi) is actually checked.
 - **T23:** the `/documents` page has no "retake" shortcut or camera preview; it is a plain form that works without JS.
+- **T19b:** live smoke test of `interpret_response` on the 15 portal messages (Haiku, ≈ $0.01 total): the only measure of real classification quality.
+- **T24:** real users have no cost sheet, so `build_project_report` refuses for them. Needs a small questionnaire (machines, working capital, sales) that writes a `cost_inputs` artifact. Needed before real-user week.
+- **T25:** persona emails: set `DEMO_PERSONA_EMAIL` (or `email:` per persona in `seed/personas.yaml`) before the demo so official mail has someone to CC; point `seed/contacts.yaml` at your own inboxes (T8).
+- **T26:** Telegram: create the bot with @BotFather, set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_BOT_USERNAME`, then register the webhook (`setWebhook` with `secret_token`) once the domain is live.
+- **T27:** host cron lines on the VPS: `scripts/backup.sh` nightly and `make retention-cleanup` daily (examples are in each script's header).
 
-## 5. What the next prompt should ask for: slices 6 + 7
+## 5. What is left, and what the next prompt should ask for
 
-> Build **slices 6 and 7** from the LLD on top of v0.5. Keep FakeClaude for every test, the budget guards,
-> and `tests/test_boundaries.py` green. Read AGENTS.md first.
->
-> **Slice 6 (Alarm Clock):**
-> - `app/clock/worker.py`: claim loop with `FOR UPDATE SKIP LOCKED` (LLD §10.2), backoff `[60, 600, 3600, 6h, 24h]`,
->   DEAD after 5 attempts + curator alert, sweeper resetting RUNNING > 30 min every 10 min. `WORKER_THREADS=1`.
-> - `app/clock/handlers.py`: `status_check`, `chase`, `doc_nudge`, `deadline_reminders`, `retry_cycle`, `brain_run`
->   (this is where deferred runs from the budget guard finally execute), `retention_cleanup`, plus `rate_limits`
->   cleanup (T17). `offer_domain` stays flag-gated and stubbed. Templated messages go through
->   `app/mouth/templates.py` (no LLM) and become pending actions, never direct sends.
-> - `app/status/`: `UserForwardsChecker` and `ManualChecker` per LLD §14.
-> - Use `schedule()` and `DbTrackerStore` (already real). Ravi's seeded `chase` job must fire ~2 minutes after
->   `make demo-reset` and draft a follow-up for approval.
-> - Tests: two workers never double-claim; backoff sequence; sweeper; DEAD + alert; demo-clock scaling through a
->   real handler run; deferred `brain_run` executes; `tests/clock/test_claim.py` un-skipped.
->
-> **Slice 7 (Guard + Mouth):**
-> - `app/guard/actions.py`: `approve`, `reject`, `execute`, `expire` (7 days), FAILED after 3 executor tries;
->   `executed_at` is set **before** calling the provider (a crash can't resend). Short codes already exist.
-> - `draft_message` tool: forced schema → scanner → pending action (≤ 2 rewrites, then PROBLEM for the curator).
->   `request_submit` tool (state → AWAITING_HUMAN_SUBMIT, `instruct_submit` pending action already created by the
->   tracker effect; do not create a second one).
-> - `/approvals` page + `POST /approvals/{id}/approve|reject` (session must own the case, CSRF), and
->   `/admin/actions`.
-> - `app/mouth/telegram.py`: send, send_document, webhook with `X-Telegram-Bot-Api-Secret-Token`, `/start <token>`
->   binding, `YES|NO <code>`. `app/mouth/email.py` already works; bank/officer mail CCs the user and the subject
->   carries the ref number.
-> - Tests: YES twice → one send; "guaranteed" bounced and rewritten; duplicate webhook ignored via
->   `messages.external_id`; unknown chat id → "open your link first"; expired actions; a FAILED send is visible in
->   Approvals and Admin.
->
-> Update BUILD_NOTES (§0, §3, §4, §5 prompt for slices 8 + 9, §6 cost log), README, and paste the pytest summary.
+Everything that can be built and tested without the VPS or a real API key is built. What remains needs you or a live service.
+
+**You (no code):** the VPS and domain steps (checklist items 1–4), the Titan mailbox (G2), the guideline PDFs and `make extract-pages` (T5), Hindi review (V6), the Telegram bot (T26), cron lines (T27), your inboxes in `contacts.yaml` and `DEMO_PERSONA_EMAIL` (T25).
+
+**Next prompt (once the VPS is up and you have an Anthropic key):**
+
+> Read AGENTS.md and BUILD_NOTES §4–§5. On the VPS checkout: run `python -m pytest -q` once (this covers T22, including the real PDF tests); fix whatever differs from the Windows run. Then, with a budget of $2 of Claude credit, run the live checks by hand and record the results in BUILD_NOTES §6:
+> 1. T16: three phrasings of Meena's answers → same matches (≈ $0.30).
+> 2. T19: the 20 specimen images through real vision (≈ $0.40): report correct / retake / wrong rates, and the measured image-token count; update `scripts/estimate_costs.py` with it.
+> 3. T19b: the 15 portal messages through `interpret_response` (≈ $0.01).
+> 4. T14: regenerate Ravi's explanation with citations once the PMEGP pages exist (≈ $0.03).
+> 5. One `make demo-reset` rehearsal with `DEMO_CLOCK_SCALE=1440`: Ravi's chase fires after ~2 minutes, the draft appears in Needs-you, YES on Telegram sends one email with Ravi copied. Fix anything that breaks; no new features.
+> Then build T24 (the cost-sheet questionnaire) if real users are next.
 
 ## 6. Cost log
 
 | Session | Claude API credit spent | Notes |
 |---|---|---|
 | v0.5 (slices 4 + 5) | **$0.00** | Every test uses FakeClaude, and a real client cannot be constructed under pytest, so no API call was made. `scripts/estimate_costs.py` is arithmetic only. The model cost of the build session itself is not visible from inside it; check the console. |
+
+| v0.9 (slices 6–9 + PIN, admin, docs) | **$0.00** | Same: FakeClaude only, no API call made. |
 
 Projected spend from here: one live vision rehearsal (T19) ≈ $0.02 per image; one full persona journey ≈ $0.36; one demo run-through ≈ $0.17.
 
