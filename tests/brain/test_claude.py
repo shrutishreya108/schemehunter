@@ -30,6 +30,8 @@ def test_cached_tools_marks_only_last_and_copies() -> None:
         "match_schemes",
         "explain_match",
         "ask_user",
+        "create_application",
+        "transition_application",
         "finish_run",
     ]
 

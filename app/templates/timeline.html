@@ -1,2 +1,6 @@
 {% extends "base.html" %}
-{% block content %}<!-- timeline.html: built in slice 4 -->{% endblock %}
+{% block content %}
+<h1>{{ t("timeline_title") }}</h1>
+<p class="muted">{{ t("timeline_help") }}</p>
+{% include "partials/events.html" %}
+{% endblock %}

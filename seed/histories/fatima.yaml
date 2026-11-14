@@ -9,14 +9,14 @@ application:
 events:
   - { days_ago: 20.0, actor: user,   type: PROFILE_UPDATED, en: "Fatima answered the onboarding questions",  hi: "फ़ातिमा ने शुरुआती सवालों के जवाब दिए" }
   - { days_ago: 20.0, actor: agent,  type: MATCHED,         en: "Rules engine: Mudra fits (Kishore)",        hi: "नियम जाँच: मुद्रा में फ़िट (किशोर)" }
-  - { days_ago: 19.9, actor: agent,  type: STATE_CHANGED,   en: "Mudra application created: ELIGIBLE",        hi: "मुद्रा आवेदन बना: ELIGIBLE", app: true }
+  - { days_ago: 19.9, actor: agent,  type: STATE_CHANGED,   en: "Started your Mudra application. You qualify to apply.",        hi: "मुद्रा आवेदन शुरू किया। आप आवेदन के योग्य हैं।", app: true }
   - { days_ago: 19.0, actor: user,   type: DOC_UPLOADED,    en: "Aadhaar photo uploaded",                     hi: "आधार की फ़ोटो अपलोड हुई" }
   - { days_ago: 19.0, actor: system, type: DOC_CHECKED,     en: "Aadhaar: OK",                                hi: "आधार: ठीक" }
-  - { days_ago: 18.0, actor: agent,  type: STATE_CHANGED,   en: "DOCS_READY → FORM_READY",                    hi: "DOCS_READY → FORM_READY", app: true }
+  - { days_ago: 18.0, actor: agent,  type: STATE_CHANGED,   en: "Papers ready and the form is filled in.",                    hi: "कागज़ तैयार और फ़ॉर्म भर दिया गया।", app: true }
   - { days_ago: 17.0, actor: user,   type: STATE_CHANGED,   en: "Fatima handed the file to the bank branch",  hi: "फ़ातिमा ने फ़ाइल बैंक शाखा में दी", app: true }
-  - { days_ago: 10.0, actor: agent,  type: STATE_CHANGED,   en: "Bank acknowledged: UNDER_REVIEW",            hi: "बैंक ने पावती दी: UNDER_REVIEW", app: true }
+  - { days_ago: 10.0, actor: agent,  type: STATE_CHANGED,   en: "The bank acknowledged the file and started its review.",            hi: "बैंक ने फ़ाइल की पावती दी और जाँच शुरू की।", app: true }
   - { days_ago: 1.0,  actor: user,   type: MESSAGE_RECEIVED, en: "Fatima forwarded the bank's rejection letter", hi: "फ़ातिमा ने बैंक का अस्वीकृति पत्र भेजा" }
-  - { days_ago: 1.0,  actor: agent,  type: STATE_CHANGED,   en: "UNDER_REVIEW → REJECTED: income proof not attached", hi: "अस्वीकृत: आय प्रमाण नहीं लगा था", app: true,
+  - { days_ago: 1.0,  actor: agent,  type: STATE_CHANGED,   en: "The bank rejected the application: income proof was not attached.", hi: "बैंक ने आवेदन लौटा दिया: आय प्रमाण नहीं लगा था।", app: true,
       payload: { rejection_reason: "income proof not attached" } }
 
 # No brain_run job: the rejection analysis is pre-generated (seed/artifacts/), so the demo spends no credit here.

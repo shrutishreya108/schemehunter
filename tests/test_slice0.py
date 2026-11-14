@@ -26,8 +26,8 @@ def test_unbuilt_routes_return_501(no_db) -> None:
     from app.main import app
 
     with TestClient(app) as client:
-        resp = client.get("/timeline")
-        assert resp.status_code == 501 and resp.json()["slice"] == "slice 4"
+        resp = client.get("/approvals")
+        assert resp.status_code == 501 and resp.json()["slice"] == "slice 7"
 
 
 def test_migration_files_in_order() -> None:

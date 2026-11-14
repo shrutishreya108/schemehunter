@@ -1,0 +1,11 @@
+<ul class="diary">
+  {% for e in events %}
+  <li class="ev {{ e.actor }}">
+    <time datetime="{{ e.when.isoformat() }}">{{ e.when.strftime("%d %b, %H:%M") }}</time>
+    <span class="who">{{ t("actor_" ~ e.actor) }}</span>
+    <span class="what">{{ e.text }}</span>
+  </li>
+  {% else %}
+  <li class="muted">{{ t("no_events") }}</li>
+  {% endfor %}
+</ul>

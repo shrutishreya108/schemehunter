@@ -16,3 +16,13 @@ button { padding: .6rem 1rem; font-size: 1rem; }
 .contact label { display: block; margin: .5rem 0; } .contact input, .contact textarea { width: 100%; padding: .5rem; }
 .admin { max-width: none; } .admin table { border-collapse: collapse; font-size: .85rem; }
 .admin td, .admin th { border: 1px solid #ddd; padding: .25rem .5rem; } .admin tr.stuck, .admin tr.error { background: #fde2e2; }
+.badge.now { background: #dbe8ff; }
+.steps { list-style: none; padding: 0; margin: .5rem 0; border-left: 2px solid #ddd; margin-left: .4rem; }
+.step { position: relative; padding: .15rem 0 .15rem 1.1rem; color: #888; }
+.step .dot { position: absolute; left: -.45rem; top: .55rem; width: .7rem; height: .7rem; border-radius: 50%; background: #ddd; }
+.step.done { color: #333; } .step.done .dot { background: #4caf50; }
+.step.now { color: #000; font-weight: 700; } .step.now .dot { background: #1a73e8; }
+.diary { list-style: none; padding: 0; }
+.ev { display: grid; grid-template-columns: 8.5rem 4.5rem 1fr; gap: .5rem; padding: .35rem 0; border-bottom: 1px solid #eee; }
+.ev time { color: #666; font-size: .85rem; } .ev .who { font-size: .75rem; color: #666; text-transform: uppercase; }
+@media (max-width: 30rem) { .ev { grid-template-columns: 1fr; } }

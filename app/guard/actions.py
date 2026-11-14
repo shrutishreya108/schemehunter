@@ -5,6 +5,7 @@ Lifecycle: PENDING → APPROVED → EXECUTED; or REJECTED; EXPIRED after 7 days;
 """
 
 import hashlib
+import json
 import re
 import secrets
 from collections.abc import Iterable
@@ -37,8 +38,27 @@ def new_short_code(taken: Iterable[str]) -> str:
             return code
 
 
-def create_pending(case_id: str, kind: str, payload: dict, application_id: str | None = None) -> dict:
-    raise NotImplementedError("slice 7")
+def create_pending(
+    conn, case_id: str, kind: str, payload: dict, application_id: str | None = None
+) -> dict | None:
+    """Insert a PENDING action. A duplicate (same idempotency key) is dropped and returns None."""
+    from psycopg.types.json import Jsonb
+
+    if kind not in KINDS:
+        raise ValueError(f"unknown pending-action kind {kind!r}")
+    key = idempotency_key(kind, case_id, application_id, json.dumps(payload, sort_keys=True, default=str))
+    taken = [
+        r["short_code"]
+        for r in conn.execute(
+            "select short_code from pending_actions where case_id = %s and status = 'PENDING'", (case_id,)
+        ).fetchall()
+    ]
+    return conn.execute(
+        "insert into pending_actions (short_code, case_id, application_id, kind, payload, idempotency_key) "
+        "values (%s, %s, %s, %s, %s, %s) on conflict (idempotency_key) do nothing "
+        "returning id, short_code",
+        (new_short_code(taken), case_id, application_id, kind, Jsonb(payload), key),
+    ).fetchone()
 
 
 def approve(action_id: str, approved_by: str) -> None:

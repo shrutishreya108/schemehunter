@@ -1,2 +1,10 @@
 {% extends "base.html" %}
-{% block content %}<!-- application_detail.html: built in slice 4 -->{% endblock %}
+{% block content %}
+<p><a href="/applications">← {{ t("nav_apps") }}</a></p>
+<h1>{{ app.name }} <span class="badge now">{{ app.label }}</span></h1>
+{% if app.ref_number %}<p class="muted">{{ t("ref_number") }}: {{ app.ref_number }}</p>{% endif %}
+{% if app.deadline %}<p class="muted">{{ t("deadline") }}: {{ app.deadline }}</p>{% endif %}
+{% set steps = app.steps %}{% include "partials/steps.html" %}
+<h2>{{ t("what_happened") }}</h2>
+{% include "partials/events.html" %}
+{% endblock %}

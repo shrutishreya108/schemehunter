@@ -29,5 +29,21 @@
   "contact_bad_message": "Please write a message (up to 5000 characters).",
   "contact_rate": "Too many messages from your connection. Please try again in an hour.",
   "contact_thanks_title": "Thank you!",
-  "contact_thanks": "We got your message and will reply by email."
+  "contact_thanks": "We got your message and will reply by email.",
+  "nav_apps": "My applications",
+  "nav_timeline": "Timeline",
+  "apps_title": "My applications",
+  "no_apps": "No applications yet.",
+  "ref_number": "Reference number",
+  "deadline": "Deadline",
+  "quiet_for": "No news for",
+  "days": "days",
+  "what_happened": "What happened",
+  "timeline_title": "Timeline",
+  "timeline_help": "Everything I did for you, and every time I waited.",
+  "no_events": "Nothing yet.",
+  "actor_user": "You",
+  "actor_agent": "Assistant",
+  "actor_clock": "Reminder",
+  "actor_system": "System"
 }

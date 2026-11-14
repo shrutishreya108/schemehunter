@@ -1,0 +1,5 @@
+<ol class="steps">
+  {% for s in steps %}
+  <li class="step {{ s.status }}"><span class="dot"></span>{{ s.label }}</li>
+  {% endfor %}
+</ol>

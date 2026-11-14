@@ -1,2 +1,15 @@
 {% extends "base.html" %}
-{% block content %}<!-- applications.html: built in slice 4 -->{% endblock %}
+{% block content %}
+<h1>{{ t("apps_title") }}</h1>
+{% for a in apps %}
+<article class="card app">
+  <h2><a href="/applications/{{ a.id }}">{{ a.name }}</a> <span class="badge now">{{ a.label }}</span></h2>
+  {% if a.ref_number %}<p class="muted">{{ t("ref_number") }}: {{ a.ref_number }}</p>{% endif %}
+  {% if a.deadline %}<p class="muted">{{ t("deadline") }}: {{ a.deadline }}</p>{% endif %}
+  {% set steps = a.steps %}{% include "partials/steps.html" %}
+  {% if a.quiet_days >= 3 %}<p class="muted">{{ t("quiet_for") }} {{ a.quiet_days }} {{ t("days") }}</p>{% endif %}
+</article>
+{% else %}
+<p>{{ t("no_apps") }} <a href="/schemes">{{ t("nav_schemes") }}</a></p>
+{% endfor %}
+{% endblock %}

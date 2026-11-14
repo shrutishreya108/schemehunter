@@ -119,26 +119,143 @@ def schemes_page(request: Request, case_id: Annotated[str, Depends(current_case_
     return render(request, "schemes.html", lang, case_id, cards=cards)
 
 
+JOURNEY = [
+    "ELIGIBLE",
+    "DOCS_PENDING",
+    "DOCS_READY",
+    "FORM_READY",
+    "AWAITING_HUMAN_SUBMIT",
+    "SUBMITTED",
+    "UNDER_REVIEW",
+    "SANCTIONED",
+]
+
+
+def journey_steps(state: str, lang: str) -> list[dict]:
+    """Parcel-tracking rows: every stop on the usual road, marked done / current / later."""
+    from app.tracker.store import state_label
+
+    path = list(JOURNEY)
+    if state not in path:  # off-road states (query, rejected, missed...) show as the current stop
+        at = {"QUERY_RAISED": "UNDER_REVIEW", "RESUBMITTED": "UNDER_REVIEW", "REJECTED": "UNDER_REVIEW"}.get(
+            state, "ELIGIBLE"
+        )
+        path.insert(path.index(at) + 1, state)
+    here = path.index(state)
+    return [
+        {
+            "state": st,
+            "label": state_label(st, lang),
+            "status": "done" if i < here else "now" if i == here else "next",
+        }
+        for i, st in enumerate(path)
+    ]
+
+
+def event_rows(rows: list[dict], lang: str) -> list[dict]:
+    return [
+        {
+            "when": r["created_at"],
+            "actor": r["actor"],
+            "type": r["type"],
+            "text": (r["summary"] or {}).get(lang) or (r["summary"] or {}).get("en") or r["type"],
+        }
+        for r in rows
+    ]
+
+
+def days_since(ts) -> int:
+    from datetime import UTC, datetime
+
+    return max(0, (datetime.now(UTC) - ts).days)
+
+
 @router.get("/applications")
-def applications_page() -> None:
-    raise NotImplementedError("slice 4")
+def applications_page(request: Request, case_id: Annotated[str, Depends(current_case_id)]):
+    from app.tracker.store import state_label
+
+    schemes = {s["id"]: s for s in load_schemes()}
+    with connect() as conn:
+        case = conn.execute("select language from cases where id = %s", (case_id,)).fetchone()
+        lang = lang_for(request, case["language"] if case else None)
+        rows = conn.execute(
+            "select id, scheme_id, state, ref_number, deadline, last_movement_at from applications "
+            "where case_id = %s order by created_at",
+            (case_id,),
+        ).fetchall()
+    apps = [
+        {
+            "id": str(r["id"]),
+            "name": (schemes[r["scheme_id"]]["name"].get(lang) or schemes[r["scheme_id"]]["name"]["en"])
+            if r["scheme_id"] in schemes
+            else r["scheme_id"],
+            "state": r["state"],
+            "label": state_label(r["state"], lang),
+            "ref_number": r["ref_number"],
+            "deadline": r["deadline"],
+            "quiet_days": days_since(r["last_movement_at"]),
+            "steps": journey_steps(r["state"], lang),
+        }
+        for r in rows
+    ]
+    return render(request, "applications.html", lang, case_id, apps=apps)
 
 
 @router.get("/applications/{application_id}")
-def application_detail(application_id: str) -> None:
-    raise NotImplementedError("slice 4")
+def application_detail(
+    application_id: str, request: Request, case_id: Annotated[str, Depends(current_case_id)]
+):
+    from uuid import UUID
+
+    from fastapi import HTTPException
+
+    from app.tracker.store import state_label
+
+    try:
+        UUID(application_id)
+    except ValueError:
+        raise HTTPException(404, "not found") from None
+    schemes = {s["id"]: s for s in load_schemes()}
+    with connect() as conn:
+        case = conn.execute("select language from cases where id = %s", (case_id,)).fetchone()
+        lang = lang_for(request, case["language"] if case else None)
+        row = conn.execute(
+            "select id, scheme_id, state, ref_number, deadline, last_movement_at from applications "
+            "where id = %s and case_id = %s",
+            (application_id, case_id),  # another case's application looks like it doesn't exist
+        ).fetchone()
+        if not row:
+            raise HTTPException(404, "not found")
+        events = conn.execute(
+            "select created_at, actor, type, summary from events "
+            "where case_id = %s and application_id = %s order by created_at",
+            (case_id, application_id),
+        ).fetchall()
+    scheme = schemes.get(row["scheme_id"])
+    app = {
+        "id": str(row["id"]),
+        "name": (scheme["name"].get(lang) or scheme["name"]["en"]) if scheme else row["scheme_id"],
+        "label": state_label(row["state"], lang),
+        "ref_number": row["ref_number"],
+        "deadline": row["deadline"],
+        "quiet_days": days_since(row["last_movement_at"]),
+        "steps": journey_steps(row["state"], lang),
+    }
+    return render(request, "application_detail.html", lang, case_id, app=app, events=event_rows(events, lang))
 
 
 @router.get("/timeline")
-def timeline_page() -> None:
-    raise NotImplementedError("slice 4")
+def timeline_page(request: Request, case_id: Annotated[str, Depends(current_case_id)]):
+    with connect() as conn:
+        case = conn.execute("select language from cases where id = %s", (case_id,)).fetchone()
+        lang = lang_for(request, case["language"] if case else None)
+        events = conn.execute(
+            "select created_at, actor, type, summary from events where case_id = %s order by created_at",
+            (case_id,),
+        ).fetchall()
+    return render(request, "timeline.html", lang, case_id, events=event_rows(events, lang))
 
 
 @router.get("/approvals")
 def approvals_page() -> None:
     raise NotImplementedError("slice 7")
-
-
-@router.get("/documents")
-def documents_page() -> None:
-    raise NotImplementedError("slice 5")
