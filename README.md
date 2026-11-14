@@ -9,8 +9,9 @@ domain + Titan mailbox run the product.
 eligibility (`app/rules`), does the money math (`app/finance`), keeps state (`app/tracker`) and holds the
 approval gate (`app/guard`). `tests/test_boundaries.py` enforces that those packages never import the AI.
 
-Status: **v0.3**, slices 0–3 of LLD v1.1 plus the hackathon environment (SMTP via Titan, contact form,
-deploy script, Claude budget controls). See `BUILD_NOTES.md`.
+Status: **v0.5**, slices 0–5 of LLD v1.1 plus the hackathon environment (SMTP via Titan, contact form,
+deploy script, Claude budget controls). Slice 4 adds the DB tracker, `/applications` and `/timeline`; slice 5 adds
+the document vault, vision checks and `/documents`. See `BUILD_NOTES.md` and `AGENTS.md`.
 
 ## GoDaddy launch checklist
 
@@ -70,5 +71,6 @@ make check-secrets                       # before every push
 
 ## Demo script
 
-LLD v1.1 §23 (≈6 minutes from `make demo-reset`). v0.3 covers Meena's live onboarding (chat → cited/pending
-matches) and `/contact`. Documents, Ravi's chase and the approval loop arrive in slices 4–7.
+LLD v1.1 §23 (≈6 minutes from `make demo-reset`). v0.5 covers Meena's live onboarding (chat → cited/pending
+matches), her document uploads (blurry → retake, clean → masked tick), Ravi's and Fatima's timelines, and `/contact`.
+Ravi's chase and the approval loop arrive in slices 6–7.

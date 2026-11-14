@@ -1,4 +1,4 @@
-# BUILD_NOTES: Scheme Hunter v0.3 (slices 0–3 + hackathon environment)
+# BUILD_NOTES: Scheme Hunter v0.5 (slices 0–5 + hackathon environment)
 
 Sources: Notion **HLD - Hackathon**, **File Structure**, **LLD v1.1**; curator decisions in the v0.2 and v0.3
 briefs. v0.3 = Part A (decisions confirmed) + Part B (GoDaddy/Titan/$100-credit environment) + Part C (slice 3).
@@ -18,6 +18,10 @@ briefs. v0.3 = Part A (decisions confirmed) + Part B (GoDaddy/Titan/$100-credit 
 | **Slice 3:** `claude.py`, `runner.py`, 5 tools, `/chat`, `/schemes`, `/answers`, sessions/CSRF/rate limits, language toggle | LLD §22 slice 3 |
 | **Migrations 003/004:** `rate_limits`, `artifacts`, `messages`/`events` default to `clock_timestamp()`, brain_runs cost columns | Contact/link rate limits, artifacts, true ordering within one transaction, cost accounting |
 | **Engine:** `missing_for()` walks only the branches that made a rule UNKNOWN | Part A: an unknown `when` asks for the `when` fact, not the `then` fact |
+| **v0.5 · Slice 4:** `app/tracker/store.py` (`DbTrackerStore`), `create_application` + `transition_application` tools, `/applications`, `/applications/{id}`, `/timeline`, diary-style Ravi/Fatima histories | LLD §22 slice 4 |
+| **v0.5 · Slice 5:** `docs/pipeline.py`, `docs/requirements.py`, `check_document` + `list_required_documents` tools, `/documents` (+ decrypt-in-memory download), 20 specimen fixtures | LLD §22 slice 5 |
+| **`schedule()` and `create_pending()` are real now** (rows in `jobs` / `pending_actions`) | The tracker's effects need them; slices 6 and 7 build on them |
+| **`AGENTS.md`** added | Cost rules and repo map for future sessions |
 
 ## 1. Status
 
@@ -27,25 +31,29 @@ briefs. v0.3 = Part A (decisions confirmed) + Part B (GoDaddy/Titan/$100-credit 
 | 1 | rules 30/30 | ✅ 30/30 + branch coverage + new when/then missing-fact tests |
 | 2 | demo-reset < 10 s, idempotent | ✅ 0.4 s; now also loads artifacts |
 | 3 | 3 phrasings → same matches; every FIT has a citation | ✅ with FakeClaude. "Every FIT has a citation" is asserted **for schemes whose pages exist**; without pages the explanation is stored `source_status: "pending"` and the UI shows a grey **"source pending"** badge. The three-phrasings check is covered at the engine level (same facts → same matches); a real-model phrasing test needs the API, so it's in TODO T16 |
+| 4 | illegal transitions raise; timeline reads like a diary | ✅ every legal transition through the DB store (30 pairs), illegal ones leave no row, ref_number and docs guards, effects → jobs/pending actions, demo clock `days=1` → +1 min, Brain creates Meena's application after a FIT (FakeClaude). Seeded diaries are checked for raw state codes in both languages |
+| 5 | rates reported; mask test green | ✅ 20/20 fixtures: **10 OK, 6 RETAKE, 4 PROBLEM**; no 12-digit number reaches `documents`, `events`, `messages`, `profile_answers`, `jobs` or the case file; duplicate upload returns the existing row; passbook name mismatch → PROBLEM; decrypted bytes never written to disk. **Caveat:** these rates test our code (decision rules, masking, name match) against what FakeClaude is told it sees. They say nothing about real vision accuracy; that needs one live run (T19) |
 
-Stubbed and returning 501 until built: applications/timeline (slice 4), documents (5), worker/handlers (6),
+Stubbed and returning 501 until built: worker/handlers (6),
 approvals/Telegram (7), interpret_response (8), report/prefill (9), admin jobs/actions (10).
 
-### Test results (FakeClaude for every test, no network; Python 3.12.3, Postgres 16)
+### Test results (FakeClaude for every test, no network; Python 3.12.16 via uv, Postgres via `pgserver`, Windows 11)
 
 ```
-$ python -m pytest -q                                   # no services
-222 passed, 42 skipped in 2.2s
-$ DATABASE_URL=postgresql://… python -m pytest -q       # with Postgres
-261 passed, 3 skipped in 6.9s
+$ DATABASE_URL=postgresql://… python -m pytest -q
+329 passed, 2 skipped, 1 failed
   SKIPPED tests/clock/test_claim.py: slice 6
-  SKIPPED tests/docs/test_pipeline.py: slice 5
   SKIPPED tests/e2e/test_happy_path.py: slices 3-9
+  FAILED  tests/test_scripts.py::test_smtp_password_value_in_tree_fails   (Windows only: see §3 item 47)
 $ ruff check . && ruff format --check .   → All checks passed
 $ make check-secrets                      → check-secrets: ok
 ```
 
-New suites:
+Before this session (v0.3, Linux): 261 passed, 3 skipped. This session adds 69 tests.
+
+New suites (v0.5): `tests/tracker/test_store.py`, `tests/e2e/test_tracker_pages.py`, `tests/docs/test_pipeline.py`, `tests/e2e/test_documents_routes.py`.
+
+Suites from v0.3:
 - `tests/brain/test_runner.py`: step cap, budget guard, per-case cap, error-return path, tool crash in a savepoint, finish_run required, API failure, `/admin/runs` totals.
 - `tests/brain/test_tools.py`: dispatch errors, coercion, match, explain cited/pending/cached/guard-fallback, ask_user, finish_run rewrites.
 - `tests/brain/test_claude.py`: caching layout, routing, max_tokens, citations parsing, cost maths.
@@ -176,6 +184,26 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
     - `seed/artifacts/`, `tests/fake_claude.py`, `tests/fixtures/claude/`
 32. **Dev dependency added:** `aiosmtpd` (fake SMTP server in tests). The `anthropic` SDK was already a runtime dependency and is now used, with `max_retries=3`.
 
+### v0.5: slice 4 (tracker)
+33. **`DbTrackerStore`** lives in `app/tracker/store.py` and imports only `app.db`, `app.events`, `app.clock.schedule`, `app.guard.actions` (no AI; `test_boundaries` stays green). It joins the caller's transaction.
+34. **`schedule()`** (in `app/clock/schedule.py`) is now `schedule(conn, type, case_id, application_id, days_from_now, at, payload, scale)`; it is still the only place `DEMO_CLOCK_SCALE` is applied. `at` is absolute and is **not** scaled.
+35. **`next_window`** (REJECTED → RETRY_NEXT_CYCLE, MISSED) = now + 30 days / scale for every scheme, because only PMEGP declares a `window` and it is `rolling`. Constant `NEXT_WINDOW_DAYS`. Replace with real window dates when schemes have them (T20).
+36. **`create_pending()`** (`guard/actions.py`) now takes `conn` first and inserts a row; duplicates are dropped by the idempotency key (sha256 of kind, case, application, sorted-JSON payload). The rest of the Guard lifecycle is still slice 7.
+37. **`create_application`** refuses anything the rules engine didn't mark FIT. If an open application for the scheme already exists it returns that one (`already_exists: true`) instead of a second row. "Open" excludes CLOSED, MISSED, RETRY_NEXT_CYCLE and SANCTIONED, so a retry cycle can start a new row.
+38. **`transition_application`** always acts as `agent`. An illegal move returns `{"error", "allowed_next_for_agent"}` so the model can adapt; application ids from another case look like "no such application".
+39. **Pages:** `/applications` shows a parcel-tracking road (ELIGIBLE → … → SANCTIONED). Off-road states (QUERY_RAISED, REJECTED, MISSED…) are inserted as the current stop. `/applications/{id}` shows only events tied to that application. Another case's id is a 404, never a 403. `/timeline` is `select … order by created_at` in the cookie/case language.
+40. **Seeded diaries:** Ravi's and Fatima's state-change events were rewritten as sentences ("Asked Ravi for his papers: Aadhaar, photo, passbook.") instead of `A → B`. A test fails if an `UPPER_CASE_STATE` name appears in any diary line in either language. Hindi lines are my drafting: V6 (a Hindi speaker checks) now also covers them.
+
+### v0.5: slice 5 (documents)
+41. **Required papers:** `docs/requirements.py` resolves `<doc>_if_<cond>` names. `caste_cert_if_special` → needed when `category` is SC, ST or OBC (not "special" in the engine's sense, which also includes all women); `education_cert_if_cost_gt_10l` → `project_cost` > ₹10 lakh. Unknown conditionals are dropped, not guessed. Schemes whose YAML has no `documents:` default to `[aadhaar, passbook]` (curator TODO T1–T4).
+42. **DOCS_READY guard** (`required_docs_ok`): every user-supplied paper is uploaded with status OK. `project_report` is excluded because we generate it in slice 9, after DOCS_READY.
+43. **Status rules (§12.3 + one addition):** RETAKE if not readable or issues include `cut_off`, `blur` or `too_dark` (the LLD listed only `cut_off`; the demo says "blurry → retake"). `glare` alone stays OK. PROBLEM on wrong type or name mismatch (token_set_ratio < 85 against the profile name and other OK documents).
+44. **Vision** only for aadhaar and passbook, forced schema `document_check_result`, `max_tokens` 1200, `MODEL_REASON`, image downscaled to a long edge ≤ 1568 px. **An aadhaar/passbook sent as a PDF is RETAKE** ("send a photo"), never OK without a check. photo, quotation, caste certificate and the rest get a basic "opens correctly" check, no model call.
+45. **Upload route:** each upload with a vision check opens a `brain_runs` row (`trigger=upload`) so its cost is metered and shows in `/admin/runs`. Over budget (`deferral_reason`), the paper is stored as PENDING and the vision call waits (the `check_document` tool can run it later). Rate limit 20 uploads/min per case. Dedupe is on the sha256 of the original bytes.
+46. **Specimen fixtures:** 20 images, each stamped "SPECIMEN / DEMO" with placeholder text only (no realistic IDs), made by `scripts/make_specimen_docs.py`. Each carries a "SAMPLE #nn" line so no two share bytes (identical images would dedupe and skip the vision call). `labels.yaml` records what FakeClaude returns per image. Three images carry a full 12-digit number in the model output, in three formats, to prove the code mask works even if the model ignores the prompt.
+47. **Windows test environment:** the box has no Docker, Postgres or Python 3.12, so I used `uv` (Python 3.12.16) and the `pgserver` wheel (embedded Postgres) in `.venv`. Known Windows-only failure: `test_smtp_password_value_in_tree_fails` runs `scripts/check_secrets.sh` via `sh` with a Windows temp path, and the script doesn't find the planted password. It passes on Linux (v0.3 notes). `PYTHONUTF8=1` is needed for `estimate_costs.py` output on a cp1252 console.
+48. **`estimate_costs.py`** now prints the image-token line (4000×3000 photo → 1568×1176 → ≈ 2,459 tokens by the w×h/750 rule) and the journey uses image + 500 tokens per vision check. It is arithmetic on the real downscale, not a measurement (T13/T19). Journey ≈ $0.36, demo ≈ $0.17 (unchanged to the cent).
+
 ## 4. TODO / verify list
 
 ### Curator: guideline verification (unchanged from v0.2)
@@ -208,48 +236,58 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 - **T17:** add a cleanup job for old `rate_limits` rows (slice 6 worker).
 - **T18:** deferred `brain_run` jobs need the slice 6 worker to run them.
 
-## 5. What the next prompt should ask for: slices 4 + 5
+- **T19:** one live vision run on real specimen photos (≈ $0.02 each) to get real RETAKE/PROBLEM/correct rates and a measured image-token count. Not part of pytest.
+- **T20:** real `window` dates for schemes, then replace `NEXT_WINDOW_DAYS`.
+- **T21:** `docs/LLD.md` is truncated (stops after §0); re-export it from Notion. `docs/HLD.md` has a duplicated block and every heading numbered `1.`.
+- **T22:** Linux CI (or the VPS) must run the full suite once, since the Windows run has the T-script failure in §3 item 47.
+- **T23:** the `/documents` page has no "retake" shortcut or camera preview; it is a plain form that works without JS.
 
-> Build **slices 4 and 5** from the LLD on top of v0.3. Keep FakeClaude for every test, the budget guards,
-> and `tests/test_boundaries.py` green.
->
-> **Slice 4 (Tracker + timeline):**
-> - A DB-backed `TrackerStore` for `app/tracker/states.py`: `save_state` updates `applications`
->   (`last_movement_at`), `log_state_change` writes a `STATE_CHANGED` event, and `run_effect` inserts `jobs`
->   rows via `app.clock.schedule.run_at_for` (DEMO_CLOCK_SCALE applies there only) or creates a pending action
->   for `instruct_submit`. `required_docs_ok` stays False until slice 5's statuses exist.
-> - Tools `create_application {scheme_id}` (DISCOVERED → ELIGIBLE if the match is FIT; refuse otherwise) and
->   `transition_application {application_id, to_state, reason}` (actor `agent`; IllegalTransition → `{"error"}`).
->   Add both to `ENABLED`.
-> - Pages `/applications` (parcel-tracking rows), `/applications/{id}` (states + that application's events),
->   `/timeline` (`select * from events where case_id = ? order by created_at`, in the user's language), all
->   session-scoped, in Hindi/English. Ravi's and Fatima's seeded histories must read like a diary.
-> - Tests: every legal transition through the DB store; illegal transitions raise; the ref_number guard; effects
->   create the right jobs (with DEMO_CLOCK_SCALE=1440, `days=1` → +1 minute); a FakeClaude script where the Brain
->   creates an application for Meena after a FIT.
->
-> **Slice 5 (documents + vault):**
-> - `scripts/make_specimen_docs.py`: 20 Pillow images visibly stamped "SPECIMEN / DEMO" (clear, blurry, cut-off,
->   wrong type, mismatched name), plus `tests/docs/fixtures/labels.yaml`. Never realistic fake IDs.
-> - `app/docs/pipeline.py` per LLD §12: ≤ 10 MB, jpeg/png/pdf, EXIF strip, sha256 dedupe, AES-GCM vault,
->   vision check only for aadhaar/passbook (MODEL_REASON, forced `document_check_result` schema,
->   max_tokens 1200, **downscale images so the long edge is ≤ 1568 px before sending** to cap tokens),
->   `mask_fields` on everything, name match (token_set_ratio < 85 → PROBLEM), status decision per §12.3.
-> - Tools `check_document {document_id}` and `list_required_documents {scheme_id}` (resolve the conditional
->   document names against facts); `/documents` upload page (camera input, green/yellow/red with a one-line
->   reason), `GET /documents/{id}/file` (session check, decrypt in memory, `Cache-Control: no-store`).
-> - Vision calls are metered into the run like every other call; `estimate_costs.py` gets a measured image-token
->   count line.
-> - Tests with FakeClaude vision scripts (no real images sent anywhere): report correct / retake / wrong rates over
->   the 20 fixtures; the mask test proves no 12-digit number reaches the DB or the case file; duplicate upload
->   returns the existing row; a passbook name mismatch → PROBLEM; the decrypted file is never written to disk.
->
-> Update BUILD_NOTES (§0 changes, §3 assumptions, §4 TODOs, §5 prompt for slices 6 + 7), README, and paste the
-> pytest summary. Deliver `schemehunter-v0.5.zip`.
+## 5. What the next prompt should ask for: slices 6 + 7
 
-## 6. Appendix: files
+> Build **slices 6 and 7** from the LLD on top of v0.5. Keep FakeClaude for every test, the budget guards,
+> and `tests/test_boundaries.py` green. Read AGENTS.md first.
+>
+> **Slice 6 (Alarm Clock):**
+> - `app/clock/worker.py`: claim loop with `FOR UPDATE SKIP LOCKED` (LLD §10.2), backoff `[60, 600, 3600, 6h, 24h]`,
+>   DEAD after 5 attempts + curator alert, sweeper resetting RUNNING > 30 min every 10 min. `WORKER_THREADS=1`.
+> - `app/clock/handlers.py`: `status_check`, `chase`, `doc_nudge`, `deadline_reminders`, `retry_cycle`, `brain_run`
+>   (this is where deferred runs from the budget guard finally execute), `retention_cleanup`, plus `rate_limits`
+>   cleanup (T17). `offer_domain` stays flag-gated and stubbed. Templated messages go through
+>   `app/mouth/templates.py` (no LLM) and become pending actions, never direct sends.
+> - `app/status/`: `UserForwardsChecker` and `ManualChecker` per LLD §14.
+> - Use `schedule()` and `DbTrackerStore` (already real). Ravi's seeded `chase` job must fire ~2 minutes after
+>   `make demo-reset` and draft a follow-up for approval.
+> - Tests: two workers never double-claim; backoff sequence; sweeper; DEAD + alert; demo-clock scaling through a
+>   real handler run; deferred `brain_run` executes; `tests/clock/test_claim.py` un-skipped.
+>
+> **Slice 7 (Guard + Mouth):**
+> - `app/guard/actions.py`: `approve`, `reject`, `execute`, `expire` (7 days), FAILED after 3 executor tries;
+>   `executed_at` is set **before** calling the provider (a crash can't resend). Short codes already exist.
+> - `draft_message` tool: forced schema → scanner → pending action (≤ 2 rewrites, then PROBLEM for the curator).
+>   `request_submit` tool (state → AWAITING_HUMAN_SUBMIT, `instruct_submit` pending action already created by the
+>   tracker effect; do not create a second one).
+> - `/approvals` page + `POST /approvals/{id}/approve|reject` (session must own the case, CSRF), and
+>   `/admin/actions`.
+> - `app/mouth/telegram.py`: send, send_document, webhook with `X-Telegram-Bot-Api-Secret-Token`, `/start <token>`
+>   binding, `YES|NO <code>`. `app/mouth/email.py` already works; bank/officer mail CCs the user and the subject
+>   carries the ref number.
+> - Tests: YES twice → one send; "guaranteed" bounced and rewritten; duplicate webhook ignored via
+>   `messages.external_id`; unknown chat id → "open your link first"; expired actions; a FAILED send is visible in
+>   Approvals and Admin.
+>
+> Update BUILD_NOTES (§0, §3, §4, §5 prompt for slices 8 + 9, §6 cost log), README, and paste the pytest summary.
 
-- **Tree vs the File Structure page:** everything on the page exists (`init.py` written as `__init__.py`), plus the v0.3 additions in §3 item 31.
+## 6. Cost log
+
+| Session | Claude API credit spent | Notes |
+|---|---|---|
+| v0.5 (slices 4 + 5) | **$0.00** | Every test uses FakeClaude, and a real client cannot be constructed under pytest, so no API call was made. `scripts/estimate_costs.py` is arithmetic only. The model cost of the build session itself is not visible from inside it; check the console. |
+
+Projected spend from here: one live vision rehearsal (T19) ≈ $0.02 per image; one full persona journey ≈ $0.36; one demo run-through ≈ $0.17.
+
+## 7. Appendix: files
+
+- **Tree vs the File Structure page:** everything on the page exists (`init.py` written as `__init__.py`), plus the v0.3 additions in §3 item 31 and, in v0.5, `app/tracker/store.py`, `app/docs/requirements.py`, `templates/partials/{steps,events}.html`.
 - **Not included:**
   - the guideline PDFs (T5)
   - `data/` (runtime only)
