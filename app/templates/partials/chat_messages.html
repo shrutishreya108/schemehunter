@@ -1,0 +1,8 @@
+<ul class="messages">
+{% for m in messages %}
+  <li class="msg {{ 'me' if m.direction == 'in' else 'bot' }}">{{ m.body }}</li>
+{% else %}
+  <li class="msg bot">{{ t("chat_hello") }}</li>
+{% endfor %}
+</ul>
+{% if notice %}<p class="notice">{{ notice }}</p>{% endif %}

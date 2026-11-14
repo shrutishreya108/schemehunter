@@ -1,0 +1,31 @@
+# Ravi: PMEGP application submitted 12 days ago, UNDER_REVIEW for 11 days with no movement.
+# Times are relative to the moment of seeding. Jobs use real minutes (not the demo clock) so the
+# chase reliably fires 2 minutes after `make demo-reset`.
+application:
+  scheme_id: pmegp
+  state: UNDER_REVIEW
+  ref_number: "PMEGP/KA/2026/04471"
+  cycle: "2026-27"
+  created_days_ago: 12.2
+  last_movement_days_ago: 11
+
+events:
+  - { days_ago: 12.20, actor: user,   type: PROFILE_UPDATED, en: "Ravi answered the onboarding questions",          hi: "रवि ने शुरुआती सवालों के जवाब दिए" }
+  - { days_ago: 12.19, actor: agent,  type: MATCHED,         en: "Rules engine: PMEGP fits (subsidy 35%)",           hi: "नियम जाँच: PMEGP में फ़िट (सब्सिडी 35%)" }
+  - { days_ago: 12.19, actor: agent,  type: STATE_CHANGED,   en: "PMEGP application created: DISCOVERED → ELIGIBLE",  hi: "PMEGP आवेदन बना: DISCOVERED → ELIGIBLE", app: true }
+  - { days_ago: 12.18, actor: agent,  type: STATE_CHANGED,   en: "ELIGIBLE → DOCS_PENDING",                           hi: "ELIGIBLE → DOCS_PENDING", app: true }
+  - { days_ago: 12.16, actor: user,   type: DOC_UPLOADED,    en: "Aadhaar photo uploaded",                            hi: "आधार की फ़ोटो अपलोड हुई" }
+  - { days_ago: 12.16, actor: system, type: DOC_CHECKED,     en: "Aadhaar: readable, ID number masked",          hi: "आधार: पढ़ने लायक, नंबर छिपाया गया" }
+  - { days_ago: 12.14, actor: user,   type: DOC_UPLOADED,    en: "Bank passbook uploaded",                            hi: "बैंक पासबुक अपलोड हुई" }
+  - { days_ago: 12.14, actor: system, type: DOC_CHECKED,     en: "Passbook: OK, name matches Aadhaar",                hi: "पासबुक: ठीक, नाम आधार से मिलता है" }
+  - { days_ago: 12.12, actor: agent,  type: STATE_CHANGED,   en: "DOCS_PENDING → DOCS_READY",                         hi: "DOCS_PENDING → DOCS_READY", app: true }
+  - { days_ago: 12.10, actor: agent,  type: STATE_CHANGED,   en: "Project report and prefill pack ready: DOCS_READY → FORM_READY", hi: "प्रोजेक्ट रिपोर्ट और भरा हुआ फ़ॉर्म तैयार: FORM_READY", app: true }
+  - { days_ago: 12.10, actor: agent,  type: STATE_CHANGED,   en: "Asked Ravi to press submit on the PMEGP portal",    hi: "रवि से PMEGP पोर्टल पर सबमिट दबाने को कहा", app: true }
+  - { days_ago: 12.05, actor: user,   type: MESSAGE_RECEIVED, en: "Ravi: done, number is PMEGP/KA/2026/04471",        hi: "रवि: हो गया, नंबर PMEGP/KA/2026/04471 है" }
+  - { days_ago: 12.05, actor: user,   type: STATE_CHANGED,   en: "Submitted with reference PMEGP/KA/2026/04471",      hi: "PMEGP/KA/2026/04471 नंबर से जमा हुआ", app: true }
+  - { days_ago: 11.00, actor: agent,  type: STATE_CHANGED,   en: "Portal SMS: forwarded to bank. SUBMITTED → UNDER_REVIEW", hi: "पोर्टल SMS: बैंक को भेजा गया। UNDER_REVIEW", app: true }
+  - { days_ago: 4.00,  actor: clock,  type: STATUS_CHECKED,  en: "Status check: no new message from the portal",      hi: "स्थिति जाँच: पोर्टल से कोई नया संदेश नहीं", app: true }
+
+jobs:
+  - { type: chase,        run_in_minutes: 2,  payload: { reason: "no movement for 11 days" } }
+  - { type: status_check, run_in_minutes: 10 }

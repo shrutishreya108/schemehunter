@@ -1,0 +1,9 @@
+# forms/mappings/pmegp.yaml (LLD §13.2). state_name is a derived fact (app/rules/facts.py) from cases.state_code.
+fields:
+  applicant_name:  { from: name_latin }
+  date_of_birth:   { from: dob, format: "DD/MM/YYYY" }
+  social_category: { from: category, map: { SC: "SC", ST: "ST", OBC: "OBC", GEN: "General" } }
+  project_cost:    { from: total_cost, format: inr }
+  unit_address:    { join: [address_line, district, state_name], sep: ", " }
+steps:
+  - { hi: "पोर्टल खोलें और 'Online Application' चुनें", en: "Open the portal and choose 'Online Application'" }

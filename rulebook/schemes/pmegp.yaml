@@ -1,0 +1,67 @@
+id: pmegp
+name: { en: "PM Employment Generation Programme", hi: "प्रधानमंत्री रोजगार सृजन कार्यक्रम" }
+aliases: ["PMEGP"]
+level: central
+authority: KVIC
+benefit:
+  type: subsidy
+  text: { en: "Margin-money subsidy on the project cost; the rest is a bank loan.",
+          hi: "परियोजना लागत पर मार्जिन-मनी सब्सिडी; बाकी बैंक लोन।" }
+  verified: false
+  source_note: "LLD v1.1 §6.1 example; benefit sentence written for v0.2, check wording against guidelines."
+apply_mode: portal
+portal_url: https://www.kviconline.gov.in/pmegpeportal/
+status_mode: user_forwards
+window: rolling
+documents: [aadhaar, photo, passbook, project_report, quotation, caste_cert_if_special, education_cert_if_cost_gt_10l]
+source_pdf: guidelines.pdf
+last_verified: 2026-11-14
+
+eligibility:
+  all:
+    - { id: age, fact: age, op: gte, value: 18, page: 3,
+        verified: false, source_note: "LLD v1.1 §6.1" }
+    - { id: new_only, fact: business_stage, op: eq, value: new, page: 3,
+        verified: false, source_note: "LLD v1.1 §6.1" }
+    - id: cost_cap
+      page: 4
+      verified: false
+      source_note: "LLD v1.1 §6.1: manufacturing <= 50 lakh, service <= 20 lakh"
+      any:
+        - all: [ { fact: sector, op: eq, value: manufacturing }, { fact: project_cost, op: lte, value: 5000000 } ]
+        - all: [ { fact: sector, op: eq, value: service }, { fact: project_cost, op: lte, value: 2000000 } ]
+    - id: education
+      page: 4
+      verified: false
+      source_note: "Curator correction (v0.2 brief): 8th pass if project_cost > 10 lakh (manufacturing) or > 5 lakh (service)"
+      when:
+        any:
+          - all: [ { fact: sector, op: eq, value: manufacturing }, { fact: project_cost, op: gt, value: 1000000 } ]
+          - all: [ { fact: sector, op: eq, value: service }, { fact: project_cost, op: gt, value: 500000 } ]
+      then: { fact: education_level, op: gte_level, value: "8th" }
+
+benefit_calc:
+  subsidy_percent:
+    - when: { all: [ { fact: area, op: eq, value: rural }, { fact: special_category, op: eq, value: true } ] }
+      value: 35
+      verified: false
+      source_note: "LLD v1.1 §6.1"
+    - when: { fact: area, op: eq, value: rural }
+      value: 25
+      verified: false
+      source_note: "LLD v1.1 §6.1"
+    - when: { fact: special_category, op: eq, value: true }
+      value: 25
+      verified: false
+      source_note: "LLD v1.1 §6.1"
+    - default: 15
+      verified: false
+      source_note: "LLD v1.1 §6.1"
+  own_contribution_percent:
+    - when: { fact: special_category, op: eq, value: true }
+      value: 5
+      verified: false
+      source_note: "LLD v1.1 §6.1"
+    - default: 10
+      verified: false
+      source_note: "LLD v1.1 §6.1"

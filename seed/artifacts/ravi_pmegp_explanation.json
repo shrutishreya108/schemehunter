@@ -1,0 +1,9 @@
+{
+  "en": "You qualify to apply for PMEGP. You are over 18, this is a new manufacturing unit, and the project cost of ₹12 lakh is within the ₹50 lakh limit; because it is above ₹10 lakh the 8th-pass rule applies, and you have passed 12th. As a rural SC applicant the computed subsidy is 35% and your own contribution is 5%.",
+  "hi": "आप PMEGP के लिए आवेदन करने के योग्य हैं। आपकी उम्र 18 से ज़्यादा है, यह नई मैन्युफ़ैक्चरिंग यूनिट है, और ₹12 लाख की लागत ₹50 लाख की सीमा के अंदर है; लागत ₹10 लाख से ज़्यादा है इसलिए 8वीं पास का नियम लागू होता है, और आप 12वीं पास हैं। ग्रामीण SC आवेदक के तौर पर गणना की गई सब्सिडी 35% है और आपका अपना हिस्सा 5% है।",
+  "citations": [],
+  "source_status": "pending",
+  "result": "FIT",
+  "generated_by": "seed",
+  "note": "Citations stay empty until rulebook/sources/pmegp/pages/ exist; never invent guideline quotes."
+}

@@ -1,0 +1,32 @@
+# 15 portal SMS/email/user texts with expected intents (tests/e2e/test_inbound.py, slice 8).
+# Intents: status_update | query_raised | rejected | sanctioned | question | approval_reply | other
+- text: "PMEGP Application PMEGP/KA/2026/04471: Documents required - Income proof. Upload within 7 days."
+  expect: { intent: query_raised, missing_docs: [income_proof], deadline_days: 7, ref_number: "PMEGP/KA/2026/04471" }
+- text: "Your application 04471 has been forwarded to Bank for appraisal."
+  expect: { intent: status_update }
+- text: "Application rejected: project report not as per format."
+  expect: { intent: rejected, reason: "project report not as per format" }
+- text: "Dear applicant, your PMEGP application PMEGP/KA/2026/04471 is sanctioned by the financing bank."
+  expect: { intent: sanctioned, ref_number: "PMEGP/KA/2026/04471" }
+- text: "Your loan application has been received at branch. Reference no. MUD/2026/118."
+  expect: { intent: status_update, ref_number: "MUD/2026/118" }
+- text: "Bank: please submit caste certificate and 2 passport photos at the branch by 30-11-2026."
+  expect: { intent: query_raised, missing_docs: [caste_cert, photo], deadline: "2026-11-30" }
+- text: "We regret to inform you that your loan request is declined due to incomplete income documents."
+  expect: { intent: rejected, reason: "incomplete income documents" }
+- text: "YES 4471"
+  expect: { intent: approval_reply }
+- text: "NO 2290"
+  expect: { intent: approval_reply }
+- text: "मेरा लोन कब तक आएगा?"
+  expect: { intent: question }
+- text: "Do I need to go to the bank again?"
+  expect: { intent: question }
+- text: "Interview scheduled at DIC office on 05-12-2026 at 11 AM for application 04471."
+  expect: { intent: status_update, deadline: "2026-12-05" }
+- text: "आपका आवेदन PMEGP/KA/2026/04471 बैंक को भेज दिया गया है।"
+  expect: { intent: status_update, ref_number: "PMEGP/KA/2026/04471" }
+- text: "Your OTP for login is 482913. Do not share it with anyone."
+  expect: { intent: other }
+- text: "Congratulations! Loan of Rs 3,00,000 sanctioned under Mudra Kishore. Visit branch for disbursal."
+  expect: { intent: sanctioned }

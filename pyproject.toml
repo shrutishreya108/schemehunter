@@ -1,0 +1,42 @@
+[project]
+name = "schemehunter"
+version = "0.2.0"
+description = "Scheme Hunter: follow-through assistant for Indian government scheme applications"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "anthropic>=0.40",
+    "psycopg[binary]>=3.2",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "jinja2>=3.1",
+    "weasyprint>=62",
+    "rapidfuzz>=3.9",
+    "cryptography>=42",
+    "pillow>=10.4",
+    "pyyaml>=6.0",
+    "structlog>=24.1",
+    "httpx>=0.27",
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.2", "ruff>=0.17,<0.18", "aiosmtpd>=1.4"]  # ruff 0.17 defaults are the lint baseline
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "db: needs Postgres; skipped unless DATABASE_URL is set",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"

@@ -1,0 +1,14 @@
+# Illustrative demo assumptions (not real quotations). Totals must equal the persona's project_cost.
+business: { en: "Beauty parlour", hi: "ब्यूटी पार्लर" }
+capex:
+  - { item: "Chairs and salon equipment", amount: 180000 }
+  - { item: "Interiors", amount: 70000 }
+working_capital: 50000           # total 3,00,000
+annual_rate: 11
+tenure_months: 60
+units_per_month: 300             # services
+price: 400
+variable_cost: 120
+fixed_costs: 50000
+growth_pct: 10
+quotations: ["Salon chairs: Demo Furnishers (specimen)"]

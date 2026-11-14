@@ -1,0 +1,39 @@
+# Meena, live onboarding, 3 chat turns (seed/conversations/meena.md, shortened).
+# Turn 1: match → NEEDS_INFO → ask_user(loan_amount) → finish_run (empty: the question is the reply)
+# Turn 2: update_profile(loan_amount=300000) → match → PMEGP + Mudra FIT → finish_run
+# Turn 3: explain_match(pmegp) → explain_match(mudra) → finish_run
+loop:
+  # turn 1
+  - content: [{tool: match_schemes, input: {}}]
+  - content:
+      - {text: "I need her loan amount first."}
+      - tool: ask_user
+        input: {question_hi: "आप कितने रुपये का लोन लेना चाहती हैं?", question_en: "How much loan do you want?", expected_fact: loan_amount}
+  - content: [{tool: finish_run, input: {user_message: "", internal_note: "asked loan_amount"}}]
+  # turn 2
+  - content: [{tool: update_profile, input: {key: loan_amount, value: 300000}}]
+  - content: [{tool: match_schemes, input: {}}]
+  - content:
+      - tool: finish_run
+        input:
+          user_message: "आप PMEGP और प्रधानमंत्री मुद्रा योजना के लिए आवेदन करने के योग्य हैं। क्या मैं बताऊँ क्यों?"
+          internal_note: "PMEGP + Mudra FIT"
+  # turn 3
+  - content: [{tool: explain_match, input: {scheme_id: pmegp}}]
+  - content: [{tool: explain_match, input: {scheme_id: mudra}}]
+  - content:
+      - tool: finish_run
+        input:
+          user_message: "PMEGP: आप नई सर्विस यूनिट हैं और लागत सीमा के अंदर है। मुद्रा: ₹3 लाख का लोन किशोर श्रेणी में आता है। आप दोनों के लिए आवेदन करने के योग्य हैं।"
+          next_check_in_days: 1
+explain:
+  - content:
+      - tool: explanation
+        input:
+          en: "You qualify to apply for PMEGP: you are over 18, this is a new service unit, and ₹5 lakh is within the ₹20 lakh service limit."
+          hi: "आप PMEGP के लिए आवेदन करने के योग्य हैं: आपकी उम्र 18 से ज़्यादा है, यह नई सर्विस यूनिट है, और ₹5 लाख सर्विस की ₹20 लाख सीमा के अंदर है।"
+  - content:
+      - tool: explanation
+        input:
+          en: "You qualify to apply for a Mudra loan: ₹3 lakh falls in the Kishore category and service businesses are covered."
+          hi: "आप मुद्रा लोन के लिए आवेदन करने के योग्य हैं: ₹3 लाख किशोर श्रेणी में आता है और सर्विस व्यवसाय शामिल हैं।"

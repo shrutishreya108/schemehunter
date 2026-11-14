@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("schemes_title") }}</h1>
+{% for c in cards %}
+<article class="card {{ c.result|lower }}">
+  <h2>{{ c.name }} <span class="badge {{ c.result|lower }}">{{ t("result_" ~ c.result) }}</span></h2>
+  {% if c.benefit_text %}<p class="benefit">{{ c.benefit_text }}</p>{% endif %}
+  {% if c.explanation %}<p>{{ c.explanation }}</p>{% endif %}
+  {% if c.result == "NEEDS_INFO" and c.missing %}<p class="muted">{{ t("needs") }}: {{ c.missing|join(", ") }}</p>{% endif %}
+  {% if c.source_status == "cited" and c.citations %}
+    {% include "partials/citation_popover.html" %}
+  {% elif c.explanation %}
+    <span class="badge pending" title="{{ t('source_pending_help') }}">{{ t("source_pending") }}</span>
+  {% endif %}
+</article>
+{% else %}
+<p>{{ t("no_matches") }} <a href="/chat">{{ t("nav_chat") }}</a></p>
+{% endfor %}
+{% endblock %}

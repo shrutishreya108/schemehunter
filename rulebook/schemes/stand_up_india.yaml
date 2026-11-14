@@ -1,0 +1,36 @@
+id: stand_up_india
+name: { en: "Stand-Up India", hi: "स्टैंड-अप इंडिया" }
+aliases: ["Stand Up India", "StandUp India"]
+level: central
+benefit:
+  type: loan
+  text: { en: "Bank loan between ₹10 lakh and ₹1 crore for a new enterprise.",
+          hi: "नए उद्यम के लिए ₹10 लाख से ₹1 करोड़ तक का बैंक लोन।" }
+  verified: false
+  source_note: "Curator public-rule list (v0.2 brief): loan 10,00,000 to 1,00,00,000"
+apply_mode: portal
+status_mode: user_forwards
+# TODO(curator): portal_url, window, documents, source_pdf, page numbers (see BUILD_NOTES.md)
+
+eligibility:
+  all:
+    - id: applicant
+      verified: false
+      source_note: "Curator public-rule list (v0.2 brief): woman OR SC/ST"
+      any:
+        - { fact: gender, op: eq, value: female }
+        - { fact: category, op: in, value: [SC, ST] }
+    - { id: age, fact: age, op: gte, value: 18,
+        verified: false, source_note: "Curator public-rule list (v0.2 brief)" }
+    - { id: new_only, fact: business_stage, op: eq, value: new,
+        verified: false, source_note: "Curator public-rule list (v0.2 brief): greenfield only" }
+    - { id: sector, fact: sector, op: in, value: [manufacturing, service, trading, agri_allied],
+        verified: false, source_note: "Curator public-rule list (v0.2 brief)" }
+    - id: loan_range
+      verified: false
+      source_note: "Curator public-rule list (v0.2 brief): 10,00,000 to 1,00,00,000"
+      all:
+        - { fact: loan_amount, op: gte, value: 1000000 }
+        - { fact: loan_amount, op: lte, value: 10000000 }
+    - { id: no_default, fact: in_default, op: eq, value: false,
+        verified: false, source_note: "Curator public-rule list (v0.2 brief): not in default to any bank" }

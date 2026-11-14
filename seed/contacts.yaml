@@ -1,0 +1,14 @@
+# "Bank" and "nodal officer" contacts for the demo. Point these at YOUR OWN inboxes (LLD §21);
+# the demo shows the email landing there with the persona CC'd. Never real officials during the demo.
+- key: bank_branch
+  label: { en: "Bank branch (PMEGP financing bank)", hi: "बैंक शाखा (PMEGP)" }
+  email: "you+bank@example.com"
+  schemes: [pmegp, stand_up_india, mudra, cgtmse]
+- key: nodal_officer
+  label: { en: "PMEGP nodal officer (KVIC/DIC)", hi: "PMEGP नोडल अधिकारी" }
+  email: "you+officer@example.com"
+  schemes: [pmegp]
+- key: district_office
+  label: { en: "District office (Udyogini)", hi: "ज़िला कार्यालय (उद्योगिनी)" }
+  email: "you+district@example.com"
+  schemes: [udyogini_ka]

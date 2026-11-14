@@ -1,0 +1,16 @@
+# Pre-generated artifacts loaded by `make demo-reset` so the demo spends Claude credit only on the live
+# onboarding and live document checks. Regenerate after the guideline PDFs land (see BUILD_NOTES).
+- persona: ravi
+  target: match_explanation        # matches.explanation; explain_match treats it as cached (same spec hash + result)
+  scheme_id: pmegp
+  file: ravi_pmegp_explanation.json
+- persona: fatima
+  target: artifact
+  kind: rejection_analysis
+  scheme_id: mudra
+  file: fatima_mudra_rejection_analysis.json
+- persona: meena
+  target: artifact
+  kind: report_narrative
+  scheme_id: pmegp
+  file: meena_pmegp_report_narrative.json

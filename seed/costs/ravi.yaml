@@ -1,0 +1,15 @@
+# Illustrative demo assumptions (not real quotations). Totals must equal the persona's project_cost.
+business: { en: "Spice grinding and packaging unit", hi: "मसाला पिसाई और पैकेजिंग यूनिट" }
+capex:
+  - { item: "Grinding machinery", amount: 650000 }
+  - { item: "Packaging machine", amount: 200000 }
+  - { item: "Shed works", amount: 150000 }
+working_capital: 200000          # total 12,00,000
+annual_rate: 11
+tenure_months: 60
+units_per_month: 6000            # kg
+price: 120
+variable_cost: 80
+fixed_costs: 120000
+growth_pct: 10
+quotations: ["Grinder: Demo Engineering Works (specimen)"]

@@ -1,0 +1,11 @@
+# DOMAIN comes from .env (docker compose passes it to this container). Caddy gets a Let's Encrypt
+# certificate on first boot once the domain's A record points at the VPS and ports 80/443 are open.
+{$DOMAIN} {
+	reverse_proxy web:8000
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+}

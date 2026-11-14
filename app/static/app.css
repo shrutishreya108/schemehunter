@@ -1,0 +1,18 @@
+body { font-family: 'Noto Sans Devanagari', system-ui, sans-serif; margin: 0 auto; max-width: 40rem; padding: 1rem; line-height: 1.5; }
+header { display: flex; gap: 1rem; align-items: baseline; justify-content: space-between; }
+.brand { font-weight: 700; text-decoration: none; }
+.messages { list-style: none; padding: 0; }
+.msg { padding: .5rem .75rem; border-radius: .75rem; margin: .35rem 0; max-width: 85%; }
+.msg.me { background: #e7f0ff; margin-left: auto; }
+.msg.bot { background: #f2f2f2; }
+.chat-input { display: flex; gap: .5rem; } .chat-input input[type=text] { flex: 1; padding: .6rem; }
+button { padding: .6rem 1rem; font-size: 1rem; }
+.card { border: 1px solid #ddd; border-radius: .75rem; padding: .75rem 1rem; margin: .75rem 0; }
+.badge { font-size: .75rem; padding: .1rem .5rem; border-radius: 1rem; background: #eee; }
+.badge.fit { background: #d8f5d8; } .badge.no_fit { background: #fde2e2; } .badge.needs_info { background: #fff3cd; }
+.badge.pending { background: #e5e5e5; color: #555; }
+.muted, .notice { color: #666; } .error { color: #b00020; }
+.hp { position: absolute; left: -10000px; }
+.contact label { display: block; margin: .5rem 0; } .contact input, .contact textarea { width: 100%; padding: .5rem; }
+.admin { max-width: none; } .admin table { border-collapse: collapse; font-size: .85rem; }
+.admin td, .admin th { border: 1px solid #ddd; padding: .25rem .5rem; } .admin tr.stuck, .admin tr.error { background: #fde2e2; }

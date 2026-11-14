@@ -1,0 +1,16 @@
+# Illustrative demo assumptions (not real quotations). Totals must equal the persona's project_cost.
+# subsidy_pct / own_pct are NOT here: they come from the scheme's benefit_calc at report time.
+business: { en: "Tailoring and boutique unit", hi: "सिलाई और बुटीक यूनिट" }
+capex:
+  - { item: "Industrial sewing machines (3)", amount: 180000 }
+  - { item: "Embroidery machine", amount: 150000 }
+  - { item: "Furniture and fittings", amount: 70000 }
+working_capital: 100000          # total 5,00,000
+annual_rate: 11
+tenure_months: 60
+units_per_month: 400             # garments
+price: 450
+variable_cost: 250
+fixed_costs: 45000               # per month: rent, wages, power
+growth_pct: 10
+quotations: ["Sewing machines: Demo Traders, Bengaluru (specimen)"]

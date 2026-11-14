@@ -1,0 +1,10 @@
+.env
+/data
+seed/real/**/*.pdf
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.venv/
+*.egg-info/
+data/

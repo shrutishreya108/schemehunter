@@ -1,0 +1,9 @@
+{
+  "reason": "income proof not attached",
+  "fixable": true,
+  "missing_docs": ["income_proof"],
+  "recommended_next_state": "RETRY_NEXT_CYCLE",
+  "en": "The bank declined because income proof was not attached. This is fixable: get an income certificate (or your last 6 months' bank statement if the branch accepts it) and re-apply in the next cycle with the same papers plus the income proof.",
+  "hi": "बैंक ने आवेदन इसलिए लौटाया क्योंकि आय प्रमाण नहीं लगा था। यह ठीक हो सकता है: आय प्रमाण पत्र (या शाखा माने तो पिछले 6 महीने का बैंक स्टेटमेंट) लें और अगले चक्र में उन्हीं काग़ज़ों के साथ आय प्रमाण जोड़कर फिर आवेदन करें।",
+  "generated_by": "seed"
+}

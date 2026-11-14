@@ -1,0 +1,16 @@
+{
+  "business_description": {
+    "en": "Meena Kumari will run a tailoring and boutique unit making women's garments and doing embroidery on order, with three industrial sewing machines and one embroidery machine.",
+    "hi": "मीना कुमारी सिलाई और बुटीक यूनिट चलाएँगी, जिसमें महिलाओं के कपड़े सिले जाएँगे और ऑर्डर पर कढ़ाई होगी; तीन इंडस्ट्रियल सिलाई मशीनें और एक कढ़ाई मशीन होगी।"
+  },
+  "market": {
+    "en": "Customers are women in the surrounding urban wards, local boutiques that outsource stitching, and festival and wedding orders.",
+    "hi": "ग्राहक आसपास के शहरी वार्डों की महिलाएँ, सिलाई बाहर से करवाने वाले स्थानीय बुटीक, और त्योहार व शादी के ऑर्डर हैं।"
+  },
+  "location": {
+    "en": "A rented ground-floor shop in an urban ward of Bengaluru, close to a market street.",
+    "hi": "बेंगलुरु के एक शहरी वार्ड में बाज़ार की गली के पास किराए की ग्राउंड-फ़्लोर दुकान।"
+  },
+  "note": "Narrative only. Every number in the report is computed by app/finance/project_report.py from seed/costs/meena.yaml.",
+  "generated_by": "seed"
+}

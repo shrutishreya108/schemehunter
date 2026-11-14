@@ -1,0 +1,8 @@
+<details class="citation">
+  <summary>{{ t("see_rule") }}</summary>
+  <ul>
+  {% for cit in c.citations %}
+    <li><blockquote>{{ cit.cited_text }}</blockquote><small>{{ t("page") }} {{ cit.page or "?" }}</small></li>
+  {% endfor %}
+  </ul>
+</details>

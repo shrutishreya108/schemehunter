@@ -1,0 +1,24 @@
+id: cgtmse
+name: { en: "Credit Guarantee Fund Trust for Micro and Small Enterprises (CGTMSE)",
+        hi: "सूक्ष्म एवं लघु उद्यम क्रेडिट गारंटी निधि ट्रस्ट (CGTMSE)" }
+aliases: ["CGTMSE", "CGTMSE cover"]
+level: central
+benefit:
+  type: guarantee
+  text: { en: "Collateral-free loan possible; bank applies for cover.",
+          hi: "बिना गिरवी लोन संभव; कवर के लिए बैंक आवेदन करता है।" }
+  verified: false
+  source_note: "Curator public-rule list (v0.2 brief). Coverage percentages deliberately omitted (they vary)."
+apply_mode: bank
+status_mode: manual
+# The entrepreneur does not apply directly: the bank attaches this guarantee to her loan.
+# TODO(curator): coverage percentages, documents, source_pdf, page numbers (see BUILD_NOTES.md)
+
+eligibility:
+  all:
+    - { id: enterprise_size, fact: enterprise_size, op: in, value: [micro, small],
+        verified: false, source_note: "Curator public-rule list (v0.2 brief): micro or small enterprise" }
+    - { id: loan_cap, fact: loan_amount, op: lte, value: 50000000,
+        verified: false, source_note: "Curator public-rule list (v0.2 brief): loan <= 5,00,00,000" }
+    - { id: sector_excluded, fact: sector, op: not_in, value: [education_institution, shg],
+        verified: false, source_note: "Curator public-rule list (v0.2 brief): not education institutions, not SHGs" }

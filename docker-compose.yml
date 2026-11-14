@@ -1,0 +1,31 @@
+# Sized for the 4 vCPU / 8 GB GoDaddy VPS: one uvicorn worker (2 brain threads inside it), one worker
+# process with one thread, Postgres with default memory settings. Expected steady use well under 1.5 GB.
+services:
+  caddy:
+    image: caddy:2
+    ports: ["80:80", "443:443"]
+    environment: { DOMAIN: "${DOMAIN:?set DOMAIN in .env}" }
+    volumes: ["./Caddyfile:/etc/caddy/Caddyfile", "caddy_data:/data"]
+    depends_on: [web]
+    restart: unless-stopped
+  web:
+    build: .
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips='*'
+    env_file: .env
+    volumes: ["vault:/data/vault"]
+    depends_on: [postgres]
+    restart: unless-stopped
+  worker:
+    build: .
+    command: python -m app.clock.worker
+    env_file: .env
+    environment: { WORKER_THREADS: "1" }
+    volumes: ["vault:/data/vault", "backups:/backups"]
+    depends_on: [postgres]
+    restart: unless-stopped
+  postgres:
+    image: postgres:16
+    environment: { POSTGRES_DB: schemehunter, POSTGRES_USER: app, POSTGRES_PASSWORD: "${PG_PASSWORD}" }
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    restart: unless-stopped
+volumes: { pgdata: {}, vault: {}, backups: {}, caddy_data: {} }

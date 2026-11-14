@@ -1,0 +1,27 @@
+# seed/personas.yaml (LLD v1.1 §21). Keys marked "added v0.2" are not in the LLD; see BUILD_NOTES.md.
+- key: meena                     # live onboarding
+  display_name: Meena
+  language: hi
+  state_code: KA
+  stage: fresh
+  profile: { name_latin: "Meena Kumari", gender: female, dob: 1991-04-12, category: OBC, sector: service,
+             business_stage: new, project_cost: 500000, area: urban, education_level: "10th" }
+
+- key: ravi                      # mid-flight: UNDER_REVIEW, 11 days silent, chase due T+2 min after reset
+  display_name: Ravi
+  language: hi
+  state_code: KA
+  stage: under_review_silent
+  profile: { name_latin: "Ravi Kumar", gender: male, dob: 1988-09-02, category: SC, sector: manufacturing,
+             business_stage: new, project_cost: 1200000, area: rural, education_level: "12th" }
+  application: { scheme_id: pmegp, ref_number: "PMEGP/KA/2026/04471" }
+
+- key: fatima                    # REJECTED on fixable reason → analyze → RETRY_NEXT_CYCLE
+  display_name: Fatima
+  language: en
+  state_code: KA
+  stage: rejected_fixable
+  profile: { name_latin: "Fatima Begum", gender: female, dob: 1994-01-20, category: GEN, sector: service,
+             business_stage: new, project_cost: 300000, area: urban, education_level: "graduate",
+             loan_amount: 300000 }   # loan_amount added v0.2 so her Mudra match is FIT, not NEEDS_INFO
+  application: { scheme_id: mudra, rejection_reason: "income proof not attached" }

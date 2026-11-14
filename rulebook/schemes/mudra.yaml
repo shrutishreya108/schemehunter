@@ -1,0 +1,48 @@
+id: mudra
+name: { en: "Pradhan Mantri Mudra Yojana (PMMY)", hi: "प्रधानमंत्री मुद्रा योजना" }
+aliases: ["Mudra", "PMMY", "PM Mudra", "Mudra loan"]
+level: central
+benefit:
+  type: loan
+  text: { en: "Collateral-free bank loan for a micro enterprise: Shishu, Kishore, Tarun (and Tarun Plus).",
+          hi: "सूक्ष्म उद्यम के लिए बिना गिरवी बैंक लोन: शिशु, किशोर, तरुण (और तरुण प्लस)।" }
+  collateral: none
+  verified: false
+  source_note: "Curator public-rule list (v0.2 brief): no collateral; categories by loan amount"
+apply_mode: bank
+status_mode: manual
+# TODO(curator): window, documents, source_pdf, page numbers; micro-enterprise test (see BUILD_NOTES.md)
+
+eligibility:
+  all:
+    - { id: age, fact: age, op: gte, value: 18,
+        verified: false, source_note: "Curator public-rule list (v0.2 brief): adult only, no other age rule" }
+    - { id: sector, fact: sector, op: in, value: [manufacturing, trading, service, agri_allied],
+        verified: false, source_note: "Non-farm income-generating enterprises. PMMY extended to activities allied to agriculture in FY2016-17 (dairy, poultry, beekeeping etc.); crop loans excluded." }
+    - id: loan_cap
+      verified: false
+      source_note: "Curator public-rule list (v0.2 brief): <= 10 lakh; Tarun Plus up to 20 lakh only if previous Tarun repaid"
+      any:
+        - { fact: loan_amount, op: lte, value: 1000000 }
+        - all:
+            - { fact: loan_amount, op: lte, value: 2000000 }
+            - { fact: previous_tarun_repaid, op: eq, value: true }
+
+benefit_calc:
+  mudra_category:
+    - when: { fact: loan_amount, op: lte, value: 50000 }
+      value: Shishu
+      verified: false
+      source_note: "Curator public-rule list (v0.2 brief): Shishu <= 50,000"
+    - when: { fact: loan_amount, op: lte, value: 500000 }
+      value: Kishore
+      verified: false
+      source_note: "Curator public-rule list (v0.2 brief): Kishore 50,001 to 5,00,000"
+    - when: { fact: loan_amount, op: lte, value: 1000000 }
+      value: Tarun
+      verified: false
+      source_note: "Curator public-rule list (v0.2 brief): Tarun 5,00,001 to 10,00,000"
+    - when: { all: [ { fact: loan_amount, op: lte, value: 2000000 }, { fact: previous_tarun_repaid, op: eq, value: true } ] }
+      value: Tarun Plus
+      verified: false
+      source_note: "Curator public-rule list (v0.2 brief): Tarun Plus 10,00,001 to 20,00,000 if previous Tarun repaid"

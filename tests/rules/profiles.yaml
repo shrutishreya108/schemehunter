@@ -1,0 +1,326 @@
+# 30 test profiles for the rules engine. Expected results were derived BY HAND from the YAML in
+# rulebook/schemes/ (not from running the engine). This suite proves the engine matches the YAML;
+# it says nothing about whether the YAML matches the guideline PDFs (curator's day-1 job).
+#
+# Each profile = base, then `set` overrides, then `unset` removes keys (fact becomes unknown).
+# Ages are computed with today = 2026-11-16 (see test_rules.py).
+#
+# expect: scheme_id -> [RESULT, deciding_rule]
+#   FIT        -> rule is null (every rule passed)
+#   NO_FIT     -> first FAILING rule in file order
+#   NEEDS_INFO -> first UNKNOWN rule in file order (only when nothing failed)
+# Only schemes that apply to the profile's state appear (udyogini_ka is KA-only).
+#
+# Rule order per scheme:
+#   pmegp:          age, new_only, cost_cap, education
+#   stand_up_india: applicant, age, new_only, sector, loan_range, no_default
+#   mudra:          age, sector, loan_cap
+#   cgtmse:         enterprise_size, loan_cap, sector_excluded
+#   udyogini_ka:    woman, age, income_cap, loan_cap
+
+today: 2026-11-16
+
+base:
+  state_code: KA
+  gender: female
+  dob: 1991-04-12            # 35
+  category: OBC
+  business_stage: new
+  sector: service
+  project_cost: 1500000
+  education_level: "10th"
+  area: urban
+  loan_amount: 1500000
+  in_default: false
+  previous_tarun_repaid: true
+  enterprise_size: micro
+  family_income: 120000
+  special_circumstance: none
+
+profiles:
+  - key: p01_base
+    note: "15L service loan: Mudra via Tarun Plus; Udyogini loan over 3L"
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [FIT, null]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p02_udyogini_fit
+    set: { loan_amount: 250000, project_cost: 300000 }
+    note: "small loan: Udyogini fits; Stand-Up India loan below 10L"
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [NO_FIT, loan_range]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [FIT, null]
+
+  - key: p03_minor
+    set: { dob: 2010-01-01, loan_amount: 250000, project_cost: 300000 }
+    note: "age 16"
+    expect:
+      pmegp: [NO_FIT, age]
+      stand_up_india: [NO_FIT, age]
+      mudra: [NO_FIT, age]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, age]
+
+  - key: p04_no_dob
+    set: { loan_amount: 250000, project_cost: 300000 }
+    unset: [dob]
+    expect:
+      pmegp: [NEEDS_INFO, age]
+      stand_up_india: [NO_FIT, loan_range]
+      mudra: [NEEDS_INFO, age]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NEEDS_INFO, age]
+
+  - key: p05_over_55
+    set: { dob: 1970-01-01, loan_amount: 250000, project_cost: 300000 }
+    note: "age 56: too old for Udyogini only"
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [NO_FIT, loan_range]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, age]
+
+  - key: p06_age_55_boundary
+    set: { dob: 1971-11-16, loan_amount: 250000, project_cost: 300000 }
+    note: "turns 55 today: still inside 18-55"
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [NO_FIT, loan_range]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [FIT, null]
+
+  - key: p07_existing_business
+    set: { business_stage: existing }
+    expect:
+      pmegp: [NO_FIT, new_only]
+      stand_up_india: [NO_FIT, new_only]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p08_stage_unknown
+    unset: [business_stage]
+    expect:
+      pmegp: [NEEDS_INFO, new_only]
+      stand_up_india: [NEEDS_INFO, new_only]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p09_mfg_over_cost_cap
+    set: { sector: manufacturing, project_cost: 6000000 }
+    note: "60L manufacturing > 50L cap"
+    expect:
+      pmegp: [NO_FIT, cost_cap]
+      stand_up_india: [FIT, null]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p10_trading
+    set: { sector: trading }
+    note: "PMEGP cost_cap only allows manufacturing/service"
+    expect:
+      pmegp: [NO_FIT, cost_cap]
+      stand_up_india: [FIT, null]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p11_sector_unknown
+    unset: [sector]
+    expect:
+      pmegp: [NEEDS_INFO, cost_cap]
+      stand_up_india: [NEEDS_INFO, sector]
+      mudra: [NEEDS_INFO, sector]
+      cgtmse: [NEEDS_INFO, sector_excluded]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p12_service_low_education
+    set: { project_cost: 1200000, loan_amount: 1000000, education_level: "5th" }
+    note: "service > 5L needs 8th pass; loan exactly 10L hits SUI lower bound and Mudra cap"
+    expect:
+      pmegp: [NO_FIT, education]
+      stand_up_india: [FIT, null]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p13_mfg_education_unknown
+    set: { sector: manufacturing, project_cost: 1200000, loan_amount: 1000000 }
+    unset: [education_level]
+    note: "manufacturing > 10L triggers the education rule"
+    expect:
+      pmegp: [NEEDS_INFO, education]
+      stand_up_india: [FIT, null]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p14_male_general
+    set: { gender: male, category: GEN }
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [NO_FIT, applicant]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, woman]
+
+  - key: p15_male_sc_maharashtra
+    set: { gender: male, category: SC, state_code: MH }
+    note: "SC qualifies for Stand-Up India; Udyogini not evaluated outside KA"
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [FIT, null]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+
+  - key: p16_gender_unknown
+    unset: [gender]
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [NEEDS_INFO, applicant]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p17_education_institution
+    set: { sector: education_institution }
+    expect:
+      pmegp: [NO_FIT, cost_cap]
+      stand_up_india: [NO_FIT, sector]
+      mudra: [NO_FIT, sector]
+      cgtmse: [NO_FIT, sector_excluded]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p18_shg_small
+    set: { sector: shg, loan_amount: 250000, project_cost: 300000 }
+    note: "Udyogini has no sector rule"
+    expect:
+      pmegp: [NO_FIT, cost_cap]
+      stand_up_india: [NO_FIT, sector]
+      mudra: [NO_FIT, sector]
+      cgtmse: [NO_FIT, sector_excluded]
+      udyogini_ka: [FIT, null]
+
+  - key: p19_loan_2cr
+    set: { loan_amount: 20000000 }
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [NO_FIT, loan_range]
+      mudra: [NO_FIT, loan_cap]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p20_loan_unknown
+    unset: [loan_amount]
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [NEEDS_INFO, loan_range]
+      mudra: [NEEDS_INFO, loan_cap]
+      cgtmse: [NEEDS_INFO, loan_cap]
+      udyogini_ka: [NEEDS_INFO, loan_cap]
+
+  - key: p21_in_default
+    set: { in_default: true }
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [NO_FIT, no_default]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p22_default_unknown
+    unset: [in_default]
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [NEEDS_INFO, no_default]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p23_tarun_not_repaid
+    set: { previous_tarun_repaid: false }
+    note: "15L without a repaid Tarun loan"
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [FIT, null]
+      mudra: [NO_FIT, loan_cap]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p24_tarun_unknown
+    unset: [previous_tarun_repaid]
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [FIT, null]
+      mudra: [NEEDS_INFO, loan_cap]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p25_medium_enterprise
+    set: { enterprise_size: medium }
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [FIT, null]
+      mudra: [FIT, null]
+      cgtmse: [NO_FIT, enterprise_size]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p26_size_unknown_loan_6cr_sc
+    set: { loan_amount: 60000000, category: SC }
+    unset: [enterprise_size]
+    note: "CGTMSE: size unknown but loan_cap fails, so NO_FIT; SC skips Udyogini income cap"
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [NO_FIT, loan_range]
+      mudra: [NO_FIT, loan_cap]
+      cgtmse: [NO_FIT, loan_cap]
+      udyogini_ka: [NO_FIT, loan_cap]
+
+  - key: p27_size_unknown
+    set: { loan_amount: 250000, project_cost: 300000 }
+    unset: [enterprise_size]
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [NO_FIT, loan_range]
+      mudra: [FIT, null]
+      cgtmse: [NEEDS_INFO, enterprise_size]
+      udyogini_ka: [FIT, null]
+
+  - key: p28_income_over_cap
+    set: { family_income: 200000, loan_amount: 250000, project_cost: 300000 }
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [NO_FIT, loan_range]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, income_cap]
+
+  - key: p29_widow_no_cap
+    set: { special_circumstance: widow, family_income: 500000, loan_amount: 250000, project_cost: 300000 }
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [NO_FIT, loan_range]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [FIT, null]
+
+  - key: p30_circumstance_unknown
+    set: { family_income: 200000, loan_amount: 250000, project_cost: 300000 }
+    unset: [special_circumstance]
+    note: "income over cap, but the cap may not apply: ask about special circumstances"
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [NO_FIT, loan_range]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NEEDS_INFO, income_cap]

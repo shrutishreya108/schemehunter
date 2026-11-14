@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% if csrf %}<meta name="csrf-token" content="{{ csrf }}">{% endif %}
+  <title>{% block title %}{{ t("app_name") }}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/htmx.min.js" defer></script>
+</head>
+<body {% if csrf %}hx-headers='{"X-CSRF-Token": "{{ csrf }}"}'{% endif %}>
+  <header>
+    <a class="brand" href="/">{{ t("app_name") }}</a>
+    {% if case_id %}<nav><a href="/chat">{{ t("nav_chat") }}</a> · <a href="/schemes">{{ t("nav_schemes") }}</a></nav>{% endif %}
+    <span class="lang-toggle">
+      {% if lang == "hi" %}<a href="/lang/en">English</a>{% else %}<a href="/lang/hi">हिन्दी</a>{% endif %}
+    </span>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <footer><a href="/contact">{{ t("nav_contact") }}</a></footer>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("chat_title") }}</h1>
+<div id="chat">{% include "partials/chat_messages.html" %}</div>
+<form method="post" action="/chat" hx-post="/chat" hx-target="#chat" hx-swap="innerHTML"
+      hx-on::after-request="this.reset()" class="chat-input">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="text" name="text" maxlength="1000" required autocomplete="off" placeholder="{{ t('chat_placeholder') }}">
+  <button type="submit">{{ t("send") }}</button>
+</form>
+{% set last = messages[-1] if messages else None %}
+{% if last and last.direction == "out" and last.attachments and last.attachments.kind == "question" %}
+<details class="answers-fallback"><summary>{{ t("answer_form") }}</summary>
+  <form method="post" action="/answers">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="key" value="{{ last.attachments.expected_fact }}">
+    <input type="text" name="value" required> <button type="submit">{{ t("send") }}</button>
+  </form>
+</details>
+{% endif %}
+{% endblock %}

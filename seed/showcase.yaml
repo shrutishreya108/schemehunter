@@ -1,0 +1,5 @@
+# What `make demo-reset` loads.
+personas: [meena, ravi, fatima]
+# Set DEMO_CLOCK_SCALE=1440 in .env for the demo (1 day → 1 minute). demo_reset.sh warns if .env differs;
+# the seeder cannot change a running container's environment.
+demo_clock_scale: 1440
