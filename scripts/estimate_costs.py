@@ -106,7 +106,7 @@ def journey(reason: str, cheap: str, cited: bool = True) -> list[Call]:
     return [
         *run_calls("onboarding run", steps=3, runs=5, reason=reason),
         *explain_calls(3, reason, cited),
-        Call("document vision check (Aadhaar/passbook)", reason, 2_100, 300, count=2),
+        Call("document vision check (Aadhaar/passbook)", reason, image_tokens()[1] + 500, 300, count=2),
         Call("interpret forwarded SMS", cheap, 600, 150, count=3),
         *run_calls("chase / follow-up run", steps=3, runs=2, reason=reason, first_writes_cache=False),
         Call("draft_message (forced schema)", reason, 1_500, 400, count=2),
@@ -128,6 +128,25 @@ def demo(reason: str, cheap: str, cited: bool = True) -> list[Call]:
     ]
 
 
+def image_tokens(photo=(4000, 3000)) -> tuple[tuple[int, int], int]:
+    """Size sent after our downscale (long edge <= MAX_EDGE_PX) and tokens by the w*h/750 rule.
+
+    A phone photo is the planning case. This is arithmetic on the real downscale, not a measurement: replace
+    it with usage.input_tokens from one real /admin/runs vision row (BUILD_NOTES T13).
+    """
+    import io
+
+    from PIL import Image
+
+    from app.docs.pipeline import downscale_for_vision
+
+    buf = io.BytesIO()
+    Image.new("RGB", photo, (240, 240, 230)).save(buf, format="JPEG")
+    small, _ = downscale_for_vision(buf.getvalue(), "image/jpeg")
+    size = Image.open(io.BytesIO(small)).size
+    return size, round(size[0] * size[1] / 750)
+
+
 def table(title: str, calls: list[Call]) -> float:
     print(f"\n{title}")
     print(f"  {'call':<44} {'model':<18} {'n':>3} {'USD':>9}")
@@ -147,6 +166,11 @@ def main() -> int:
             f"  {model:<20} in {p['input']:.2f}  out {p['output']:.2f}  cache-write {p['cache_write']:.2f}  "
             f"cache-read {p['cache_read']:.2f}"
         )
+    size, tokens = image_tokens()
+    print(
+        f"\nVision image: 4000x3000 phone photo -> {size[0]}x{size[1]} after downscale -> ~{tokens} image tokens "
+        f"(w*h/750; planning figure, not measured). The journey below assumes image + 500 prompt tokens per check."
+    )
     j = table("One full persona journey (guideline pages present, citations on)", journey(reason, cheap))
     j0 = table(
         "Same journey before PDFs land (explanations without citations)", journey(reason, cheap, cited=False)

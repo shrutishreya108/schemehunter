@@ -11,9 +11,11 @@ from typing import Any
 
 from app.brain.tools import (
     ask_user,
+    check_document,
     create_application,
     explain_match,
     finish_run,
+    list_required_documents,
     match_schemes,
     transition_application,
     update_profile,
@@ -22,12 +24,14 @@ from app.brain.tools.base import Ctx, ToolError, validate
 
 log = logging.getLogger(__name__)
 
-# Slices 3-4. Later slices add their modules here; stubs stay out of TOOLS until they're built.
+# Slices 3-5. Later slices add their modules here; stubs stay out of TOOLS until they're built.
 ENABLED: list[ModuleType] = [
     update_profile,
     match_schemes,
     explain_match,
     ask_user,
+    list_required_documents,
+    check_document,
     create_application,
     transition_application,
     finish_run,

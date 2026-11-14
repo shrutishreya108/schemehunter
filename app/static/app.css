@@ -26,3 +26,7 @@ button { padding: .6rem 1rem; font-size: 1rem; }
 .ev { display: grid; grid-template-columns: 8.5rem 4.5rem 1fr; gap: .5rem; padding: .35rem 0; border-bottom: 1px solid #eee; }
 .ev time { color: #666; font-size: .85rem; } .ev .who { font-size: .75rem; color: #666; text-transform: uppercase; }
 @media (max-width: 30rem) { .ev { grid-template-columns: 1fr; } }
+.upload { display: grid; gap: .5rem; margin: .75rem 0; }
+.chip { font-size: .75rem; padding: .1rem .5rem; border-radius: 1rem; background: #eee; }
+.chip.ok { background: #d8f5d8; } .chip.retake { background: #fff3cd; } .chip.problem { background: #fde2e2; }
+.doclist, .needs { list-style: none; padding: 0; } .doc, .needs li { padding: .3rem 0; border-bottom: 1px solid #eee; }
