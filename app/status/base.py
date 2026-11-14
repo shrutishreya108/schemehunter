@@ -1,7 +1,7 @@
-"""StatusChecker protocol, CheckResult, get_checker(scheme) (LLD §14)."""
+"""StatusChecker protocol, CheckResult, get_checker(status_mode) (LLD §14)."""
 
 from dataclasses import dataclass
-from typing import Literal, Protocol
+from typing import Any, Literal, Protocol
 
 
 @dataclass
@@ -12,7 +12,7 @@ class CheckResult:
 
 
 class StatusChecker(Protocol):
-    def check(self, app: dict) -> CheckResult: ...
+    def check(self, conn: Any, app: Any) -> CheckResult: ...
 
 
 def get_checker(status_mode: str) -> StatusChecker:

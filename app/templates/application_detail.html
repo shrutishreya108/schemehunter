@@ -5,6 +5,20 @@
 {% if app.ref_number %}<p class="muted">{{ t("ref_number") }}: {{ app.ref_number }}</p>{% endif %}
 {% if app.deadline %}<p class="muted">{{ t("deadline") }}: {{ app.deadline }}</p>{% endif %}
 {% set steps = app.steps %}{% include "partials/steps.html" %}
+{% if app.state == "AWAITING_HUMAN_SUBMIT" %}
+<form method="post" action="/applications/{{ app.id }}/submitted" class="card">
+  <p>{{ t("pressed_submit_help") }}</p>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label>{{ t("ref_number") }} <input type="text" name="ref_number" required maxlength="60"></label>
+  <button type="submit">{{ t("pressed_submit") }}</button>
+</form>
+{% elif app.state == "DOCS_PENDING" and app.ref_number %}
+<form method="post" action="/applications/{{ app.id }}/resubmitted" class="card">
+  <p>{{ t("sent_papers_help") }}</p>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <button type="submit">{{ t("sent_papers") }}</button>
+</form>
+{% endif %}
 <h2>{{ t("what_happened") }}</h2>
 {% include "partials/events.html" %}
 {% endblock %}

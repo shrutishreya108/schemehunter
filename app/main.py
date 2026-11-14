@@ -45,6 +45,18 @@ async def friendly_http_errors(request: Request, exc: HTTPException):
     return await http_exception_handler(request, exc)
 
 
+@app.exception_handler(Exception)
+async def friendly_server_error(request: Request, exc: Exception):
+    """A crash is never shown to a user as a stack trace: "I'll get back to you shortly" (LLD §19)."""
+    log.exception("unhandled error on %s", request.url.path)
+    wants_html = "text/html" in request.headers.get("accept", "")
+    if wants_html and not request.url.path.startswith("/admin"):
+        from app.routes.render import render
+
+        return render(request, "error.html", "hi", status_code=500)
+    return JSONResponse({"error": "something went wrong"}, status_code=500)
+
+
 @app.exception_handler(NotImplementedError)
 async def not_built_yet(_: Request, exc: NotImplementedError) -> JSONResponse:
     return JSONResponse({"error": "not built yet", "slice": str(exc)}, status_code=501)

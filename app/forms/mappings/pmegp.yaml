@@ -1,9 +1,14 @@
 # forms/mappings/pmegp.yaml (LLD §13.2). state_name is a derived fact (app/rules/facts.py) from cases.state_code.
+# total_cost comes from the project report totals when a cost sheet exists, else from the project_cost answer.
 fields:
-  applicant_name:  { from: name_latin }
-  date_of_birth:   { from: dob, format: "DD/MM/YYYY" }
-  social_category: { from: category, map: { SC: "SC", ST: "ST", OBC: "OBC", GEN: "General" } }
-  project_cost:    { from: total_cost, format: inr }
-  unit_address:    { join: [address_line, district, state_name], sep: ", " }
+  applicant_name:  { label: { en: "Applicant name", hi: "आवेदक का नाम" }, from: name_latin }
+  date_of_birth:   { label: { en: "Date of birth", hi: "जन्म तिथि" }, from: dob, format: "DD/MM/YYYY" }
+  social_category: { label: { en: "Social category", hi: "सामाजिक श्रेणी" }, from: category, map: { SC: "SC", ST: "ST", OBC: "OBC", GEN: "General" } }
+  project_cost:    { label: { en: "Project cost", hi: "परियोजना लागत" }, from: total_cost, format: inr }
+  unit_address:    { label: { en: "Unit address", hi: "इकाई का पता" }, join: [address_line, district, state_name], require: [address_line], sep: ", " }
 steps:
   - { hi: "पोर्टल खोलें और 'Online Application' चुनें", en: "Open the portal and choose 'Online Application'" }
+  - { hi: "इस पैक की जानकारी हर खाने में कॉपी करें", en: "Copy the values from this pack into each box" }
+  - { hi: "आधार, फ़ोटो, पासबुक और प्रोजेक्ट रिपोर्ट अपलोड करें", en: "Upload your Aadhaar, photo, passbook and the project report" }
+  - { hi: "पोर्टल पर आए OTP से सबमिट दबाएँ (यह सिर्फ़ आप कर सकती हैं)", en: "Press Submit using the OTP the portal sends you (only you can do this)" }
+  - { hi: "स्क्रीन पर दिखा संदर्भ नंबर मुझे भेज दें", en: "Send me the reference number shown on screen" }

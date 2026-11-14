@@ -126,6 +126,56 @@ def compute(inp: ReportInputs) -> ReportTotals:
     )
 
 
-def render_pdf(totals: ReportTotals, narrative: dict, lang: str = "hi") -> bytes:
-    """Jinja project_report.html → WeasyPrint bytes (falls back to English)."""
-    raise NotImplementedError("slice 9")
+def inr(value: float | None) -> str:
+    """Indian digit grouping with the rupee sign: 1234567.5 → ₹12,34,567.50 (whole rupees drop the paise)."""
+    if value is None:
+        return "-"
+    negative = value < 0
+    whole, _, frac = f"{abs(value):.2f}".partition(".")
+    head, tail = whole[:-3], whole[-3:]
+    groups = []
+    while len(head) > 2:
+        groups.insert(0, head[-2:])
+        head = head[:-2]
+    if head:
+        groups.insert(0, head)
+    text = ",".join([*groups, tail]) if groups else tail
+    if frac != "00":
+        text += "." + frac
+    return ("-" if negative else "") + "₹" + text
+
+
+def inputs_from(costs: dict, subsidy_pct: float, own_pct: float) -> ReportInputs:
+    """Build ReportInputs from a cost-inputs mapping (seed/costs/*.yaml shape) and the scheme's percentages."""
+    return ReportInputs(
+        capex=[float(c["amount"]) for c in costs["capex"]],
+        working_capital=float(costs["working_capital"]),
+        own_pct=float(own_pct),
+        subsidy_pct=float(subsidy_pct),
+        annual_rate=float(costs["annual_rate"]),
+        tenure_months=int(costs["tenure_months"]),
+        units_per_month=float(costs["units_per_month"]),
+        price=float(costs["price"]),
+        variable_cost=float(costs["variable_cost"]),
+        fixed_costs=float(costs["fixed_costs"]),
+        growth_pct=float(costs.get("growth_pct", 0)),
+    )
+
+
+def report_context(
+    costs: dict, totals: ReportTotals, narrative: dict, applicant: str, scheme_name: dict
+) -> dict:
+    return {
+        "costs": costs,
+        "totals": totals.to_dict(),
+        "narrative": narrative,
+        "applicant": applicant,
+        "scheme_name": scheme_name,
+    }
+
+
+def render_pdf(context: dict, lang: str = "hi") -> tuple[bytes, bool]:
+    """project_report.html → (PDF bytes, fell_back_to_english). Needs WeasyPrint (see app/pdf/render.py)."""
+    from app.pdf.render import render
+
+    return render("project_report", context, lang)

@@ -6,7 +6,7 @@
   as a hidden `csrf` field.
 - Curator: /admin/* behind HTTP basic auth with ADMIN_PASSWORD.
 - Rate limits: Postgres fixed-window counters (rate_limits table).
-- Optional PIN: still a stub (see BUILD_NOTES).
+- Optional 4-digit PIN: asked once per device after the link is opened; 5 wrong tries per 10 minutes.
 """
 
 import base64
@@ -26,6 +26,10 @@ from app.config import get_settings
 SESSION_COOKIE = "sh_session"
 LANG_COOKIE = "sh_lang"
 SESSION_DAYS = 30
+PIN_COOKIE = "sh_pin_pending"
+PIN_PENDING_MINUTES = 10
+PIN_TRIES = 5
+PIN_WINDOW_SECONDS = 600
 
 _basic = HTTPBasic()
 
@@ -63,6 +67,20 @@ def demo_link_token(persona_key: str) -> str:
     return _hmac(f"demo:{persona_key}")
 
 
+def bind_token(case_id: str) -> str:
+    """Signed token for the Telegram deep link t.me/<bot>?start=<token>. Binds one chat to this case."""
+    return f"{case_id.replace('-', '')}{_hmac(f'bind:{case_id}')[:24]}"
+
+
+def case_for_bind_token(token: str) -> str | None:
+    """Case id for a valid bind token, else None. Constant-time compare."""
+    raw, sig = token[:32], token[32:]
+    if len(raw) != 32 or not raw.isalnum():
+        return None
+    case_id = f"{raw[:8]}-{raw[8:12]}-{raw[12:16]}-{raw[16:20]}-{raw[20:]}"
+    return case_id if hmac.compare_digest(sig, _hmac(f"bind:{case_id}")[:24]) else None
+
+
 # ---------------------------------------------------------------- sessions
 
 
@@ -88,7 +106,7 @@ def read_session(cookie: str | None, now: float | None = None) -> str | None:
 
 def case_for_token(conn: psycopg.Connection, token: str) -> dict | None:
     return conn.execute(
-        "select id, language from cases where access_token_hash = %s", (hash_token(token),)
+        "select id, language, pin_hash from cases where access_token_hash = %s", (hash_token(token),)
     ).fetchone()
 
 
@@ -148,5 +166,51 @@ def rate_limit(
     return row["count"] <= limit
 
 
-def check_pin(case_id: str, pin: str) -> bool:
-    raise NotImplementedError("optional PIN: after slice 5")
+def hash_pin(case_id: str, pin: str) -> str:
+    return _hmac(f"pin:{case_id}:{pin}")
+
+
+def valid_pin_format(pin: str) -> bool:
+    return len(pin) == 4 and pin.isascii() and pin.isdigit()
+
+
+def set_pin(conn: psycopg.Connection, case_id: str, pin: str | None) -> None:
+    """Set a 4-digit PIN, or clear it with None."""
+    if pin is not None and not valid_pin_format(pin):
+        raise ValueError("PIN must be 4 digits")
+    conn.execute(
+        "update cases set pin_hash = %s where id = %s", (hash_pin(case_id, pin) if pin else None, case_id)
+    )
+
+
+def check_pin(conn: psycopg.Connection, case_id: str, pin: str) -> bool:
+    """True if the PIN matches. Wrong tries are counted: 5 per 10 minutes per case, then locked out."""
+    if not rate_limit(conn, f"pin:{case_id}", PIN_TRIES, PIN_WINDOW_SECONDS):
+        return False  # locked out: even the right PIN waits
+    row = conn.execute("select pin_hash from cases where id = %s", (case_id,)).fetchone()
+    return bool(
+        row
+        and row["pin_hash"]
+        and valid_pin_format(pin)
+        and hmac.compare_digest(row["pin_hash"], hash_pin(case_id, pin))
+    )
+
+
+def sign_pin_pending(case_id: str, now: float | None = None) -> str:
+    """Short-lived cookie: "the link was opened, the PIN is still to come". Not a session."""
+    expires = int((now or time.time()) + PIN_PENDING_MINUTES * 60)
+    payload = base64.urlsafe_b64encode(f"{case_id}|{expires}".encode()).decode().rstrip("=")
+    return f"{payload}.{_hmac('pin-pending:' + payload)}"
+
+
+def read_pin_pending(cookie: str | None, now: float | None = None) -> str | None:
+    if not cookie or "." not in cookie:
+        return None
+    payload, sig = cookie.rsplit(".", 1)
+    if not hmac.compare_digest(sig, _hmac("pin-pending:" + payload)):
+        return None
+    try:
+        case_id, expires = base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)).decode().split("|")
+    except (ValueError, UnicodeDecodeError):
+        return None
+    return case_id if int(expires) > (now or time.time()) else None

@@ -30,3 +30,8 @@ button { padding: .6rem 1rem; font-size: 1rem; }
 .chip { font-size: .75rem; padding: .1rem .5rem; border-radius: 1rem; background: #eee; }
 .chip.ok { background: #d8f5d8; } .chip.retake { background: #fff3cd; } .chip.problem { background: #fde2e2; }
 .doclist, .needs { list-style: none; padding: 0; } .doc, .needs li { padding: .3rem 0; border-bottom: 1px solid #eee; }
+.inline { display: inline-block; margin-right: .5rem; }
+button.secondary { background: #eee; }
+.draft { white-space: pre-wrap; background: #f7f7f7; padding: .6rem; border-radius: .5rem; font-family: inherit; }
+.card.approval.pending { border-color: #1a73e8; }
+.adminnav { margin-bottom: 1rem; }

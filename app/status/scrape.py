@@ -4,5 +4,5 @@ from app.status.base import CheckResult
 
 
 class ScrapeChecker:
-    def check(self, app: dict) -> CheckResult:
+    def check(self, conn, app) -> CheckResult:
         raise NotImplementedError("scraper is stubbed in the demo build")

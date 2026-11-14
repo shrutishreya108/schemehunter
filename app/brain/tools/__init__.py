@@ -11,12 +11,18 @@ from typing import Any
 
 from app.brain.tools import (
     ask_user,
+    build_project_report,
     check_document,
     create_application,
+    draft_message,
     explain_match,
     finish_run,
+    interpret_response,
     list_required_documents,
     match_schemes,
+    prefill_form,
+    request_submit,
+    schedule,
     transition_application,
     update_profile,
 )
@@ -24,7 +30,7 @@ from app.brain.tools.base import Ctx, ToolError, validate
 
 log = logging.getLogger(__name__)
 
-# Slices 3-5. Later slices add their modules here; stubs stay out of TOOLS until they're built.
+# All 15 tools from LLD §8.
 ENABLED: list[ModuleType] = [
     update_profile,
     match_schemes,
@@ -32,8 +38,14 @@ ENABLED: list[ModuleType] = [
     ask_user,
     list_required_documents,
     check_document,
+    build_project_report,
+    prefill_form,
     create_application,
     transition_application,
+    interpret_response,
+    draft_message,
+    request_submit,
+    schedule,
     finish_run,
 ]
 REGISTRY: dict[str, ModuleType] = {m.SCHEMA["name"]: m for m in ENABLED}

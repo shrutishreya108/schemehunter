@@ -2,6 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><title>Runs: Scheme Hunter admin</title>
 <link rel="stylesheet" href="/static/app.css"></head>
 <body class="admin">
+{% include "admin/nav.html" %}
 <h1>Brain runs</h1>
 <p><strong>Today:</strong> ${{ "%.4f"|format(summary.today) }} of ${{ "%.2f"|format(summary.budget) }} daily budget
  · <strong>All time:</strong> ${{ "%.4f"|format(summary.total) }}</p>

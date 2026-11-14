@@ -22,12 +22,23 @@ def test_healthz_without_db(no_db) -> None:
         assert client.get("/healthz").json() == {"ok": True, "db": "not configured"}
 
 
-def test_unbuilt_routes_return_501(no_db) -> None:
+def test_not_built_yet_handler_returns_501(no_db) -> None:
+    """Stubbed features (WhatsApp, the scraper) raise NotImplementedError; the API answers 501, not a crash."""
     from app.main import app
 
-    with TestClient(app) as client:
-        resp = client.get("/approvals")
-        assert resp.status_code == 501 and resp.json()["slice"] == "slice 7"
+    @app.get("/_probe_not_built")
+    def probe() -> None:
+        raise NotImplementedError("stretch feature")
+
+    try:
+        with TestClient(app) as client:
+            resp = client.get("/_probe_not_built")
+            assert resp.status_code == 501 and resp.json() == {
+                "error": "not built yet",
+                "slice": "stretch feature",
+            }
+    finally:
+        app.router.routes[:] = [r for r in app.router.routes if getattr(r, "path", "") != "/_probe_not_built"]
 
 
 def test_migration_files_in_order() -> None:
@@ -36,6 +47,7 @@ def test_migration_files_in_order() -> None:
         "002_seed_schemes_hash.sql",
         "003_rate_limits_artifacts.sql",
         "004_brain_run_costs.sql",
+        "005_pending_attempts.sql",
     ]
 
 
@@ -43,7 +55,13 @@ def test_migration_files_in_order() -> None:
 def test_migrations_apply_once(settings_db: str) -> None:
     first = run_migrations(settings_db)
     assert run_migrations(settings_db) == []
-    all_versions = ["001_init", "002_seed_schemes_hash", "003_rate_limits_artifacts", "004_brain_run_costs"]
+    all_versions = [
+        "001_init",
+        "002_seed_schemes_hash",
+        "003_rate_limits_artifacts",
+        "004_brain_run_costs",
+        "005_pending_attempts",
+    ]
     assert first in ([], all_versions)
     with connect(settings_db) as conn:
         versions = [r["version"] for r in conn.execute("select version from schema_migrations order by 1")]

@@ -48,10 +48,36 @@ def runs(request: Request):
 
 
 @router.get("/jobs")
-def jobs() -> None:
-    raise NotImplementedError("slice 10")
+def jobs(request: Request):
+    with connect() as conn:
+        counts = {
+            r["status"]: r["n"]
+            for r in conn.execute("select status, count(*) as n from jobs group by status order by status")
+        }
+        dead = conn.execute(
+            "select id, type, case_id, attempts, last_error, run_at from jobs where status = 'DEAD' order by run_at desc limit 100"
+        ).fetchall()
+        upcoming = conn.execute(
+            "select id, type, case_id, status, run_at, attempts from jobs where status in ('PENDING', 'RUNNING') "
+            "order by run_at limit 100"
+        ).fetchall()
+    return render(request, "admin/jobs.html", "en", counts=counts, dead=dead, upcoming=upcoming)
 
 
 @router.get("/actions")
-def actions() -> None:
-    raise NotImplementedError("slice 10")
+def actions(request: Request):
+    with connect() as conn:
+        problems = conn.execute(
+            "select created_at, case_id, kind, status, attempts, error from pending_actions "
+            "where status = 'FAILED' order by created_at desc limit 100"
+        ).fetchall()
+        waiting = conn.execute(
+            "select created_at, case_id, kind, short_code from pending_actions where status = 'PENDING' "
+            "order by created_at limit 100"
+        ).fetchall()
+        # Contact-form rows are stored before sending (T10): an unprocessed one never reached the mailbox.
+        unsent = conn.execute(
+            "select created_at, from_addr, body from messages where channel = 'web' and direction = 'in' "
+            "and case_id is null and processed = false order by created_at desc limit 100"
+        ).fetchall()
+    return render(request, "admin/actions.html", "en", problems=problems, waiting=waiting, unsent=unsent)

@@ -1,5 +1,6 @@
 """Profile keys the Brain may write, with the type each is coerced to. Matches rulebook/README.md."""
 
+import re
 from datetime import date
 from typing import Any
 
@@ -19,7 +20,8 @@ ENUMS: dict[str, set[str]] = {
 }
 DATES = {"dob"}
 TEXT = {"name_latin", "name_native", "district", "address_line", "business_description"}
-ALLOWED = MONEY | BOOLS | set(ENUMS) | DATES | TEXT
+EMAIL = {"email"}  # stored on the case (not in profile_answers): official mail CCs it
+ALLOWED = MONEY | BOOLS | set(ENUMS) | DATES | TEXT | EMAIL
 
 
 class VocabError(ValueError):
@@ -61,6 +63,8 @@ def coerce(key: str, value: Any) -> Any:
         except ValueError:
             raise VocabError(f"{key} must be YYYY-MM-DD") from None
     text = str(value).strip()
+    if key in EMAIL and not re.fullmatch(r"[^@\s]{1,64}@[^@\s]{1,200}\.[^@\s.]{2,}", text):
+        raise VocabError("email must look like name@example.com")
     if not text or len(text) > 200:
         raise VocabError(f"{key} must be 1-200 characters")
     return text

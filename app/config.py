@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     DEMO_CLOCK_SCALE: float = 1
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_WEBHOOK_SECRET: str = ""
+    TELEGRAM_BOT_USERNAME: str = ""  # for the t.me/<bot>?start=<token> link
+    TELEGRAM_API_BASE: str = "https://api.telegram.org"
 
     # Email: SMTP through the Titan Business Email mailbox on our domain.
     # smtpout.secureserver.net is GoDaddy's relay for Titan mailboxes bought on godaddy.com;
@@ -54,6 +56,7 @@ class Settings(BaseSettings):
     EMAIL_FROM: str = ""
     CONTACT_TO: str = ""
     CURATOR_ALERT_EMAIL: str = ""
+    DEMO_PERSONA_EMAIL: str = ""  # seeded personas get this email, so official demo mail CCs your inbox
 
     FEATURE_DOMAIN_OFFER: bool = False
     GODADDY_API_KEY: str = ""

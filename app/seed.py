@@ -92,14 +92,15 @@ def insert_case(conn: psycopg.Connection, persona: dict, now: datetime) -> UUID:
     case_id = case_id_for(persona["key"])
     state = "ONBOARDING" if persona.get("stage") == "fresh" else "ACTIVE"
     conn.execute(
-        "insert into cases (id, display_name, language, state_code, access_token_hash, state, "
-        "consent_version, consent_at, created_at) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        "insert into cases (id, display_name, language, state_code, access_token_hash, email, state, "
+        "consent_version, consent_at, created_at) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
         (
             case_id,
             persona.get("display_name"),
             persona.get("language", "hi"),
             persona.get("state_code"),
             hash_token(demo_link_token(persona["key"])),
+            persona.get("email") or get_settings().DEMO_PERSONA_EMAIL or None,
             state,
             "demo-v0",
             now,
@@ -226,6 +227,20 @@ def load_artifacts(conn: psycopg.Connection, seeded: dict[str, UUID], schemes: l
     return loaded
 
 
+def load_cost_inputs(conn: psycopg.Connection, seeded: dict[str, UUID]) -> int:
+    """seed/costs/<persona>.yaml → an artifact (kind cost_inputs) that build_project_report reads."""
+    loaded = 0
+    for key, case_id in seeded.items():
+        path = SEED_DIR / "costs" / f"{key}.yaml"
+        if path.exists():
+            conn.execute(
+                "insert into artifacts (case_id, kind, content, source) values (%s, 'cost_inputs', %s, 'seed')",
+                (case_id, jsonb(json_safe(read_yaml(path)))),
+            )
+            loaded += 1
+    return loaded
+
+
 def truncate_all(conn: psycopg.Connection) -> None:
     conn.execute(f"truncate {', '.join(TABLES)} restart identity cascade")
 
@@ -248,6 +263,7 @@ def seed(url: str | None = None, reset: bool = False, now: datetime | None = Non
         for key in showcase["personas"]:
             seeded[key] = seed_persona(conn, personas[key], schemes, now)
         load_artifacts(conn, seeded, schemes)
+        load_cost_inputs(conn, seeded)
     return seeded
 
 

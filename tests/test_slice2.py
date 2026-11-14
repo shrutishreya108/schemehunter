@@ -74,7 +74,7 @@ def test_seed_is_idempotent_and_fast(settings_db: str) -> None:
     assert first == second and counts() == before
     assert before["cases"] == 3 and before["schemes"] == 5 and before["applications"] == 2
     assert before["events"] == 25 and before["jobs"] == 2  # Fatima's analysis is seeded, not a job
-    assert before["artifacts"] == 2
+    assert before["artifacts"] == 5  # rejection analysis + report narrative + one cost sheet per persona (3)
 
 
 def _counts(url: str) -> dict:

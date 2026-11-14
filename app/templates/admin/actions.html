@@ -1,2 +1,31 @@
-{% extends "base.html" %}
-{% block content %}<!-- admin/actions.html: built in slice 10 -->{% endblock %}
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Actions: Scheme Hunter admin</title>
+<link rel="stylesheet" href="/static/app.css"></head>
+<body class="admin">
+{% include "admin/nav.html" %}
+<h1>Pending actions</h1>
+<h2>Needs the curator (failed sends and blocked drafts)</h2>
+<table>
+  <thead><tr><th>Created</th><th>Case</th><th>Kind</th><th>Status</th><th>Tries</th><th>Error</th></tr></thead>
+  <tbody>
+  {% for a in problems %}<tr class="error"><td>{{ a.created_at.strftime("%Y-%m-%d %H:%M") }}</td><td>{{ (a.case_id|string)[:8] }}</td><td>{{ a.kind }}</td><td>{{ a.status }}</td><td>{{ a.attempts }}</td><td>{{ a.error or "" }}</td></tr>
+  {% else %}<tr><td colspan="6">None.</td></tr>{% endfor %}
+  </tbody>
+</table>
+<h2>Waiting for the user</h2>
+<table>
+  <thead><tr><th>Created</th><th>Case</th><th>Kind</th><th>Code</th></tr></thead>
+  <tbody>
+  {% for a in waiting %}<tr><td>{{ a.created_at.strftime("%Y-%m-%d %H:%M") }}</td><td>{{ (a.case_id|string)[:8] }}</td><td>{{ a.kind }}</td><td>{{ a.short_code }}</td></tr>
+  {% else %}<tr><td colspan="4">None.</td></tr>{% endfor %}
+  </tbody>
+</table>
+<h2>Contact-form messages that were not emailed</h2>
+<table>
+  <thead><tr><th>Received</th><th>From</th><th>Message</th></tr></thead>
+  <tbody>
+  {% for m in unsent %}<tr class="error"><td>{{ m.created_at.strftime("%Y-%m-%d %H:%M") }}</td><td>{{ m.from_addr }}</td><td>{{ (m.body or "")[:300] }}</td></tr>
+  {% else %}<tr><td colspan="3">None.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</body></html>

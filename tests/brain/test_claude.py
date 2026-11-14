@@ -32,8 +32,14 @@ def test_cached_tools_marks_only_last_and_copies() -> None:
         "ask_user",
         "list_required_documents",
         "check_document",
+        "build_project_report",
+        "prefill_form",
         "create_application",
         "transition_application",
+        "interpret_response",
+        "draft_message",
+        "request_submit",
+        "schedule",
         "finish_run",
     ]
 

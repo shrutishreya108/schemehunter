@@ -28,6 +28,19 @@ def handle(data: Input, ctx: Ctx) -> dict[str, Any]:
         value = coerce(data.key, data.value)
     except VocabError as exc:
         raise ToolError(str(exc)) from None
+    if data.key == "email":
+        ctx.conn.execute("update cases set email = %s where id = %s", (value, ctx.case_id))
+        log_event(
+            ctx.conn,
+            ctx.case_id,
+            "agent",
+            "PROFILE_UPDATED",
+            bilingual(
+                "Saved your email for copies of official mail", "आधिकारिक ईमेल की कॉपी के लिए आपका ईमेल सहेजा"
+            ),
+            payload={"key": "email"},  # the address itself stays out of the timeline
+        )
+        return {"ok": True, "key": "email"}
     ctx.conn.execute(
         "insert into profile_answers (case_id, key, value, source) values (%s, %s, %s, 'typed') "
         "on conflict (case_id, key) do update set value = excluded.value, source = 'typed', updated_at = now()",

@@ -25,6 +25,14 @@ pytestmark = pytest.mark.db
 FIXTURES = Path(__file__).parent / "fixtures"
 LABELS = yaml.safe_load((FIXTURES / "labels.yaml").read_text(encoding="utf-8"))
 TWELVE = re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}\b")
+UUID = re.compile(
+    r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+)  # ids can look like 4-4-4 digits
+
+
+def has_id_number(text: str) -> bool:
+    """A 12-digit ID-like number, ignoring UUIDs (random ids can look like one by chance)."""
+    return bool(TWELVE.search(UUID.sub("", text)))
 
 
 @pytest.fixture
@@ -93,10 +101,10 @@ def test_no_12_digit_number_reaches_the_db_or_the_case_file(seeded, conn, vault_
         ("brain_runs", "error"),
     ]:
         for row in conn.execute(f"select {col}::text as v from {table}"):
-            if row["v"] and TWELVE.search(row["v"]):
+            if row["v"] and has_id_number(row["v"]):
                 leaked.append((table, col, row["v"][:80]))
     assert not leaked, leaked
-    assert not TWELVE.search(json.dumps(build_case_file(case_id, conn), default=str))
+    assert not has_id_number(json.dumps(build_case_file(case_id, conn), default=str))
     masked = conn.execute(
         "select extracted from documents where case_id = %s and extracted::text like '%%XXXX XXXX 9012%%'",
         (case_id,),

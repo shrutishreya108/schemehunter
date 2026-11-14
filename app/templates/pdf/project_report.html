@@ -1,1 +1,58 @@
-<!-- pdf/project_report.html: built in slice 9 -->
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<style>
+  {% if font_url %}@font-face { font-family: "Noto Sans Devanagari"; src: url("{{ font_url }}"); }{% endif %}
+  @page { size: A4; margin: 18mm; }
+  body { font-family: "Noto Sans Devanagari", "DejaVu Sans", sans-serif; font-size: 11pt; color: #111; }
+  h1 { font-size: 18pt; margin: 0 0 4pt; } h2 { font-size: 13pt; margin: 16pt 0 4pt; border-bottom: 1px solid #999; }
+  table { border-collapse: collapse; width: 100%; margin: 4pt 0; }
+  td, th { border: 1px solid #bbb; padding: 3pt 6pt; text-align: right; } td:first-child, th:first-child { text-align: left; }
+  .muted { color: #555; font-size: 9pt; }
+</style>
+</head>
+<body>
+{% set en = lang == "en" %}
+<h1>{{ "Project report" if en else "प्रोजेक्ट रिपोर्ट" }}</h1>
+<p>{{ applicant }} · {{ scheme_name[lang] or scheme_name["en"] }}</p>
+
+<h2>{{ "About the business" if en else "व्यवसाय के बारे में" }}</h2>
+<p>{{ (narrative.business_description or {})[lang] or (narrative.business_description or {})["en"] }}</p>
+<h2>{{ "Market" if en else "बाज़ार" }}</h2>
+<p>{{ (narrative.market or {})[lang] or (narrative.market or {})["en"] }}</p>
+<h2>{{ "Location" if en else "स्थान" }}</h2>
+<p>{{ (narrative.location or {})[lang] or (narrative.location or {})["en"] }}</p>
+
+<h2>{{ "Project cost" if en else "परियोजना लागत" }}</h2>
+<table>
+  {% for c in costs.capex %}<tr><td>{{ c.item }}</td><td>{{ c.amount|inr }}</td></tr>{% endfor %}
+  <tr><td>{{ "Working capital" if en else "कार्यशील पूँजी" }}</td><td>{{ costs.working_capital|inr }}</td></tr>
+  <tr><th>{{ "Total project cost" if en else "कुल परियोजना लागत" }}</th><th>{{ totals.total_cost|inr }}</th></tr>
+</table>
+
+<h2>{{ "How it is funded" if en else "पैसा कैसे जुटेगा" }}</h2>
+<table>
+  <tr><td>{{ "Subsidy (if sanctioned)" if en else "सब्सिडी (मंज़ूर होने पर)" }}</td><td>{{ totals.subsidy|inr }}</td></tr>
+  <tr><td>{{ "Own contribution" if en else "अपना योगदान" }}</td><td>{{ totals.own|inr }}</td></tr>
+  <tr><td>{{ "Bank loan" if en else "बैंक लोन" }}</td><td>{{ totals.loan|inr }}</td></tr>
+  <tr><td>{{ "Monthly instalment (EMI)" if en else "मासिक किस्त (EMI)" }}</td><td>{{ totals.emi|inr }}</td></tr>
+</table>
+
+<h2>{{ "Can the business repay?" if en else "क्या व्यवसाय चुका पाएगा?" }}</h2>
+<table>
+  <tr><td>{{ "Break-even (units per month)" if en else "ब्रेक-ईवन (यूनिट प्रति माह)" }}</td><td>{{ totals.break_even_units if totals.break_even_units is not none else "-" }}</td></tr>
+  <tr><td>{{ "Profit per month" if en else "मासिक मुनाफ़ा" }}</td><td>{{ totals.profit_month|inr }}</td></tr>
+  <tr><td>{{ "DSCR (1.5 or more is comfortable)" if en else "DSCR (1.5 या ज़्यादा ठीक माना जाता है)" }}</td><td>{{ totals.dscr if totals.dscr is not none else "-" }}</td></tr>
+</table>
+
+<h2>{{ "Three-year view" if en else "तीन साल का अनुमान" }}</h2>
+<table>
+  <tr><th>{{ "Year" if en else "साल" }}</th><th>{{ "Units/month" if en else "यूनिट/माह" }}</th><th>{{ "Revenue" if en else "आमदनी" }}</th><th>{{ "Operating profit" if en else "संचालन मुनाफ़ा" }}</th><th>{{ "Loan repaid" if en else "किस्तें" }}</th><th>DSCR</th></tr>
+  {% for r in totals.table %}
+  <tr><td>{{ r.year }}</td><td>{{ r.units_per_month }}</td><td>{{ r.revenue|inr }}</td><td>{{ r.operating_profit|inr }}</td><td>{{ r.debt_service|inr }}</td><td>{{ r.dscr if r.dscr is not none else "-" }}</td></tr>
+  {% endfor %}
+</table>
+<p class="muted">{{ "These are estimates from the figures you gave. They are not a promise of any loan or subsidy." if en else "ये आपके दिए आँकड़ों से लगाए अनुमान हैं। किसी लोन या सब्सिडी का वादा नहीं हैं।" }}</p>
+</body>
+</html>

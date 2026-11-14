@@ -1,1 +1,35 @@
-<!-- pdf/prefill_pack.html: built in slice 9 -->
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<style>
+  {% if font_url %}@font-face { font-family: "Noto Sans Devanagari"; src: url("{{ font_url }}"); }{% endif %}
+  @page { size: A4; margin: 18mm; }
+  body { font-family: "Noto Sans Devanagari", "DejaVu Sans", sans-serif; font-size: 11pt; color: #111; }
+  h1 { font-size: 18pt; } h2 { font-size: 13pt; border-bottom: 1px solid #999; margin-top: 16pt; }
+  table { border-collapse: collapse; width: 100%; } td { border: 1px solid #bbb; padding: 5pt 8pt; }
+  td.label { width: 40%; background: #f3f3f3; } .missing { color: #b00020; }
+  .muted { color: #555; font-size: 9pt; }
+</style>
+</head>
+<body>
+{% set en = lang == "en" %}
+<h1>{{ scheme_name[lang] or scheme_name["en"] }}: {{ "form pack" if en else "फ़ॉर्म पैक" }}</h1>
+<p class="muted">{{ "Copy each value into the matching box on the official portal. This pack is not the official form." if en else "हर जानकारी पोर्टल के सही खाने में कॉपी करें। यह आधिकारिक फ़ॉर्म नहीं है।" }}</p>
+
+<h2>{{ "Your details" if en else "आपकी जानकारी" }}</h2>
+<table>
+  {% for f in fields %}
+  <tr><td class="label">{{ f.label[lang] or f.label["en"] }}</td>
+      <td>{% if f.value %}{{ f.value }}{% else %}<span class="missing">{{ "(missing: ask me to add it)" if en else "(बाक़ी: मुझसे जुड़वाइए)" }}</span>{% endif %}</td></tr>
+  {% endfor %}
+</table>
+
+<h2>{{ "Steps on the portal" if en else "पोर्टल पर स्टेप" }}</h2>
+<ol>
+  {% for s in steps %}<li>{{ s[lang] or s["en"] }}</li>{% endfor %}
+</ol>
+<p>{{ "Portal:" if en else "पोर्टल:" }} {{ portal_url }}</p>
+<p class="muted">{{ "When you have pressed submit, send me the reference number." if en else "सबमिट करने के बाद मुझे संदर्भ संख्या भेजिए।" }}</p>
+</body>
+</html>

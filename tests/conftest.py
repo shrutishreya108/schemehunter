@@ -144,3 +144,37 @@ def conn(settings_db: str):
 
     with connect(settings_db) as c:
         yield c
+
+
+# ---------------------------------------------------------------- vault + PDF stand-ins for end-to-end tests
+
+
+@pytest.fixture
+def vault_env(settings_db: str, tmp_path, monkeypatch: pytest.MonkeyPatch):
+    """Encrypted vault in a temp dir with a throwaway key."""
+    import base64
+
+    from app.config import get_settings
+
+    monkeypatch.setenv("VAULT_KEY", base64.b64encode(b"k" * 32).decode())
+    monkeypatch.setenv("VAULT_DIR", str(tmp_path / "vault"))
+    get_settings.cache_clear()
+    yield tmp_path / "vault"
+    get_settings.cache_clear()
+
+
+@pytest.fixture
+def fake_pdf(monkeypatch: pytest.MonkeyPatch):
+    """Real HTML templates, stub PDF engine (the native libraries WeasyPrint needs are missing on bare Windows)."""
+    from app.pdf import render as pdf
+
+    rendered: list[tuple[str, str, str]] = []
+
+    def render(template, context, lang="hi"):
+        html, used = pdf.render_html(template, context, lang)
+        rendered.append((template, used, html))
+        return b"%PDF-1.4 stub\n" + html.encode("utf-8"), used != lang
+
+    monkeypatch.setattr(pdf, "render", render)
+    monkeypatch.setattr("app.brain.tools.prefill_form.render", render)
+    return rendered

@@ -3,18 +3,27 @@
 from typing import Annotated
 from urllib.parse import urlsplit
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
 from app.access import (
     LANG_COOKIE,
+    PIN_COOKIE,
+    PIN_PENDING_MINUTES,
+    PIN_TRIES,
     SESSION_COOKIE,
     SESSION_DAYS,
     case_for_token,
+    check_csrf,
+    check_pin,
     client_ip,
     current_case_id,
     rate_limit,
+    read_pin_pending,
+    set_pin,
+    sign_pin_pending,
     sign_session,
+    valid_pin_format,
 )
 from app.config import get_settings
 from app.db import connect
@@ -46,16 +55,84 @@ def open_link(token: str, request: Request):
         return render(
             request, "error.html", "hi", message="This link is not valid any more.", status_code=404
         )
-    resp = RedirectResponse("/chat", status_code=303)
+    if case.get("pin_hash"):  # a PIN is set: no session until it is entered on this device
+        resp = RedirectResponse("/pin", status_code=303)
+        resp.set_cookie(
+            PIN_COOKIE,
+            sign_pin_pending(str(case["id"])),
+            max_age=PIN_PENDING_MINUTES * 60,
+            httponly=True,
+            secure=get_settings().APP_BASE_URL.startswith("https"),
+            samesite="lax",
+        )
+        return resp
+    return start_session(str(case["id"]))
+
+
+def start_session(case_id: str, to: str = "/chat") -> RedirectResponse:
+    resp = RedirectResponse(to, status_code=303)
     resp.set_cookie(
         SESSION_COOKIE,
-        sign_session(str(case["id"])),
+        sign_session(case_id),
         max_age=SESSION_DAYS * 86400,
         httponly=True,
         secure=get_settings().APP_BASE_URL.startswith("https"),
         samesite="lax",
     )
+    resp.delete_cookie(PIN_COOKIE)
     return resp
+
+
+@router.get("/pin")
+def pin_page(request: Request):
+    case_id = read_pin_pending(request.cookies.get(PIN_COOKIE))
+    if not case_id:
+        raise HTTPException(401, "Please open your personal Scheme Hunter link.")
+    return render(request, "pin.html", lang_for(request), None, error=False, locked=False)
+
+
+@router.post("/pin")
+def pin_submit(request: Request, pin: Annotated[str, Form()] = ""):
+    case_id = read_pin_pending(request.cookies.get(PIN_COOKIE))
+    if not case_id:
+        raise HTTPException(401, "Please open your personal Scheme Hunter link.")
+    with connect() as conn:
+        ok = check_pin(conn, case_id, pin.strip())
+        locked = (
+            not ok
+            and conn.execute(
+                "select count from rate_limits where key = %s order by window_start desc limit 1",
+                (f"pin:{case_id}",),
+            ).fetchone()
+        )
+    if ok:
+        return start_session(case_id)
+    return render(
+        request,
+        "pin.html",
+        lang_for(request),
+        None,
+        error=True,
+        locked=bool(locked and locked["count"] >= PIN_TRIES),
+        status_code=403,
+    )
+
+
+@router.post("/pin/set")
+def pin_set(
+    request: Request,
+    case_id: Annotated[str, Depends(current_case_id)],
+    pin: Annotated[str, Form()] = "",
+    csrf: Annotated[str | None, Form()] = None,
+):
+    """Set a 4-digit PIN, or clear it by sending an empty value."""
+    check_csrf(case_id, request.headers.get("x-csrf-token") or csrf)
+    pin = pin.strip()
+    if pin and not valid_pin_format(pin):
+        raise HTTPException(422, "PIN must be 4 digits")
+    with connect() as conn:
+        set_pin(conn, case_id, pin or None)
+    return RedirectResponse(safe_back(request.headers.get("referer")), status_code=303)
 
 
 def safe_back(referer: str | None) -> str:
@@ -235,6 +312,7 @@ def application_detail(
     app = {
         "id": str(row["id"]),
         "name": (scheme["name"].get(lang) or scheme["name"]["en"]) if scheme else row["scheme_id"],
+        "state": row["state"],
         "label": state_label(row["state"], lang),
         "ref_number": row["ref_number"],
         "deadline": row["deadline"],
@@ -256,6 +334,59 @@ def timeline_page(request: Request, case_id: Annotated[str, Depends(current_case
     return render(request, "timeline.html", lang, case_id, events=event_rows(events, lang))
 
 
-@router.get("/approvals")
-def approvals_page() -> None:
-    raise NotImplementedError("slice 7")
+def user_move(
+    application_id: str,
+    case_id: str,
+    request: Request,
+    csrf: str | None,
+    to_state: str,
+    ref: str | None = None,
+):
+    """The user's own buttons: "I pressed submit" and "I sent the papers". Same guarded transition as the agent's."""
+    from uuid import UUID
+
+    from fastapi import HTTPException
+
+    from app.access import check_csrf
+    from app.tracker.states import IllegalTransition, transition
+    from app.tracker.store import DbTrackerStore, load_application
+
+    check_csrf(case_id, request.headers.get("x-csrf-token") or csrf)
+    try:
+        UUID(application_id)
+    except ValueError:
+        raise HTTPException(404, "not found") from None
+    with connect() as conn:
+        app = load_application(conn, application_id, case_id)
+        if not app:
+            raise HTTPException(404, "not found")
+        ref = (ref or "").strip()[:60]
+        if ref and not app.ref_number:
+            conn.execute("update applications set ref_number = %s where id = %s", (ref, app.id))
+            app.ref_number = ref
+        try:
+            transition(app, to_state, "user", "pressed the button", DbTrackerStore(conn))
+        except IllegalTransition as exc:
+            raise HTTPException(409, str(exc.reason)) from None
+    return RedirectResponse(f"/applications/{application_id}", status_code=303)
+
+
+@router.post("/applications/{application_id}/submitted")
+def mark_submitted(
+    application_id: str,
+    request: Request,
+    case_id: Annotated[str, Depends(current_case_id)],
+    ref_number: Annotated[str, Form()] = "",
+    csrf: Annotated[str | None, Form()] = None,
+):
+    return user_move(application_id, case_id, request, csrf, "SUBMITTED", ref_number)
+
+
+@router.post("/applications/{application_id}/resubmitted")
+def mark_resubmitted(
+    application_id: str,
+    request: Request,
+    case_id: Annotated[str, Depends(current_case_id)],
+    csrf: Annotated[str | None, Form()] = None,
+):
+    return user_move(application_id, case_id, request, csrf, "RESUBMITTED")

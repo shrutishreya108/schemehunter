@@ -1,2 +1,24 @@
-{% extends "base.html" %}
-{% block content %}<!-- admin/jobs.html: built in slice 10 -->{% endblock %}
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Jobs: Scheme Hunter admin</title>
+<link rel="stylesheet" href="/static/app.css"></head>
+<body class="admin">
+{% include "admin/nav.html" %}
+<h1>Alarm Clock jobs</h1>
+<p>{% for s, n in counts.items() %}<strong>{{ s }}</strong> {{ n }} &nbsp; {% endfor %}</p>
+<h2>DEAD jobs (failed 5 times)</h2>
+<table>
+  <thead><tr><th>Id</th><th>Type</th><th>Case</th><th>Attempts</th><th>Last error</th><th>Run at</th></tr></thead>
+  <tbody>
+  {% for j in dead %}<tr class="error"><td>{{ j.id }}</td><td>{{ j.type }}</td><td>{{ (j.case_id|string)[:8] }}</td><td>{{ j.attempts }}</td><td>{{ j.last_error or "" }}</td><td>{{ j.run_at.strftime("%Y-%m-%d %H:%M") }}</td></tr>
+  {% else %}<tr><td colspan="6">None.</td></tr>{% endfor %}
+  </tbody>
+</table>
+<h2>Coming up</h2>
+<table>
+  <thead><tr><th>Id</th><th>Type</th><th>Case</th><th>Status</th><th>Run at</th><th>Attempts</th></tr></thead>
+  <tbody>
+  {% for j in upcoming %}<tr><td>{{ j.id }}</td><td>{{ j.type }}</td><td>{{ (j.case_id|string)[:8] }}</td><td>{{ j.status }}</td><td>{{ j.run_at.strftime("%Y-%m-%d %H:%M:%S") }}</td><td>{{ j.attempts }}</td></tr>
+  {% else %}<tr><td colspan="6">Nothing queued.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</body></html>
