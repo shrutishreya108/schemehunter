@@ -249,6 +249,12 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES ย
 72. **Friendly 500:** any unhandled error shows "I'll get back to you shortly" to browsers and `{"error": ...}` to API clients, never a stack trace.
 73. **Flaky test fixed:** the 12-digit scan in `tests/docs/test_pipeline.py` could match a random UUID (`7019-4320-9714`); UUIDs are now stripped first.
 
+### v0.10: Telegram removed
+74. **Telegram is gone from the code.** Removed: `mouth/telegram.py`, the `/webhooks/telegram` route, the `/start` binding and its signed token, the YES/NO reply parsing, the Telegram copy of nudges, and the Telegram document send. The only channels are the web chat (for the user) and SMTP email through Titan (for banks and officers). Approvals happen on `/approvals`.
+75. **Consequences:** a forwarded SMS now reaches the agent only if it is posted through the chat or the contact form; `UserForwardsChecker` still reads unprocessed inbound messages from any channel. The `pending_actions.short_code` column stays (unused by the UI); `users.telegram_chat_id` stays in the schema (`sql/001_init.sql`) and is unused. Dropping either needs a new migration, so it's left as is.
+76. **Instruction pack:** the "press submit" approval no longer sends the pre-filled pack to a phone. The steps go to the chat, and the pack is in **My papers**.
+77. Tests: 465 pass (Telegram suites removed; approvals suite now `tests/e2e/test_approvals_web.py`).
+
 ## 4. TODO / verify list
 
 ### Curator: guideline verification (unchanged from v0.2)
@@ -287,7 +293,7 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES ย
 - **T19b:** live smoke test of `interpret_response` on the 15 portal messages (Haiku, โ $0.01 total): the only measure of real classification quality.
 - **T24:** real users have no cost sheet, so `build_project_report` refuses for them. Needs a small questionnaire (machines, working capital, sales) that writes a `cost_inputs` artifact. Needed before real-user week.
 - **T25:** persona emails: set `DEMO_PERSONA_EMAIL` (or `email:` per persona in `seed/personas.yaml`) before the demo so official mail has someone to CC; point `seed/contacts.yaml` at your own inboxes (T8).
-- **T26:** Telegram: create the bot with @BotFather, set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_BOT_USERNAME`, then register the webhook (`setWebhook` with `secret_token`) once the domain is live.
+- ~~**T26**~~ dropped: Telegram removed (ยง3 item 74).
 - **T27:** host cron lines on the VPS: `scripts/backup.sh` nightly and `make retention-cleanup` daily (examples are in each script's header).
 
 ## 5. What is left, and what the next prompt should ask for

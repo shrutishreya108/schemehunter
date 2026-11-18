@@ -1,7 +1,6 @@
 """What an APPROVED pending action actually does. Called only from guard.actions.execute()."""
 
 import logging
-from pathlib import Path
 
 from app.db import jsonb
 from app.events import log_event
@@ -24,7 +23,7 @@ def run_action(conn, action: dict) -> None:
 
 def _case(conn, case_id) -> dict:
     return conn.execute(
-        "select language, email, telegram_chat_id, display_name from cases where id = %s", (case_id,)
+        "select language, email, display_name from cases where id = %s", (case_id,)
     ).fetchone()
 
 
@@ -76,7 +75,6 @@ def send_chat(conn, action: dict) -> None:
 
 def instruct_submit(conn, action: dict) -> None:
     """The user pressed "I'll do it": send the step list (and the pre-filled pack, if linked) to them."""
-    from app.docs import vault
     from app.forms.prefill import steps_for
     from app.mouth.outbox import notify_user
 
@@ -99,17 +97,6 @@ def instruct_submit(conn, action: dict) -> None:
         event_type="MESSAGE_SENT",
         payload={"action_id": str(action["id"])},
     )
-    pack_id = p.get("pack_document_id")
-    case = _case(conn, action["case_id"])
-    if pack_id and case and case["telegram_chat_id"]:
-        row = conn.execute(
-            "select file_path from documents where id = %s and case_id = %s", (pack_id, action["case_id"])
-        ).fetchone()
-        if row:
-            from app.mouth.telegram import TelegramChannel
-
-            data = vault.decrypt(Path(row["file_path"]).read_bytes())  # in memory only
-            TelegramChannel().send_document(case["telegram_chat_id"], data, f"{name}-pack.pdf")
     conn.execute(
         "update pending_actions set payload = payload || %s where id = %s",
         (jsonb({"steps_sent": True}), action["id"]),

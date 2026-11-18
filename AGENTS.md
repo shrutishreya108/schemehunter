@@ -21,7 +21,7 @@ Agent that takes a small Indian entrepreneur from "I need money" to filed, track
 - app/guard actions.py, scanner.py
 - app/docs pipeline.py, vault.py, masking.py
 - app/finance, app/forms project_report.py, forms/mappings/pmegp.yaml
-- app/status, app/mouth status/base.py; mouth/email.py (Titan SMTP), mouth/telegram.py
+- app/status, app/mouth status/base.py; mouth/email.py (Titan SMTP), mouth/outbox.py (web chat)
 - app/routes, app/templates FastAPI + HTMX; routes/contact.py is the judged contact form
 - app/costs.py, app/config.py price table, budget guards
 - sql/ 001_init.sql is the schema source of truth; later files additive
@@ -50,11 +50,11 @@ Status: slices 0–9 built (v0.9). Left: 10 real users, 11 demo rehearsals on th
 4 Tracker UI + DB store; /applications, /applications/{id}, /timeline; seeded histories read like a diary; illegal transitions raise.
 5 Documents: pipeline → vision (FakeClaude) → mask → name match → status; 20 specimen fixtures scored; no 12-digit number survives.
 6 Clock: claim loop (skip locked), backoff, sweeper, handlers; two workers never double-claim; deferred brain_run jobs execute.
-7 Guard + Mouth: pending_actions, short codes, idempotency, /approvals, Telegram webhook (YES/NO code, /start binding); "YES twice → one send"; "guaranteed" bounced.
+7 Guard + Mouth: pending_actions, short codes, idempotency, /approvals (web); "YES twice → one send"; "guaranteed" bounced.
 8 Inbound: interpret_response, confidence ≥ 0.7 gate, UserForwardsChecker; 15 portal_messages → intents; vague → clarification.
 9 Report PDF (use seeded report_narrative artifact first; Devanagari, English fallback), pmegp prefill, request_submit; EMI/break-even to the rupee.
 10 Real users: fixes only. 11 Demo hardening: demo-reset re-arms Ravi's chase at T+2 min; 3 clean rehearsals.
 
 ## Never cut
 
-Rules engine + tests · citations · Guard · Tracker + timeline · Telegram approval loop · make demo-reset
+Rules engine + tests · citations · Guard · Tracker + timeline · email approval loop · make demo-reset

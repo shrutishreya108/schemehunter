@@ -2,13 +2,11 @@
 {% block content %}
 <h1>{{ t("approvals_title") }}</h1>
 <p class="muted">{{ t("approvals_help") }}</p>
-{% if telegram_link %}<p><a href="{{ telegram_link }}">{{ t("link_telegram") }}</a></p>{% endif %}
 {% for a in items %}
 <article class="card approval {{ a.status|lower }}">
   <h2>{{ a.line }}</h2>
   {% if a.body %}<pre class="draft">{{ a.body }}</pre>{% endif %}
   {% if a.status == "PENDING" %}
-  <p class="muted">{{ t("reply_code") }}: <b>YES {{ a.code }}</b> / <b>NO {{ a.code }}</b></p>
   <form method="post" action="/approvals/{{ a.id }}/approve" class="inline">
     <input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">{{ t("approve") }}</button>
   </form>

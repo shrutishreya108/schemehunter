@@ -20,10 +20,6 @@ def get_channel(name: str) -> Channel:
         from app.mouth.email import SmtpEmail
 
         return SmtpEmail.from_settings()
-    if name == "telegram":
-        from app.mouth.telegram import TelegramChannel
-
-        return TelegramChannel()
     if name == "whatsapp":
         from app.mouth.whatsapp import WhatsAppChannel
 

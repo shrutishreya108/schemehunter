@@ -24,7 +24,7 @@ DRAFT_TOOL = {
     "input_schema": {
         "type": "object",
         "properties": {
-            "channel": {"type": "string", "enum": ["email", "telegram"]},
+            "channel": {"type": "string", "enum": ["email"]},
             "to": {"type": "string"},
             "subject": {"type": ["string", "null"]},
             "body": {"type": "string"},
@@ -83,9 +83,7 @@ def handle(data: Input, ctx: Ctx) -> dict[str, Any]:
             "a message to the bank or an officer must be about one application: pass application_id"
         )
     scheme = ctx.scheme(app.scheme_id) if app else None
-    case = ctx.conn.execute(
-        "select email, telegram_chat_id from cases where id = %s", (ctx.case_id,)
-    ).fetchone()
+    case = ctx.conn.execute("select email from cases where id = %s", (ctx.case_id,)).fetchone()
     official = data.audience in ("bank", "officer")
     if official:
         if not case["email"]:
@@ -99,7 +97,7 @@ def handle(data: Input, ctx: Ctx) -> dict[str, Any]:
             )
         to = contact["email"]
     else:
-        to = case["telegram_chat_id"] or "web"
+        to = "web"
     applicant = applicant_name(ctx)
     prompt = model_prompt(data, scheme, app.ref_number if app else None, applicant, ctx.language)
     messages = [{"role": "user", "content": prompt}]

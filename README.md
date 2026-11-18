@@ -10,7 +10,7 @@ eligibility (`app/rules`), does the money math (`app/finance`), keeps state (`ap
 approval gate (`app/guard`). `tests/test_boundaries.py` enforces that those packages never import the AI.
 
 Status: **v0.9**, slices 0–9 of LLD v1.1 (plus the optional PIN, admin pages and error states) plus the hackathon environment (SMTP via Titan, contact form,
-deploy script, Claude budget controls). Built and tested with a fake Claude: tracker, vault, Alarm Clock, approvals (web and Telegram), inbound
+deploy script, Claude budget controls). Built and tested with a fake Claude: tracker, vault, Alarm Clock, approvals (web only; email is the only outbound channel), inbound
 message reading, project report and pre-filled pack. **Not yet deployed** and not yet run against the real API.
 See `BUILD_NOTES.md` §5 for what is left and `AGENTS.md` for how to work on it.
 
@@ -73,6 +73,6 @@ make check-secrets                       # before every push
 ## Demo script
 
 LLD v1.1 §23 (≈6 minutes from `make demo-reset`). v0.9 covers the whole script: Meena's live onboarding, document uploads (blurry → retake, clean → masked tick),
-Ravi's timeline and his chase firing on the demo clock, the draft in Needs-you, `YES <code>` on Telegram → one email
+Ravi's timeline and his chase firing on the demo clock, the draft in Needs-you, Approve → one email
 with Ravi copied, a forwarded SMS moving an application to QUERY_RAISED, Meena's report and pack and the "press
 submit" gate, and `/contact`.

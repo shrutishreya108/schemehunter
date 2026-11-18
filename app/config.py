@@ -39,10 +39,6 @@ class Settings(BaseSettings):
     CHAT_SYNC_TIMEOUT_S: float = 60
 
     DEMO_CLOCK_SCALE: float = 1
-    TELEGRAM_BOT_TOKEN: str = ""
-    TELEGRAM_WEBHOOK_SECRET: str = ""
-    TELEGRAM_BOT_USERNAME: str = ""  # for the t.me/<bot>?start=<token> link
-    TELEGRAM_API_BASE: str = "https://api.telegram.org"
 
     # Email: SMTP through the Titan Business Email mailbox on our domain.
     # smtpout.secureserver.net is GoDaddy's relay for Titan mailboxes bought on godaddy.com;

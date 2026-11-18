@@ -63,7 +63,7 @@ def test_forwarded_sms_moves_ravi_to_docs_pending(seeded, conn, fake_claude) -> 
     case_id = seeded["ravi"]
     app = app_of(conn, case_id)
     msg = conn.execute(
-        "insert into messages (case_id, direction, channel, body, processed) values (%s, 'in', 'telegram', %s, false) returning id",
+        "insert into messages (case_id, direction, channel, body, processed) values (%s, 'in', 'web', %s, false) returning id",
         (case_id, QUERY_SMS),
     ).fetchone()["id"]
     classify(
@@ -97,7 +97,7 @@ def test_vague_message_changes_nothing_and_asks(seeded, conn, fake_claude) -> No
     case_id = seeded["ravi"]
     app = app_of(conn, case_id)
     conn.execute(
-        "insert into messages (case_id, direction, channel, body, processed) values (%s, 'in', 'telegram', 'update aaya hai', false)",
+        "insert into messages (case_id, direction, channel, body, processed) values (%s, 'in', 'web', 'update aaya hai', false)",
         (case_id,),
     )
     classify(fake_claude, intent="status_update", confidence=0.4)

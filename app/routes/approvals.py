@@ -6,8 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
-from app.access import bind_token, check_csrf, current_case_id
-from app.config import get_settings
+from app.access import check_csrf, current_case_id
 from app.db import connect
 from app.guard import actions
 from app.routes.render import lang_for, render
@@ -18,14 +17,6 @@ router = APIRouter()
 def case_language(conn, case_id: str) -> str | None:
     row = conn.execute("select language from cases where id = %s", (case_id,)).fetchone()
     return row["language"] if row else None
-
-
-def telegram_link(conn, case_id: str) -> str | None:
-    s = get_settings()
-    row = conn.execute("select telegram_chat_id from cases where id = %s", (case_id,)).fetchone()
-    if not s.TELEGRAM_BOT_USERNAME or (row and row["telegram_chat_id"]):
-        return None
-    return f"https://t.me/{s.TELEGRAM_BOT_USERNAME}?start={bind_token(case_id)}"
 
 
 @router.get("/approvals")
@@ -47,8 +38,7 @@ def approvals_page(request: Request, case_id: Annotated[str, Depends(current_cas
             for a in actions.pending_for_case(conn, case_id)
             if not (a["status"] == "FAILED" and str(a["error"] or "").startswith("guard:"))  # curator-only
         ]
-        link = telegram_link(conn, case_id)
-    return render(request, "approvals.html", lang, case_id, items=items, telegram_link=link)
+    return render(request, "approvals.html", lang, case_id, items=items)
 
 
 def decide(action_id: str, case_id: str, request: Request, csrf: str | None, approve: bool):

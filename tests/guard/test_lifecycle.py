@@ -35,7 +35,7 @@ def status(conn, action_id: str) -> dict:
 def test_double_approve_sends_exactly_one_email_with_the_user_copied(seeded, conn, smtp_settings) -> None:
     action_id = pending_email(conn, seeded)
     actions.approve(conn, action_id, "web", case_id=seeded["ravi"])
-    actions.approve(conn, action_id, "telegram", case_id=seeded["ravi"])  # the double tap / the late YES
+    actions.approve(conn, action_id, "web", case_id=seeded["ravi"])  # the double tap
     assert len(smtp_settings.handler.messages) == 1
     sent = smtp_settings.handler.messages[0]
     assert "ravi@example.test" in sent.rcpt_tos and "bank@example.test" in sent.rcpt_tos  # CC'd

@@ -207,14 +207,14 @@ def test_an_illegal_move_is_reported_not_forced(seeded, conn, fake_claude) -> No
 def test_message_id_reads_the_stored_message_and_marks_it_processed(seeded, conn, fake_claude) -> None:
     ctx, _ = ravi(conn, seeded)
     mid = conn.execute(
-        "insert into messages (case_id, direction, channel, body, processed) values (%s, 'in', 'telegram', 'declined', false) returning id",
+        "insert into messages (case_id, direction, channel, body, processed) values (%s, 'in', 'web', 'declined', false) returning id",
         (seeded["ravi"],),
     ).fetchone()["id"]
     script(fake_claude, {"intent": "rejected", "reason": "declined"})
     dispatch("interpret_response", {"message_id": str(mid)}, ctx)
     assert conn.execute("select processed from messages where id = %s", (mid,)).fetchone()["processed"]
     other = conn.execute(
-        "insert into messages (case_id, direction, channel, body) values (%s, 'in', 'telegram', 'hi') returning id",
+        "insert into messages (case_id, direction, channel, body) values (%s, 'in', 'web', 'hi') returning id",
         (seeded["fatima"],),
     ).fetchone()["id"]
     assert (

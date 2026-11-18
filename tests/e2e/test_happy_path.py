@@ -130,7 +130,7 @@ def test_meena_from_first_message_to_under_review_again(
     # 5. The portal SMS she forwards moves it to review, then a query arrives
     def inbound(text: str) -> None:
         conn.execute(
-            "insert into messages (case_id, direction, channel, body, processed) values (%s, 'in', 'telegram', %s, false)",
+            "insert into messages (case_id, direction, channel, body, processed) values (%s, 'in', 'web', %s, false)",
             (case_id, text),
         )
 

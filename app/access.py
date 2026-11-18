@@ -67,20 +67,6 @@ def demo_link_token(persona_key: str) -> str:
     return _hmac(f"demo:{persona_key}")
 
 
-def bind_token(case_id: str) -> str:
-    """Signed token for the Telegram deep link t.me/<bot>?start=<token>. Binds one chat to this case."""
-    return f"{case_id.replace('-', '')}{_hmac(f'bind:{case_id}')[:24]}"
-
-
-def case_for_bind_token(token: str) -> str | None:
-    """Case id for a valid bind token, else None. Constant-time compare."""
-    raw, sig = token[:32], token[32:]
-    if len(raw) != 32 or not raw.isalnum():
-        return None
-    case_id = f"{raw[:8]}-{raw[8:12]}-{raw[12:16]}-{raw[16:20]}-{raw[20:]}"
-    return case_id if hmac.compare_digest(sig, _hmac(f"bind:{case_id}")[:24]) else None
-
-
 # ---------------------------------------------------------------- sessions
 
 
