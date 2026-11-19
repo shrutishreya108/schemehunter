@@ -135,5 +135,7 @@
   "discover_check_again": "Check again",
   "discover_not_checked_yet": "Not checked yet.",
   "discover_check_now": "Check my eligibility",
-  "nav_discover": "Find schemes"
+  "nav_discover": "Find schemes",
+  "chat_gave_up": "I couldn't finish that. Please send it again.",
+  "chat_working": "Working on your last message…"
 }

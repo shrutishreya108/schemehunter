@@ -1,11 +1,14 @@
-"""/chat (LLD §16.2): sync brain run ≤ CHAT_SYNC_TIMEOUT_S, then "working on it". /answers: no-JS fallback.
+"""/chat (LLD §16.2): a message is saved at once and its run starts in the background; the page polls while a reply is
+pending. /answers: no-JS fallback.
 
 POST /chat with HX-Request returns the chat-messages partial; without HTMX it redirects back to /chat.
 /answers saves the answer and re-runs the rules engine in code, so it costs no Claude credit.
+
+The page knows a reply is pending when a run for this case is open, or the newest message is the user's and is
+recent. When neither holds for long enough and the last run never answered, the page says so (no silence).
 """
 
 from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import TimeoutError as FutureTimeout
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -17,6 +20,7 @@ from app.brain.runner import run_brain
 from app.brain.tools.base import Ctx
 from app.brain.tools.facts_vocab import VocabError, coerce
 from app.brain.tools.match_schemes import run_match
+from app.config import get_settings
 from app.db import connect, jsonb
 from app.events import log_event
 from app.i18n import bilingual
@@ -24,12 +28,11 @@ from app.routes.render import lang_for, render
 from app.rules.loader import load_schemes
 
 router = APIRouter()
-_runs = ThreadPoolExecutor(max_workers=2, thread_name_prefix="brain")
+# one thread per waiting run; a few cases can be busy at once without starving the others
+_runs = ThreadPoolExecutor(max_workers=4, thread_name_prefix="chat-brain")
 MAX_TEXT = 1000
-WORKING = {
-    "hi": "मैं इस पर काम कर रही हूँ, थोड़ी देर में यहाँ जवाब दिखेगा।",
-    "en": "I'm working on it; the answer will appear here shortly.",
-}
+RECENT_IN_S = 20  # a user message this young counts as pending even before a run row exists
+POLL_EXTRA_S = 15  # the page keeps polling this long beyond the run deadline
 
 
 def load_chat(conn, case_id: str) -> list[dict]:
@@ -54,15 +57,41 @@ def chat_task(latest: str) -> str:
     return f"{CHAT_TASK}\n\nLatest user message: «{latest}»"
 
 
-PENDING_SECONDS = 120  # keep polling for a reply this long after the user's message
+def _age(msg: dict) -> float:
+    return (datetime.now(UTC) - msg["created_at"]).total_seconds()
 
 
-def is_pending(msgs: list[dict]) -> bool:
-    """The last message is the user's and no reply has come yet: the page should keep checking."""
+def _run_open(conn, case_id: str) -> bool:
+    """A run for this case has no end time and started within the run deadline (plus a margin)."""
+    window = get_settings().CHAT_RUN_DEADLINE_S + POLL_EXTRA_S
+    row = conn.execute(
+        "select 1 from brain_runs where case_id = %s and ended_at is null "
+        "and started_at > now() - make_interval(secs => %s) limit 1",
+        (case_id, window),
+    ).fetchone()
+    return row is not None
+
+
+def is_pending(conn, case_id: str, msgs: list[dict]) -> bool:
+    """Keep polling: a run is open, or the newest message is the user's and was just sent."""
+    if _run_open(conn, case_id):
+        return True
+    return bool(msgs) and msgs[-1]["direction"] == "in" and _age(msgs[-1]) < RECENT_IN_S
+
+
+def gave_up(conn, case_id: str, msgs: list[dict]) -> bool:
+    """The newest message is the user's, the wait is over, no run is open, and a chat run did start for it but
+    nothing was written back. The page then says so, instead of staying silent."""
     if not msgs or msgs[-1]["direction"] != "in":
         return False
-    age = (datetime.now(UTC) - msgs[-1]["created_at"]).total_seconds()
-    return age < PENDING_SECONDS
+    window = get_settings().CHAT_RUN_DEADLINE_S + POLL_EXTRA_S
+    if _age(msgs[-1]) < window or _run_open(conn, case_id):
+        return False
+    row = conn.execute(
+        "select 1 from brain_runs where case_id = %s and trigger = 'chat' and started_at >= %s limit 1",
+        (case_id, msgs[-1]["created_at"]),
+    ).fetchone()
+    return row is not None
 
 
 def case_lang(conn, case_id: str) -> str | None:
@@ -70,12 +99,17 @@ def case_lang(conn, case_id: str) -> str | None:
     return row["language"] if row else None
 
 
+def _state(conn, case_id: str, msgs: list[dict]) -> dict:
+    return {"pending": is_pending(conn, case_id, msgs), "gave_up": gave_up(conn, case_id, msgs)}
+
+
 @router.get("/chat")
 def chat_page(request: Request, case_id: Annotated[str, Depends(current_case_id)]):
     with connect() as conn:
         lang = lang_for(request, case_lang(conn, case_id))
         msgs = load_chat(conn, case_id)
-    return render(request, "chat.html", lang, case_id, messages=msgs, notice=None, pending=is_pending(msgs))
+        state = _state(conn, case_id, msgs)
+    return render(request, "chat.html", lang, case_id, messages=msgs, notice=None, **state)
 
 
 @router.get("/chat/messages")
@@ -84,15 +118,8 @@ def chat_messages(request: Request, case_id: Annotated[str, Depends(current_case
     with connect() as conn:
         lang = lang_for(request, case_lang(conn, case_id))
         msgs = load_chat(conn, case_id)
-    return render(
-        request,
-        "partials/chat_messages.html",
-        lang,
-        case_id,
-        messages=msgs,
-        notice=None,
-        pending=is_pending(msgs),
-    )
+        state = _state(conn, case_id, msgs)
+    return render(request, "partials/chat_messages.html", lang, case_id, messages=msgs, notice=None, oob=True, **state)
 
 
 @router.post("/chat")
@@ -104,39 +131,27 @@ def post_chat(
 ):
     check_csrf(case_id, request.headers.get("x-csrf-token") or csrf)
     text = text.strip()[:MAX_TEXT]
+    message_id = None
     with connect() as conn:
         lang = lang_for(request, case_lang(conn, case_id))
         if text:
             if not rate_limit(conn, f"chat:{case_id}", 20, 60):
                 text = ""
             else:
-                conn.execute(
+                row = conn.execute(
                     "insert into messages (case_id, direction, channel, body, processed) "
-                    "values (%s, 'in', 'web', %s, true)",
+                    "values (%s, 'in', 'web', %s, true) returning id",
                     (case_id, text),
-                )
-    notice = None
+                ).fetchone()
+                message_id = row["id"]
     if text:
-        future = _runs.submit(run_brain, case_id, chat_task(text), "chat")
-        try:
-            # Answer quickly: the user's message is already saved. A slow reply arrives by polling.
-            result = future.result(timeout=0.5)
-            if result.status != "DONE" and result.user_message:
-                notice = result.user_message
-        except FutureTimeout:
-            notice = None
+        # The message is saved; the run's outcome reaches the page through the chat, never through this response.
+        _runs.submit(run_brain, case_id, chat_task(text), "chat", message_id=message_id)
     if request.headers.get("hx-request"):
         with connect() as conn:
             msgs = load_chat(conn, case_id)
-        return render(
-            request,
-            "partials/chat_messages.html",
-            lang,
-            case_id,
-            messages=msgs,
-            notice=notice,
-            pending=is_pending(msgs),
-        )
+            state = _state(conn, case_id, msgs)
+        return render(request, "partials/chat_messages.html", lang, case_id, messages=msgs, notice=None, oob=True, **state)
     return RedirectResponse("/chat", status_code=303)
 
 
@@ -156,7 +171,8 @@ def post_answers(
         except VocabError as exc:
             msgs = load_chat(conn, case_id)
             return render(
-                request, "chat.html", lang, case_id, messages=msgs, notice=str(exc), status_code=422
+                request, "chat.html", lang, case_id, messages=msgs, notice=str(exc), status_code=422,
+                pending=False, gave_up=False,
             )
         conn.execute(
             "insert into messages (case_id, direction, channel, body, processed) "

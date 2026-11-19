@@ -10,3 +10,5 @@
 <p class="muted typing">{{ t("chat_thinking") }}</p>
 <div hx-get="/chat/messages" hx-trigger="load delay:2s" hx-target="#chat" hx-swap="innerHTML"></div>
 {% endif %}
+{% if gave_up %}<p class="notice">{{ t("chat_gave_up") }}</p>{% endif %}
+{% if oob %}<button id="chat-send" type="submit" hx-swap-oob="true" {% if pending %}disabled{% endif %}>{{ t("chat_working") if pending else t("send") }}</button>{% endif %}
