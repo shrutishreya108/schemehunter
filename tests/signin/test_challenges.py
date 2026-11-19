@@ -138,3 +138,20 @@ def test_signin_resolves_to_its_case_and_admin_link_is_one_use(seeded, conn) -> 
     conn.commit()
     assert ch.verify_link(conn, admin_token) is None  # the second issue superseded the first
     assert ch.verify_link(conn, second_token) is not None
+
+
+def test_housekeeping_drops_challenges_older_than_a_day(seeded, conn) -> None:
+    from app.clock import worker
+
+    _, _, _ = new(conn)
+    conn.execute(
+        "update login_challenges set created_at = now() - interval '2 days' where email_norm = %s", (EMAIL,)
+    )
+    conn.commit()
+    worker.housekeeping(conn)
+    assert (
+        conn.execute("select count(*) as n from login_challenges where email_norm = %s", (EMAIL,)).fetchone()[
+            "n"
+        ]
+        == 0
+    )

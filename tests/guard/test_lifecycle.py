@@ -99,6 +99,7 @@ def test_failed_send_is_retried_then_marked_failed_after_three_tries(seeded, con
 
 
 def test_official_mail_without_a_user_copy_is_refused_and_fails_visibly(seeded, conn, smtp_settings) -> None:
+    conn.execute("update cases set email = null where id = %s", (seeded["ravi"],))  # no user copy on file
     app_id = str(
         conn.execute("select id from applications where case_id = %s", (seeded["ravi"],)).fetchone()["id"]
     )
@@ -262,6 +263,7 @@ def test_the_recipient_comes_from_contacts_not_the_model(seeded, conn, fake_clau
 
 
 def test_official_draft_needs_the_users_email_first(seeded, conn, fake_claude) -> None:
+    conn.execute("update cases set email = null where id = %s", (seeded["ravi"],))  # no user copy on file
     app_id = str(
         conn.execute("select id from applications where case_id = %s", (seeded["ravi"],)).fetchone()["id"]
     )

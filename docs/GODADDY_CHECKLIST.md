@@ -127,6 +127,8 @@ print(SmtpEmail.from_settings().send('hello@<domain>', 'SMTP test from the VPS',
 
 If sending fails, the form still stores the message (`processed=false`), so nothing is lost.
 
+Sign-in codes and one-tap links use the same SMTP settings (see `app/signin/mail.py`). If they don't arrive, check `/admin/actions` for the recorded error.
+
 ## 7. SMTP password (and every secret) kept out of code and repo
 
 | | |

@@ -9,7 +9,7 @@ domain + Titan mailbox run the product.
 eligibility (`app/rules`), does the money math (`app/finance`), keeps state (`app/tracker`) and holds the
 approval gate (`app/guard`). `tests/test_boundaries.py` enforces that those packages never import the AI.
 
-Status: **v0.9**, slices 0–9 of LLD v1.1 (plus the optional PIN, admin pages and error states) plus the hackathon environment (SMTP via Titan, contact form,
+Status: **v0.10**, slices 0–9 of LLD v1.1 (plus email sign-in, admin pages and error states) plus the hackathon environment (SMTP via Titan, contact form,
 deploy script, Claude budget controls). Built and tested with a fake Claude: tracker, vault, Alarm Clock, approvals (web only; email is the only outbound channel), inbound
 message reading, project report and pre-filled pack. **Not yet deployed** and not yet run against the real API.
 See `BUILD_NOTES.md` §5 for what is left and `AGENTS.md` for how to work on it.
@@ -58,7 +58,7 @@ With Postgres 16:
 export DATABASE_URL=postgresql://app:pw@localhost:5432/schemehunter
 python -m pytest -q                              # also runs DB tests (throwaway database)
 python -m app.seed --reset                       # demo data; prints the three case links
-uvicorn app.main:app --reload                    # /c/<token> → /chat, /schemes, /contact, /admin/runs
+uvicorn app.main:app --reload                    # /signin (email code), then /, /chat, /schemes, /admin/runs
 ```
 
 ## Run on the VPS
@@ -76,3 +76,16 @@ LLD v1.1 §23 (≈6 minutes from `make demo-reset`). v0.9 covers the whole scrip
 Ravi's timeline and his chase firing on the demo clock, the draft in Needs-you, Approve → one email
 with Ravi copied, a forwarded SMS moving an application to QUERY_RAISED, Meena's report and pack and the "press
 submit" gate, and `/contact`.
+
+## Sign in
+
+There is no personal link and no PIN. Everyone signs in with an email address:
+
+1. Open `/signin` and enter an email.
+2. Enter the 6-digit code from the email, or tap the one-tap link in it. The code works for 10 minutes and five wrong tries end it.
+3. A new email address creates a case; ticking the consent box is required at that point, and only then.
+
+Admins can issue a one-time link for someone who has lost email access: `POST /admin/cases/<id>/signin-link`, from the Actions page.
+
+For judges: go to `/signin`, sign up with any email you can read, and you land on your own eligibility page.
+

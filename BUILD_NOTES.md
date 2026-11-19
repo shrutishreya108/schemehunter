@@ -1,4 +1,4 @@
-# BUILD_NOTES: Scheme Hunter v0.9 (slices 0–9 + PIN, admin pages, demo hardening; nothing deployed yet)
+# BUILD_NOTES: Scheme Hunter v0.10 (slices 0–9 + email-only sign-in; not yet redeployed)
 
 Sources: Notion **HLD - Hackathon**, **File Structure**, **LLD v1.1**; curator decisions in the v0.2 and v0.3
 briefs. v0.3 = Part A (decisions confirmed) + Part B (GoDaddy/Titan/$100-credit environment) + Part C (slice 3).
@@ -26,7 +26,8 @@ briefs. v0.3 = Part A (decisions confirmed) + Part B (GoDaddy/Titan/$100-credit 
 | **v0.9 · Slice 7:** Guard lifecycle (`guard/actions.py`, `guard/executors.py`), `draft_message` + `request_submit` + `schedule` tools, `/approvals`, `/webhooks/telegram`, `mouth/telegram.py`, `mouth/outbox.py`, migration `005_pending_attempts.sql` | LLD §22 slice 7 |
 | **v0.9 · Slice 8:** `interpret_response` tool (confidence gate, application matching, legal moves only), `UserForwardsChecker` | LLD §22 slice 8 |
 | **v0.9 · Slice 9:** `build_project_report`, `prefill_form`, PDF layer (`pdf/render.py`), report/pack templates, cost sheets seeded as artifacts | LLD §22 slice 9 |
-| **v0.9 · Slice 10/11 items:** `/admin/jobs`, `/admin/actions` (+ unsent contact messages, T10), optional PIN (T9), friendly 500 page, user buttons "I pressed submit" / "I sent the papers", vendored `htmx.min.js` and the Devanagari font (T6, T7) | LLD §22 slices 10–11 |
+| **v0.9 · Slice 10/11 items:** `/admin/jobs`, `/admin/actions` (+ unsent contact messages, T10), friendly 500 page, user buttons "I pressed submit" / "I sent the papers", vendored `htmx.min.js` and the Devanagari font (T6, T7) | LLD §22 slices 10–11 |
+| **v0.10 · Email sign-in (LLD signin):** `sql/006_email_signin.sql`, `app/signin/` (codes, one-tap links, challenges, cookies, mail), `app/routes/signin.py`, `/admin/cases/<id>/signin-link`. Removed: personal link (`/c/<token>`), PIN, `DEMO_PERSONA_EMAIL` | Spec: email is the only way in |
 | **Docs repaired:** `docs/LLD.md` restored in full with headings, `docs/HLD.md` de-duplicated and renumbered | The Notion exports were truncated or duplicated |
 
 ## 1. Status
@@ -255,6 +256,16 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 76. **Instruction pack:** the "press submit" approval no longer sends the pre-filled pack to a phone. The steps go to the chat, and the pack is in **My papers**.
 77. Tests: 465 pass (Telegram suites removed; approvals suite now `tests/e2e/test_approvals_web.py`).
 
+### v0.10: email-only sign-in (LLD signin)
+78. **Consent on the code page only for sign-up.** The LLD asks for it that way, but the page then differs by whether an address has an account, which reveals existence to anyone who types an address. Accepted risk for the demo; the fix is to show the consent box for both paths.
+79. **Admin link is shown on the admin page and emailed to the case address when there is one.** LLD §6 and §7 disagree; both are done. Shown once, 60 minutes, one use, 10 per hour.
+80. **An admin link does not cancel the person's own pending code.** Only a newer link of the same purpose supersedes an older one.
+81. **Honeypot and a bad form token look like success** (the honeypot), or return the form with "Please try again" (token too fast). Nothing is created or sent in either case.
+82. **Sign-up creates a case in ONBOARDING with no `state_code`.** Central schemes don't depend on state, but state-specific ones will need a question to fill it in. Open question.
+83. **Cookie for a deleted case** is treated as signed out on every request (one extra lookup per request).
+84. **Migration 006** drops `cases.access_token_hash`, `cases.pin_hash` and `cases.telegram_chat_id`, and creates `identities` and `login_challenges`. Housekeeping deletes challenges older than 24 hours (added to the worker, see §4).
+85. **Demo personas** have email addresses in `seed/personas.yaml`, written as `YOURNAME+<key>@gmail.com` placeholders. They must be replaced with inboxes you can read before the demo; `demo-reset` prints them.
+
 ## 4. TODO / verify list
 
 ### Curator: guideline verification (unchanged from v0.2)
@@ -292,25 +303,21 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 - **T23:** the `/documents` page has no "retake" shortcut or camera preview; it is a plain form that works without JS.
 - **T19b:** live smoke test of `interpret_response` on the 15 portal messages (Haiku, ≈ $0.01 total): the only measure of real classification quality.
 - **T24:** real users have no cost sheet, so `build_project_report` refuses for them. Needs a small questionnaire (machines, working capital, sales) that writes a `cost_inputs` artifact. Needed before real-user week.
-- **T25:** persona emails: set `DEMO_PERSONA_EMAIL` (or `email:` per persona in `seed/personas.yaml`) before the demo so official mail has someone to CC; point `seed/contacts.yaml` at your own inboxes (T8).
+- **T25:** persona emails: replace the `YOURNAME+…` placeholders in `seed/personas.yaml` with inboxes you can read before the demo (sign-in needs them); point `seed/contacts.yaml` at your own inboxes (T8).
 - ~~**T26**~~ dropped: Telegram removed (§3 item 74).
 - **T27:** host cron lines on the VPS: `scripts/backup.sh` nightly and `make retention-cleanup` daily (examples are in each script's header).
 
 ## 5. What is left, and what the next prompt should ask for
 
-Everything that can be built and tested without the VPS or a real API key is built. What remains needs you or a live service.
+**Curator (VPS steps for email sign-in):**
+1. `git pull --ff-only` in `/srv/schemehunter`.
+2. `docker compose up -d --build --force-recreate` (migration 006 runs at startup).
+3. Put real inboxes in `seed/personas.yaml` (replace `YOURNAME+…`), then `docker compose exec web sh scripts/demo_reset.sh`.
+4. Sign in once per persona in three browser profiles and keep the tabs open for the demo.
 
-**You (no code):** the VPS and domain steps (checklist items 1–4), the Titan mailbox (G2), the guideline PDFs and `make extract-pages` (T5), Hindi review (V6), the Telegram bot (T26), cron lines (T27), your inboxes in `contacts.yaml` and `DEMO_PERSONA_EMAIL` (T25).
+**Live checks (about $2 of Claude credit, when the key is set):** T16 three phrasings of Meena's answers (≈ $0.30); T19 the 20 specimen images through real vision (≈ $0.40); T19b the 15 portal messages (≈ $0.01); T14 Ravi's explanation with citations (≈ $0.03); one `demo-reset` rehearsal with `DEMO_CLOCK_SCALE=1440`.
 
-**Next prompt (once the VPS is up and you have an Anthropic key):**
-
-> Read AGENTS.md and BUILD_NOTES §4–§5. On the VPS checkout: run `python -m pytest -q` once (this covers T22, including the real PDF tests); fix whatever differs from the Windows run. Then, with a budget of $2 of Claude credit, run the live checks by hand and record the results in BUILD_NOTES §6:
-> 1. T16: three phrasings of Meena's answers → same matches (≈ $0.30).
-> 2. T19: the 20 specimen images through real vision (≈ $0.40): report correct / retake / wrong rates, and the measured image-token count; update `scripts/estimate_costs.py` with it.
-> 3. T19b: the 15 portal messages through `interpret_response` (≈ $0.01).
-> 4. T14: regenerate Ravi's explanation with citations once the PMEGP pages exist (≈ $0.03).
-> 5. One `make demo-reset` rehearsal with `DEMO_CLOCK_SCALE=1440`: Ravi's chase fires after ~2 minutes, the draft appears in Needs-you, YES on Telegram sends one email with Ravi copied. Fix anything that breaks; no new features.
-> Then build T24 (the cost-sheet questionnaire) if real users are next.
+**Next prompt:** run the live checks above, then build T24 (the cost-sheet questionnaire) if real users come next.
 
 ## 6. Cost log
 
@@ -319,6 +326,7 @@ Everything that can be built and tested without the VPS or a real API key is bui
 | v0.5 (slices 4 + 5) | **$0.00** | Every test uses FakeClaude, and a real client cannot be constructed under pytest, so no API call was made. `scripts/estimate_costs.py` is arithmetic only. The model cost of the build session itself is not visible from inside it; check the console. |
 
 | v0.9 (slices 6–9 + PIN, admin, docs) | **$0.00** | Same: FakeClaude only, no API call made. |
+| v0.10 (email sign-in) | **$0.00** | No model involved; tests use aiosmtpd and the fakes. |
 
 Projected spend from here: one live vision rehearsal (T19) ≈ $0.02 per image; one full persona journey ≈ $0.36; one demo run-through ≈ $0.17.
 

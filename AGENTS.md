@@ -23,6 +23,7 @@ Agent that takes a small Indian entrepreneur from "I need money" to filed, track
 - app/finance, app/forms project_report.py, forms/mappings/pmegp.yaml
 - app/status, app/mouth status/base.py; mouth/email.py (Titan SMTP), mouth/outbox.py (web chat)
 - app/routes, app/templates FastAPI + HTMX; routes/contact.py is the judged contact form
+- app/signin email sign-in only (codes, one-tap links, challenges); routes/signin.py; no personal links, no PINs
 - app/costs.py, app/config.py price table, budget guards
 - sql/ 001_init.sql is the schema source of truth; later files additive
 - seed/ personas (meena fresh, ravi mid-flight, fatima rejected), histories, artifacts, portal_messages

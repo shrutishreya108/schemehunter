@@ -114,6 +114,7 @@ def housekeeping(conn: psycopg.Connection) -> None:
         actions.expire(conn)
         actions.retry_failed_sends(conn)
         conn.execute("delete from rate_limits where window_start < now() - interval '1 day'")
+        conn.execute("delete from login_challenges where created_at < now() - interval '24 hours'")
         conn.commit()
     except Exception as exc:  # noqa: BLE001
         conn.rollback()
