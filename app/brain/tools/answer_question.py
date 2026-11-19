@@ -105,7 +105,26 @@ def guideline_sources(ctx: Ctx, scheme_ids: list[str], questions: list[str]) -> 
     query = " ".join(questions)
     out: list[dict] = []
     for sid in scheme_ids:
-        hits = search(ctx.conn, query, [sid], k=GUIDELINE_CHUNKS)
+        # The pages of verified evidence always go first: keyword search can miss the page a rule is on
+        # (e.g. "minimum age" vs "above 18 years of age"). Search fills the rest of the GUIDELINE_CHUNKS.
+        ev_pages = verified_pages(ctx.conn, sid)
+        evidence = (
+            ctx.conn.execute(
+                "select scheme_id, page, ord, text from source_chunks where scheme_id = %s and page = any(%s) "
+                "order by page, ord limit %s",
+                (sid, ev_pages, GUIDELINE_CHUNKS),
+            ).fetchall()
+            if ev_pages
+            else []
+        )
+        hits = [dict(r) for r in evidence]
+        seen = {(h["page"], h["ord"]) for h in hits}
+        for h in search(ctx.conn, query, [sid], k=GUIDELINE_CHUNKS):
+            if len(hits) >= GUIDELINE_CHUNKS:
+                break
+            if (h["page"], h["ord"]) not in seen:
+                hits.append(h)
+                seen.add((h["page"], h["ord"]))
         if not hits:
             out.append(
                 {

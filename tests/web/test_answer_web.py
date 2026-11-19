@@ -172,3 +172,9 @@ def test_fetching_off_means_a_stale_copy_or_unknown_with_no_network(
         assert calls == []
     finally:
         get_settings.cache_clear()
+
+
+def test_the_age_rules_page_is_sent_even_when_keyword_search_misses_it(seeded, conn, fake_claude) -> None:
+    """Regression: 'minimum age of applicant' does not match page 5 by keywords ('above 18 years of age')."""
+    sources = qa.guideline_sources(ctx_for(conn, seeded["meena"], fake_claude), ["pmegp"], ["What is the minimum age of applicant?"])
+    assert any(s["id"].startswith("guideline:pmegp:p5") for s in sources), [s["id"] for s in sources]

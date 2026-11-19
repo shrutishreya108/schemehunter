@@ -117,7 +117,7 @@ def test_a_sources_sent_to_the_model_are_grounded_and_labelled(seeded, conn, fak
     prompt = fake_claude.calls_for("qa")[-1]["messages"][0]["content"]
     assert "[code:encryption] (verified)" in prompt
     # retrieval finds no guideline text for this question, and the gap is stated, not hidden
-    assert "[guideline:pmegp:none] (unknown) No guideline text for pmegp matched these questions." in prompt
+    assert "[guideline:pmegp:p5:1]" in prompt  # verified evidence pages are always sent, whatever the question
     assert "[rulefile:pmegp] (estimate)" in prompt
 
 
