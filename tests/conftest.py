@@ -76,6 +76,27 @@ def fake_claude(monkeypatch: pytest.MonkeyPatch):
     claude.set_client(None)
 
 
+# ---------------------------------------------------------------- web: no test may reach the network
+
+
+@pytest.fixture(autouse=True)
+def no_real_web(monkeypatch: pytest.MonkeyPatch):
+    """Any page fetch in a test that does not set its own fake transport fails loudly (no DNS, no connection)."""
+    import httpx
+
+    from app.web import fetch
+
+    def refuse(request: httpx.Request) -> httpx.Response:
+        raise RuntimeError(f"tests must never reach the network: {request.url}")
+
+    def no_dns(host: str):
+        raise RuntimeError(f"tests must never resolve hosts: {host}")
+
+    monkeypatch.setattr(fetch, "_transport", httpx.MockTransport(refuse))
+    monkeypatch.setattr(fetch, "_default_resolver", no_dns)
+    yield
+
+
 # ---------------------------------------------------------------- SMTP: local fake server
 
 
