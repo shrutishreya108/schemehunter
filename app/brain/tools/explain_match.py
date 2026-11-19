@@ -11,14 +11,17 @@
 from pathlib import Path
 from typing import Any
 
+import psycopg
 from pydantic import BaseModel
 
 from app.brain import claude
 from app.brain.tools.base import Ctx, ToolError, scan_text, tool_schema
 from app.config import get_settings
 from app.db import jsonb
+from app.rag.search import pages_for
 
-MAX_PAGES = 20
+MAX_PAGES = 4  # pages sent for one explanation, retrieved or verified
+FALLBACK_PAGES = 6  # used only when retrieval finds nothing (the first pages of the guideline)
 
 EXPLANATION_TOOL = {
     "name": "explanation",
@@ -49,11 +52,60 @@ def page_files(scheme_id: str, root: Path | None = None) -> list[tuple[int, Path
     return sorted(files)
 
 
-def select_pages(scheme: dict, files: list[tuple[int, Path]]) -> list[tuple[int, str]]:
-    """Pages named by the scheme's rules if any exist on disk; otherwise all pages (capped)."""
-    wanted = {r.get("page") for r in scheme["eligibility"]["all"] if r.get("page")}
-    chosen = [(n, p) for n, p in files if n in wanted] or files
-    return [(n, p.read_text(encoding="utf-8")) for n, p in chosen[:MAX_PAGES]]
+def _fact_names(node: Any) -> list[str]:
+    if isinstance(node, dict):
+        return ([str(node["fact"])] if "fact" in node else []) + [f for v in node.values() for f in _fact_names(v)]
+    if isinstance(node, list):
+        return [f for v in node for f in _fact_names(v)]
+    return []
+
+
+def retrieval_query(scheme: dict, match: dict) -> str:
+    """Built in code: the scheme name, the deciding rule, and each failing or unknown rule's note and fact names."""
+    rules = match["rule_results"]["rules"]
+    by_id = {r["id"]: r for r in scheme["eligibility"]["all"]}
+    decider = match["rule_results"].get("deciding_rule")
+    parts = [scheme["name"]["en"], decider or ""]
+    for rid, outcome in rules.items():
+        if outcome == "PASS" or rid not in by_id:
+            continue
+        parts.append(by_id[rid].get("source_note", ""))
+        parts += _fact_names(by_id[rid])
+    return " ".join(p for p in parts if p)
+
+
+def verified_pages(conn: psycopg.Connection, scheme_id: str) -> list[int]:
+    """Pages that carry a verified evidence passage for this scheme."""
+    rows = conn.execute(
+        "select distinct page from rule_evidence where scheme_id = %s and status = 'verified' and page is not null "
+        "order by page",
+        (scheme_id,),
+    ).fetchall()
+    return [r["page"] for r in rows]
+
+
+def select_pages(
+    conn: psycopg.Connection, scheme: dict, match: dict, files: list[tuple[int, Path]]
+) -> tuple[list[tuple[int, str]], str]:
+    """Pages to send, and how they were chosen. The page hints in the scheme file are ignored on purpose.
+
+    1. pages named by the scheme's verified evidence rows; 2. pages that retrieval ranks for the query built
+    from the result; 3. only if both are empty, the first FALLBACK_PAGES pages. At most MAX_PAGES from 1 and 2.
+    """
+    on_disk = dict(files)
+    chosen: list[int] = []
+    for n in verified_pages(conn, scheme["id"]):
+        if n in on_disk and n not in chosen and len(chosen) < MAX_PAGES:
+            chosen.append(n)
+    for n in pages_for(conn, retrieval_query(scheme, match), scheme["id"], max_pages=MAX_PAGES):
+        if n in on_disk and n not in chosen and len(chosen) < MAX_PAGES:
+            chosen.append(n)
+    if chosen:
+        how = "retrieved"
+    else:
+        chosen = [n for n, _ in files[:FALLBACK_PAGES]]
+        how = "fallback"
+    return [(n, on_disk[n].read_text(encoding="utf-8")) for n in sorted(chosen)], how
 
 
 def instruction(scheme: dict, match: dict, language: str) -> str:
@@ -105,10 +157,11 @@ def is_cached(explanation: dict | None, scheme: dict, result: str, verification:
 
 def generate(scheme: dict, match: dict, ctx: Ctx) -> dict:
     text = instruction(scheme, match, ctx.language)
-    pages = select_pages(scheme, page_files(scheme["id"]))
+    files = page_files(scheme["id"])
+    pages, how = select_pages(ctx.conn, scheme, match, files) if files else ([], "none")
     if pages:
         out = claude.citations_call(pages, scheme["name"]["en"], text, ctx.meter, client=ctx.client)
-        return {**out, "source_status": "cited"}
+        return {**out, "source_status": "cited", "pages": [n for n, _ in pages], "page_selection": how}
     system = [{"type": "text", "text": claude.prompt("explain_match.md"), "cache_control": claude.EPHEMERAL}]
     out = claude.forced_tool_call(
         EXPLANATION_TOOL,
@@ -118,7 +171,7 @@ def generate(scheme: dict, match: dict, ctx: Ctx) -> dict:
         purpose="explain",
         client=ctx.client,
     )
-    return {"en": out["en"], "hi": out["hi"], "citations": [], "source_status": "pending"}
+    return {"en": out["en"], "hi": out["hi"], "citations": [], "source_status": "pending", "pages": [], "page_selection": how}
 
 
 def handle(data: Input, ctx: Ctx) -> dict[str, Any]:
@@ -131,10 +184,12 @@ def handle(data: Input, ctx: Ctx) -> dict[str, Any]:
     if not match:
         raise ToolError("no match stored for this scheme; call match_schemes first")
     verification = (match["rule_results"] or {}).get("verification", "verified")
+    pages_used, page_how = [], None
     if is_cached(match["explanation"], scheme, match["result"], verification):
         exp, cached = match["explanation"], True
     else:
         exp, cached = generate(scheme, match, ctx), False
+        pages_used, page_how = exp.pop("pages", []), exp.pop("page_selection", None)
         check = scan_text(ctx, exp["en"], exp["hi"])
         if not check["ok"]:
             exp = {**exp, **fallback_text(scheme, match["result"], verification), "scan_failed": check}
@@ -157,4 +212,6 @@ def handle(data: Input, ctx: Ctx) -> dict[str, Any]:
         "citations": len(exp.get("citations") or []),
         "source_status": exp.get("source_status"),
         "cached": cached,
+        "pages": pages_used,  # numbers only; the runner logs them in TOOL_CALLED
+        "page_selection": page_how,
     }

@@ -197,7 +197,12 @@ def run_loop(ctx: Ctx, task: str, system: list[dict], tools: list[dict], use_his
                     f"Tool {block.name}: {'ok' if ok else 'error'}",
                     f"टूल {block.name}: {'ठीक' if ok else 'त्रुटि'}",
                 ),
-                payload={"tool": block.name, "ok": ok, "run_id": ctx.run_id},
+                payload={
+                    "tool": block.name,
+                    "ok": ok,
+                    "run_id": ctx.run_id,
+                    **({"pages": out["pages"]} if block.name == "explain_match" and out.get("pages") else {}),
+                },
             )
             results.append(
                 {

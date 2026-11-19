@@ -136,6 +136,10 @@ def test_every_fit_with_pages_has_a_citation(seeded, conn, fake_claude, tmp_path
         (pages / "04.txt").write_text("Project cost limits apply.", encoding="utf-8")
     monkeypatch.setenv("RULEBOOK_SOURCES_DIR", str(tmp_path))
     get_settings.cache_clear()
+    from app.rag.index import index_scheme
+
+    for scheme_id in ("pmegp", "mudra"):  # retrieval reads the index, so index the temp pages too
+        index_scheme(conn, scheme_id, tmp_path / scheme_id / "pages")
     ctx = db_ctx(conn, seeded["meena"])
     dispatch("update_profile", {"key": "loan_amount", "value": 300000}, ctx)
     fits = [r["scheme_id"] for r in dispatch("match_schemes", {}, ctx)["results"] if r["result"] == "FIT"]
@@ -149,10 +153,10 @@ def test_every_fit_with_pages_has_a_citation(seeded, conn, fake_claude, tmp_path
         for c in fake_claude.calls_for("explain_cited")
     ]
     pmegp_docs = next(d for d in docs_per_call if d[0]["title"].startswith("PM Employment"))
-    assert [d["title"] for d in pmegp_docs] == [
-        "PM Employment Generation Programme guidelines page 3",
-        "PM Employment Generation Programme guidelines page 4",
-    ]
+    # only pages that exist in the folder are sent, and the page holding the rule's text is among them
+    titles = [d["title"] for d in pmegp_docs]
+    assert titles and all(t.startswith("PM Employment Generation Programme guidelines page ") for t in titles)
+    assert "PM Employment Generation Programme guidelines page 3" in titles
     get_settings.cache_clear()
 
 
