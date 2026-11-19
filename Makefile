@@ -1,7 +1,7 @@
 COMPOSE = docker compose
 RUN_WEB = $(COMPOSE) run --rm web
 
-.PHONY: up down logs migrate seed demo-reset test extract-pages retention-cleanup check-secrets deploy estimate-costs
+.PHONY: up down logs migrate seed demo-reset test extract-pages rulebook-suggest rulebook-report retention-cleanup check-secrets deploy estimate-costs
 
 up:
 	$(COMPOSE) up -d --build
@@ -25,7 +25,14 @@ test:
 	python -m pytest -q
 
 extract-pages:
-	sh scripts/extract_pages.sh
+	python scripts/extract_pages.py
+
+# Curator commands: read only. Need DATABASE_URL (the rulebook must be synced: make seed or demo-reset).
+rulebook-suggest:
+	$(RUN_WEB) python -m app.rag.curator suggest $(SCHEME)
+
+rulebook-report:
+	$(RUN_WEB) python -m app.rag.curator report
 
 retention-cleanup:
 	$(RUN_WEB) sh scripts/retention_cleanup.sh
