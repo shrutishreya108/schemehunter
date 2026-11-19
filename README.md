@@ -81,6 +81,27 @@ submit" gate, and `/contact`.
 
 The answers and explanations look up guideline pages with full-text search over `rulebook/sources/<scheme>/pages/`. Retrieval only finds pages; it never decides eligibility. See [rulebook/README.md](rulebook/README.md) for `make extract-pages`, `make rulebook-suggest` and `make rulebook-report`.
 
+## Official web pages (fallback)
+
+When a scheme has no guideline PDF text, a question about it can be answered from its official web page. The
+pages are a short curated list in `rulebook/sources/<scheme>/web.yaml`. Code picks the page, never the model, and
+the model has no fetch tool. A scheme that has PDF text never uses the web.
+
+- Answers say where the text came from: page title, domain, the time it was read, a link, and one fixed sentence:
+  "This comes from the official web page, not a checked rule, and the page may not show the latest circulars."
+- Web text is never used to say someone qualifies. Eligibility comes only from the rules engine.
+- `app/web/fetch.py` allows https on port 443 to the scheme's listed hosts only, refuses private and metadata
+  addresses, checks robots.txt and every redirect, and caps time, size and text.
+- Copies are cached for WEB_CACHE_TTL_H (24 h). A copy older than WEB_SNAPSHOT_WARN_DAYS (30) is marked as
+  over a month old. `/admin/web` lists each copy with its age.
+
+Snapshots: `make warm-web` fetches each page and writes `rulebook/sources/<scheme>/web/*.txt`, which are committed.
+Seeding and demo-reset load them into the cache with the date they were read.
+
+Geo-block note: the scheme sites were not reachable from the US data centre that hosts the VPS. Run `make warm-web`
+on a machine that can reach them, commit the snapshots, and set `WEB_FETCH_ENABLED=false` on the VPS. With the
+setting false the app never opens a network connection for web pages.
+
 ## Sign in
 
 There is no personal link and no PIN. Everyone signs in with an email address:

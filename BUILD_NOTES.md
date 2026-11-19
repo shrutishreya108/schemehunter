@@ -5,6 +5,10 @@ briefs. v0.3 = Part A (decisions confirmed) + Part B (GoDaddy/Titan/$100-credit 
 
 ## 0. What changed since v0.2, and why
 
+- **Official web fallback (`app/web`):** curated pages in `rulebook/sources/<id>/web.yaml` (stand_up_india, mudra, udyogini_ka). Safe fetcher (https 443, allowlist, public IPs only, pinned, redirects re-checked, robots.txt, 8 s, 1 retry, 1 req/s per host, 1 MB, text only). `web_cache` table (`sql/009_web_cache.sql`), TTL 24 h, stale copies, committed snapshots in `rulebook/sources/<id>/web/*.txt`. `answer_question` uses web text only for schemes with no PDF text; fixed source sentence added in code. `/admin/web`. `make warm-web` (`python -m app.web.warm --export-only`).
+- **Live snapshot run (this machine):** udyogini_ka status 200, 12000 characters, new (the second run: unchanged); stand_up_india 200 (12000 and 2024 characters); mudra 200, 1364 characters.
+- **Overclaim guard:** "qualify for everything" / "you will qualify" are now banned in the output scan (app/guard/scanner.py).
+
 - **Retrieval (RAG, no model, no embeddings):** `guidelines.pdf` for pmegp, per-page text from `make extract-pages` (`scripts/extract_pages.py`, pdftotext -layout, pypdf fallback). `sql/008_source_chunks.sql` + `app/rag` (chunk, index, search, curator). `sync_sources` rebuilds the index, so `make seed` and `demo-reset` keep it current.
 - **explain_match** sends verified-evidence pages, then retrieved pages (max 4); fallback first 6 pages. Page numbers go to the `TOOL_CALLED` payload (numbers only). **answer_question** guideline sources are retrieved chunks (4 per scheme), labelled verified only with complete source + evidence page.
 - **Curator:** `make rulebook-suggest SCHEME=pmegp`, `make rulebook-report` (read only). **PMEGP evidence:** 4 rules verified with verbatim passages (age p5, new_only p6, cost_cap p5, education p6), retrieval date 2026-11-19.
@@ -301,6 +305,8 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES Â
 
 105a. **Retrieval decisions:** the `page:` hints in scheme YAML files are left in place and ignored by explain_match (retrieval and evidence rows decide pages). Search is AND first, OR when nothing matches (keyword search, no synonyms). Chunks are about 900 characters with 100 overlap, per page, so a chunk never crosses a page. `app/fetch` was not created: no web fetching is in scope. Only `guidelines.pdf` is extracted by `make extract-pages`; the other schemes' PDFs are not renamed or indexed yet. The rule `verified:` flags in the YAML stay `false`; verification status shown to users comes from `rule_evidence`, so PMEGP's verified rules now show as verified and benefit still keeps the result preliminary. Eligibility results are unchanged. The known retrieval miss in `tests/rag/test_retrieval.py` is a strict `xfail` with its reason, not a silent skip.
 
+106a. **Web fallback decisions:** the migration is `009_web_cache.sql`, because 008 is taken by the chunk index; the table also has a `scheme_id` column (for the admin page and the allowlist). "No PDF text" means no `pages/*.txt` files on disk (not "no retrieval hit"). Snapshot files carry the title as a `Title:` line at the top of the body, and the body's sha256 is in the header. Robots: 404 or non-text/plain means no rules; a network error on robots.txt refuses the fetch. Redirects are followed by hand (max 3), each hop checked. Pinning sends the real host as `Host` and as TLS SNI to the validated IP. The fetch reads 1 MB at most and keeps 12,000 characters; the answer uses 6,000 per page. Tests never reach the network: an autouse fixture in `tests/conftest.py` refuses any request and any DNS lookup.
+
 ## 4. TODO / verify list
 
 ### Curator: guideline verification (unchanged from v0.2)
@@ -353,6 +359,11 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES Â
 - **T35:** `make rulebook-suggest` and `make rulebook-report` run through `$(RUN_WEB)` (docker). They were run directly against a scratch database, not inside the container.
 - **T36:** the four new PDFs (CGTMSE, MUDRA, Stand Up India x2) are not `guidelines.pdf` yet. Stand Up India's brochure page 1 has 60 characters, so it is likely scanned.
 
+- **T37:** the Udyogini snapshot includes navigation text (About Us, Login) that sits in plain divs, not nav/header tags. Improve the cleaner (e.g. drop known menu blocks) before the demo, or accept it.
+- **T38:** the KSWDC page can lag its 2026 circular. Say so to the user, or find the newer circular and add it to a curated list.
+- **T39:** on the VPS: set `WEB_FETCH_ENABLED=false` in `.env`, `git pull`, rebuild, then check `/admin/web` shows the snapshot dates. The server cannot fetch live.
+- **T40:** the `--export` path (warm with the database) is not exercised by a test; only `--export-only` ran live.
+
 ## 5. What is left, and what the next prompt should ask for
 
 **Next prompt:** check the retrieval recall (T33) and the URL decision (T34), then rename the other schemes' PDFs to `guidelines.pdf` and extract them (T36).
@@ -376,6 +387,7 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES Â
 | v0.9 (slices 6â€“9 + PIN, admin, docs) | **$0.00** | Same: FakeClaude only, no API call made. |
 | v0.10 (email sign-in) | **$0.00** | No model involved; tests use aiosmtpd and the fakes. |
 | Retrieval + PMEGP evidence | **$0.00** | No model call; all retrieval tests use FakeClaude. Full suite 636 passed, 2 skipped, 1 xfailed (deselected Windows script test). |
+| Web fallback | **$0.00** | No model call. Live fetch from this machine for the snapshots only. Tests use fake transports. |
 | PMEGP audit | **$0.00** | Tests and file edits only; no API call. Full suite: 605 passed, 2 skipped (Postgres on port 52356, `PYTHONUTF8=1`). |
 
 Projected spend from here: one live vision rehearsal (T19) â‰ˆ $0.02 per image; one full persona journey â‰ˆ $0.36; one demo run-through â‰ˆ $0.17.

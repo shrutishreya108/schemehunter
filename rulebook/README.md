@@ -33,6 +33,11 @@ Curator commands (read only; they need a synced database):
   with a 300-character excerpt. It writes nothing.
 - `make rulebook-report`: per scheme, verified / total material rules, and each verified rule with its page and passage.
 
+Official web pages (fallback, `app/web`): a scheme with no PDF text may list up to 2 official pages in `web.yaml`
+(https only; the hosts are the allowlist). Answers read them only when the scheme has no PDF text. Run
+`make warm-web` to fetch them and write `web/*.txt` snapshots, which are committed. The VPS serves the snapshots
+(`WEB_FETCH_ENABLED=false`). A web page is never a checked rule.
+
 Limits: scanned pages (under 200 characters) are written empty and are not read; table text can extract badly
 (the PMEGP subsidy table is checked against the rendered page image, not the text).
 
