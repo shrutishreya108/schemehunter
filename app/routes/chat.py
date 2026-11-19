@@ -6,6 +6,7 @@ POST /chat with HX-Request returns the chat-messages partial; without HTMX it re
 
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, Request
@@ -16,7 +17,6 @@ from app.brain.runner import run_brain
 from app.brain.tools.base import Ctx
 from app.brain.tools.facts_vocab import VocabError, coerce
 from app.brain.tools.match_schemes import run_match
-from app.config import get_settings
 from app.db import connect, jsonb
 from app.events import log_event
 from app.i18n import bilingual
@@ -41,6 +41,17 @@ def load_chat(conn, case_id: str) -> list[dict]:
     return list(reversed(rows))
 
 
+PENDING_SECONDS = 120  # keep polling for a reply this long after the user's message
+
+
+def is_pending(msgs: list[dict]) -> bool:
+    """The last message is the user's and no reply has come yet: the page should keep checking."""
+    if not msgs or msgs[-1]["direction"] != "in":
+        return False
+    age = (datetime.now(UTC) - msgs[-1]["created_at"]).total_seconds()
+    return age < PENDING_SECONDS
+
+
 def case_lang(conn, case_id: str) -> str | None:
     row = conn.execute("select language from cases where id = %s", (case_id,)).fetchone()
     return row["language"] if row else None
@@ -51,7 +62,24 @@ def chat_page(request: Request, case_id: Annotated[str, Depends(current_case_id)
     with connect() as conn:
         lang = lang_for(request, case_lang(conn, case_id))
         msgs = load_chat(conn, case_id)
-    return render(request, "chat.html", lang, case_id, messages=msgs, notice=None)
+    return render(request, "chat.html", lang, case_id, messages=msgs, notice=None, pending=is_pending(msgs))
+
+
+@router.get("/chat/messages")
+def chat_messages(request: Request, case_id: Annotated[str, Depends(current_case_id)]):
+    """Polled by the page while a reply is pending. Returns the message list only."""
+    with connect() as conn:
+        lang = lang_for(request, case_lang(conn, case_id))
+        msgs = load_chat(conn, case_id)
+    return render(
+        request,
+        "partials/chat_messages.html",
+        lang,
+        case_id,
+        messages=msgs,
+        notice=None,
+        pending=is_pending(msgs),
+    )
 
 
 @router.post("/chat")
@@ -80,15 +108,24 @@ def post_chat(
             run_brain, case_id, f"The user sent a chat message: «{text}». Continue onboarding.", "chat"
         )
         try:
-            result = future.result(timeout=get_settings().CHAT_SYNC_TIMEOUT_S)
+            # Answer quickly: the user's message is already saved. A slow reply arrives by polling.
+            result = future.result(timeout=0.5)
             if result.status != "DONE" and result.user_message:
                 notice = result.user_message
         except FutureTimeout:
-            notice = WORKING.get(lang, WORKING["en"])
+            notice = None
     if request.headers.get("hx-request"):
         with connect() as conn:
             msgs = load_chat(conn, case_id)
-        return render(request, "partials/chat_messages.html", lang, case_id, messages=msgs, notice=notice)
+        return render(
+            request,
+            "partials/chat_messages.html",
+            lang,
+            case_id,
+            messages=msgs,
+            notice=notice,
+            pending=is_pending(msgs),
+        )
     return RedirectResponse("/chat", status_code=303)
 
 

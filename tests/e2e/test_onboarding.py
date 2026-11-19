@@ -22,9 +22,15 @@ def meena_client(seeded, settings_db, tmp_path, monkeypatch):
 
 
 def say(client, case_id: str, text: str):
-    return client.post(
+    """Send, then poll like the page does until the reply has arrived (the send itself returns at once)."""
+    r = client.post(
         "/chat", data={"text": text}, headers={"HX-Request": "true", "X-CSRF-Token": csrf_token(case_id)}
     )
+    for _ in range(50):
+        if "load delay:2s" not in r.text:
+            break
+        r = client.get("/chat/messages", headers={"HX-Request": "true"})
+    return r
 
 
 def test_meena_three_turns(meena_client, conn, fake_claude) -> None:

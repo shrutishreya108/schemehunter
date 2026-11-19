@@ -6,3 +6,7 @@
 {% endfor %}
 </ul>
 {% if notice %}<p class="notice">{{ notice }}</p>{% endif %}
+{% if pending %}
+<p class="muted typing">{{ t("chat_thinking") }}</p>
+<div hx-get="/chat/messages" hx-trigger="load delay:2s" hx-target="#chat" hx-swap="innerHTML"></div>
+{% endif %}
