@@ -45,6 +45,7 @@ TABLES = [
     "source_chunks",
     "rule_evidence",
     "source_documents",
+    "web_cache",
     "schemes",
 ]
 UNKEYED_TABLES = ["events", "pending_actions", "messages", "jobs", "brain_runs"]  # case_id without FK
@@ -272,6 +273,9 @@ def seed(url: str | None = None, reset: bool = False, now: datetime | None = Non
         from app.rules.sources import sync_sources
 
         sync_sources(conn)
+        from app.web.cache import load_all_snapshots
+
+        load_all_snapshots(conn)  # committed web snapshots, with their own fetched_at
         for key in showcase["personas"]:
             seeded[key] = seed_persona(conn, personas[key], schemes, now)
         load_artifacts(conn, seeded, schemes)

@@ -86,6 +86,9 @@ class Settings(BaseSettings):
 
     VAULT_DIR: Path = Path("/data/vault")
     RULEBOOK_SOURCES_DIR: Path = ROOT / "rulebook" / "sources"
+    WEB_FETCH_ENABLED: bool = True  # VPS sets false: it serves committed snapshots and never opens a connection
+    WEB_CACHE_TTL_H: int = 24
+    WEB_SNAPSHOT_WARN_DAYS: int = 30
     RUN_MIGRATIONS_ON_STARTUP: bool = True
     TRUST_PROXY: bool = True  # behind Caddy: client IP from X-Forwarded-For
 

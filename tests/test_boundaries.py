@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 APP = Path(__file__).resolve().parent.parent / "app"
-GUARDED = ["rules", "finance", "tracker", "guard", "signin", "rag"]
+GUARDED = ["rules", "finance", "tracker", "guard", "signin", "rag", "web"]
 
 
 def imported_modules(path: Path) -> list[str]:

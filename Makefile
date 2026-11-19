@@ -1,7 +1,7 @@
 COMPOSE = docker compose
 RUN_WEB = $(COMPOSE) run --rm web
 
-.PHONY: up down logs migrate seed demo-reset test extract-pages rulebook-suggest rulebook-report retention-cleanup check-secrets deploy estimate-costs
+.PHONY: up down logs migrate seed demo-reset test extract-pages rulebook-suggest rulebook-report warm-web retention-cleanup check-secrets deploy estimate-costs
 
 up:
 	$(COMPOSE) up -d --build
@@ -33,6 +33,11 @@ rulebook-suggest:
 
 rulebook-report:
 	$(RUN_WEB) python -m app.rag.curator report
+
+# Official web pages: fetch the curated pages (rulebook/sources/<id>/web.yaml) and write snapshots. Run on a machine
+# that can reach the sites; the VPS serves the committed snapshots (WEB_FETCH_ENABLED=false).
+warm-web:
+	python -m app.web.warm --export-only
 
 retention-cleanup:
 	$(RUN_WEB) sh scripts/retention_cleanup.sh
