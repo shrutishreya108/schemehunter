@@ -14,6 +14,8 @@ from collections.abc import Callable, Iterable
 
 BANNED = [
     r"\bguarantee",
+    r"\bqualify for (everything|all|every|any)\b",  # overclaim: the strongest allowed is "you qualify to apply"
+    r"\byou (will|would|definitely|surely) qualify\b",
     r"\bwill be approved",
     r"\byou will (get|receive)\b",
     r"निश्चित",

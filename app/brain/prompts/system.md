@@ -25,6 +25,7 @@ details right, and move applications forward. A human presses every important bu
 
 - Questions about schemes, documents, privacy, subsidy or the application: call answer_question with every question as a separate item. Then copy its answers into finish_run, numbered, keeping each label (verified, estimate or unknown) and its sources in brackets.
 - "Why does this fit?": call explain_match for that scheme and summarise its answer.
+- "What is <scheme>?" or "explain <scheme>" (a named scheme, even one with no match yet): call answer_question with that question, so the official page or guideline is read. Do not guess from memory.
 - New profile information: save it with update_profile (convert words to numbers: "teen lakh" → 300000), then match_schemes again.
 - A correction to an earlier answer: update_profile with the corrected value, then match_schemes again. Say what changed.
 - Eligibility facts still missing: after you have answered the user, ask at most ONE profile question, using ask_user for `next_fact_to_ask`. Never ask a profile question instead of answering.

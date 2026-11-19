@@ -6,21 +6,31 @@ The model may only cite source ids it was given. Citations to anything else are 
 valid source is labelled unknown. Every question gets an answer.
 """
 
+import re
 from collections import Counter
 from typing import Any
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, Field
 
 from app.brain import claude
 from app.brain.tools.base import Ctx, ToolError, scan_text, tool_schema
 from app.brain.tools.build_project_report import load_artifact, percentages
-from app.brain.tools.explain_match import verified_pages
+from app.brain.tools.explain_match import page_files, verified_pages
 from app.finance.project_report import compute, inputs_from, inr
 from app.rag.search import search
 from app.rules.loader import load_schemes
 from app.rules.sources import is_complete
+from app.web.cache import refresh_many, web_pages
 
 GUIDELINE_CHUNKS = 4  # per scheme
+WEB_PAGES_PER_SCHEME = 2
+WEB_TEXT_CHARS = 6000
+WEB_BUDGET_S = 10.0  # per scheme, all its pages together
+WEB_FIXED_SENTENCE = (
+    "This comes from the official web page, not a checked rule, and the page may not show the latest circulars."
+)
+WEB_UNREADABLE = "I could not read the official page right now."
 MAX_QUESTIONS = 8
 LABELS = ("verified", "estimate", "unknown")
 
@@ -127,6 +137,54 @@ def guideline_sources(ctx: Ctx, scheme_ids: list[str], questions: list[str]) -> 
     return out
 
 
+def web_sources(ctx: Ctx, scheme_ids: list[str]) -> list[dict]:
+    """Official web pages, only for schemes with no guideline PDF text. A scheme with PDF text never reaches the network."""
+    out: list[dict] = []
+    for sid in scheme_ids:
+        if page_files(sid):
+            continue
+        pages = web_pages(sid)[:WEB_PAGES_PER_SCHEME]
+        if not pages:
+            continue
+        results = refresh_many(ctx.conn, sid, [p["url"] for p in pages], budget_s=WEB_BUDGET_S)
+        read = 0
+        for n, item in enumerate(pages, 1):
+            view = results.get(item["url"])
+            if not view:
+                continue
+            read += 1
+            domain = urlsplit(item["url"]).hostname or ""
+            when = view["fetched_at"].strftime("%Y-%m-%d %H:%M UTC")
+            title = view["title"] or item["title"]
+            head = (
+                f"Official web page: {title} ({domain}), read {when}"
+                f"{', stale copy' if view['stale'] else ''}"
+                f"{'; this copy is over a month old' if view['old'] else ''}. "
+            )
+            out.append(
+                {
+                    "id": f"web:{sid}:{n}",
+                    "label": "estimate",
+                    "text": head + view["text"][:WEB_TEXT_CHARS],
+                    "meta": {"title": title, "domain": domain, "when": when, "url": item["url"], "stale": view["stale"]},
+                }
+            )
+        if not read:
+            out.append({"id": f"web:{sid}:none", "label": "unknown", "text": WEB_UNREADABLE})
+    return out
+
+
+def named_schemes(schemes: list[dict], questions: list[str]) -> list[str]:
+    """Schemes the questions name (by name or alias), so an explanation works even before a match exists."""
+    text = " ".join(questions).casefold()
+    found = []
+    for s in schemes:
+        names = [s["name"]["en"], *(s.get("aliases") or [])]
+        if any(re.search(rf"(?<![a-z0-9]){re.escape(n.casefold())}(?![a-z0-9])", text) for n in names):
+            found.append(s["id"])
+    return found
+
+
 def rule_sources(schemes: list[dict]) -> list[dict]:
     out = []
     for s in schemes:
@@ -200,8 +258,10 @@ def gather_sources(ctx: Ctx, questions: list[str]) -> list[dict]:
     ).fetchall()
     fit = [m["scheme_id"] for m in matches if m["result"] == "FIT"]
     relevant = [m["scheme_id"] for m in matches] or [s["id"] for s in schemes]
+    relevant = list(dict.fromkeys(named_schemes(schemes, questions) + relevant))
     sources = [{"id": pid, "label": "verified", "text": text} for pid, text in PRIVACY_FACTS]
     sources += guideline_sources(ctx, relevant, questions)
+    sources += web_sources(ctx, relevant)
     sources += rule_sources([s for s in schemes if s["id"] in relevant])
     sources += paper_sources(ctx)
     sources += subsidy_source(ctx, fit)
@@ -231,6 +291,28 @@ def check_answers(raw: list[dict], questions: list[str], valid_ids: set[str], ct
     return out
 
 
+def attach_web_sources(answers: list[dict], sources: list[dict]) -> list[dict]:
+    """Code, not the model, says where web text came from: title, domain, read time, link and one fixed sentence."""
+    by_id = {s["id"]: s for s in sources}
+    out = []
+    for a in answers:
+        used = [by_id[i] for i in a["sources"] if i in by_id and by_id[i]["id"].startswith("web:")]
+        if any(s["id"].endswith(":none") for s in used):
+            out.append({**a, "answer": WEB_UNREADABLE, "label": "unknown", "sources": []})
+            continue
+        if not used:
+            out.append(a)
+            continue
+        lines = [a["answer"]]
+        for s in dict.fromkeys(s["id"] for s in used):
+            m = by_id[s]["meta"]
+            stale = ", stale copy" if m["stale"] else ""
+            lines.append(f"Source: {m['title']} ({m['domain']}), read {m['when']}{stale}: {m['url']}")
+        lines.append(WEB_FIXED_SENTENCE)
+        out.append({**a, "answer": "\n".join(lines)})
+    return out
+
+
 def handle(data: Input, ctx: Ctx) -> dict[str, Any]:
     sources = gather_sources(ctx, data.questions)
     valid_ids = {s["id"] for s in sources}
@@ -246,6 +328,7 @@ def handle(data: Input, ctx: Ctx) -> dict[str, Any]:
         client=ctx.client,
     )
     answers = check_answers(raw.get("answers", []), data.questions, valid_ids, ctx)
+    answers = attach_web_sources(answers, sources)
     return {
         "answers": answers,
         "instruction": "Copy each answer into your reply, numbered, with its label and sources.",
