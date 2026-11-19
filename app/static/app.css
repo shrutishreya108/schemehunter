@@ -321,3 +321,9 @@ button.secondary { background: var(--paper); color: var(--ink); border: 1px soli
   .chat-input button { width: 100%; }
   .brand { font-size: .98rem; }
 }
+.summary { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin: .75rem 0 1rem; }
+.stat { text-decoration: none; color: var(--ink); font-size: .95rem; }
+.stat b { display: block; font-size: 1.6rem; color: var(--brand); }
+.card h3 { margin: 0 0 .3rem; font-size: 1.05rem; }
+.benefit { font-weight: 600; }
+@media (max-width: 30rem) { .summary { grid-template-columns: 1fr; } }

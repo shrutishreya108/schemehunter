@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("home_hello") }}{% if person_name %}, {{ person_name }}{% endif %}</h1>
+<p class="muted">{{ t("home_intro") }}</p>
+
+<div class="summary">
+  <a class="card stat" href="/applications"><b>{{ open_apps }}</b> {{ t("home_open_apps") }}</a>
+  <a class="card stat" href="/approvals"><b>{{ waiting }}</b> {{ t("home_waiting") }}</a>
+</div>
+
+<h2>{{ t("home_eligibility") }}</h2>
+{% for c in cards %}
+<article class="card {{ c.result|lower }}">
+  <h3>{{ c.name }} <span class="badge {{ c.result|lower }}">{{ t("result_" ~ c.result) }}</span></h3>
+  {% if c.benefit_text %}<p class="benefit">{{ c.benefit_text }}</p>{% endif %}
+  {% if c.explanation %}<p>{{ c.explanation }}</p>{% endif %}
+  {% if c.result == "NEEDS_INFO" and c.missing %}<p class="muted">{{ t("needs") }}: {{ c.missing|join(", ") }}</p>{% endif %}
+  {% if c.result == "NEEDS_INFO" %}<p><a href="/chat">{{ t("home_answer_more") }}</a></p>{% endif %}
+</article>
+{% else %}
+<div class="card">
+  <p>{{ t("home_none") }}</p>
+  <p><a href="/chat">{{ t("nav_chat") }}</a></p>
+</div>
+{% endfor %}
+
+<p class="muted">{{ t("home_rule_note") }}</p>
+{% endblock %}

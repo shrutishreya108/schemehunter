@@ -86,5 +86,14 @@
   "pin_open": "Open",
   "pin_set_title": "PIN for this phone",
   "pin_set_help": "Optional. 4 digits, asked once on each new phone. Leave empty to remove it.",
-  "pin_save": "Save PIN"
+  "pin_save": "Save PIN",
+  "nav_home": "Home",
+  "home_hello": "Hello",
+  "home_intro": "Here is where you stand for each scheme. The rules check this, not a computer guess.",
+  "home_open_apps": "open applications",
+  "home_waiting": "waiting for your OK",
+  "home_eligibility": "Your eligibility",
+  "home_answer_more": "Answer a few more questions",
+  "home_none": "No schemes checked yet. Tell me about your business to start.",
+  "home_rule_note": "“You qualify to apply” means you can apply. It is not a promise of a loan or subsidy."
 }

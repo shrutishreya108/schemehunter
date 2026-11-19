@@ -41,7 +41,7 @@ def set_pin(client: TestClient, case_id: str, pin: str):
 def test_a_case_without_a_pin_opens_straight_away(app_client, seeded) -> None:
     c = app_client()
     r = login(c, "meena")
-    assert r.status_code == 303 and r.headers["location"] == "/chat" and c.get("/chat").status_code == 200
+    assert r.status_code == 303 and r.headers["location"] == "/" and c.get("/chat").status_code == 200
 
 
 def test_pin_is_asked_on_a_new_phone_and_unlocks_the_session(app_client, seeded, conn) -> None:
@@ -63,7 +63,7 @@ def test_pin_is_asked_on_a_new_phone_and_unlocks_the_session(app_client, seeded,
     assert wrong.status_code == 403 and "सही नहीं" in wrong.text  # Hindi is the default language
     assert phone2.get("/chat").status_code == 401
     ok = phone2.post("/pin", data={"pin": "4821"})
-    assert ok.status_code == 303 and ok.headers["location"] == "/chat"
+    assert ok.status_code == 303 and ok.headers["location"] == "/"
     assert phone2.get("/chat").status_code == 200  # session now set; the pending cookie is gone
     assert phone2.cookies.get(PIN_COOKIE) is None
 
@@ -113,7 +113,7 @@ def test_pin_can_be_cleared(app_client, seeded, conn) -> None:
         is None
     )
     other = app_client()
-    assert login(other, "meena").headers["location"] == "/chat"
+    assert login(other, "meena").headers["location"] == "/"
 
 
 @pytest.mark.parametrize("bad", ["123", "12345", "abcd", "12 4", "١٢٣٤"])
@@ -141,7 +141,7 @@ def test_one_persons_pin_does_not_affect_another(app_client, seeded) -> None:
     login(c, "meena")
     set_pin(c, seeded["meena"], "4821")
     other = app_client()
-    assert login(other, "ravi").headers["location"] == "/chat"
+    assert login(other, "ravi").headers["location"] == "/"
 
 
 def test_a_crash_shows_the_friendly_page_not_a_stack_trace(seeded, settings_db) -> None:
@@ -160,3 +160,18 @@ def test_a_crash_shows_the_friendly_page_not_a_stack_trace(seeded, settings_db) 
             assert api.status_code == 500 and api.json() == {"error": "something went wrong"}
     finally:
         app.router.routes[:] = [r for r in app.router.routes if getattr(r, "path", "") != "/_probe_crash"]
+
+
+def test_home_shows_whose_case_and_eligibility(app_client, seeded, conn) -> None:
+    """Login lands on home: the name, and each scheme's result with the reason."""
+    c = app_client()
+    r = login(c, "meena")
+    assert r.headers["location"] == "/"
+    page = c.get("/").text
+    assert "Meena" in page
+    assert "आप आवेदन करने के योग्य हैं" in page or "You qualify to apply" in page  # PMEGP fits for Meena
+    assert 'href="/applications"' in page and 'href="/approvals"' in page
+    assert "Need more information" in page or "और जानकारी चाहिए" in page  # the others still need answers
+    fresh = app_client()
+    login(fresh, "ravi")
+    assert "Ravi" in fresh.get("/").text

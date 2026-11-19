@@ -34,9 +34,38 @@ from app.rules.loader import load_schemes
 router = APIRouter()
 
 
+def profile_name(conn, case_id: str) -> str | None:
+    row = conn.execute(
+        "select value from profile_answers where case_id = %s and key = 'name_latin'", (case_id,)
+    ).fetchone()
+    return row["value"] if row and isinstance(row["value"], str) else None
+
+
 @router.get("/")
-def dashboard(case_id: Annotated[str, Depends(current_case_id)]) -> RedirectResponse:
-    return RedirectResponse("/chat", status_code=303)
+def dashboard(request: Request, case_id: Annotated[str, Depends(current_case_id)]):
+    """Home after login: whose case this is, and where the person stands for each scheme."""
+    with connect() as conn:
+        case = conn.execute("select display_name, language from cases where id = %s", (case_id,)).fetchone()
+        lang = lang_for(request, case["language"] if case else None)
+        cards = scheme_cards(conn, case_id, lang)
+        open_apps = conn.execute(
+            "select count(*) as n from applications where case_id = %s and state not in "
+            "('CLOSED','MISSED','RETRY_NEXT_CYCLE','SANCTIONED')",
+            (case_id,),
+        ).fetchone()["n"]
+        waiting = conn.execute(
+            "select count(*) as n from pending_actions where case_id = %s and status = 'PENDING'", (case_id,)
+        ).fetchone()["n"]
+    return render(
+        request,
+        "home.html",
+        lang,
+        case_id,
+        person_name=(case or {}).get("display_name") or profile_name(conn, case_id),
+        cards=cards,
+        open_apps=open_apps,
+        waiting=waiting,
+    )
 
 
 @router.get("/c/{token}")
@@ -69,7 +98,7 @@ def open_link(token: str, request: Request):
     return start_session(str(case["id"]))
 
 
-def start_session(case_id: str, to: str = "/chat") -> RedirectResponse:
+def start_session(case_id: str, to: str = "/") -> RedirectResponse:
     resp = RedirectResponse(to, status_code=303)
     resp.set_cookie(
         SESSION_COOKIE,
