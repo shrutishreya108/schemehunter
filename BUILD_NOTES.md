@@ -5,6 +5,11 @@ briefs. v0.3 = Part A (decisions confirmed) + Part B (GoDaddy/Titan/$100-credit 
 
 ## 0. What changed since v0.2, and why
 
+- **Rule checks against the PDFs:** CGTMSE (`guidelines.pdf`, 2026 scheme document) and Stand-Up India (`guidelines.pdf` = the brochure). Evidence rows with verbatim passages. `make rulebook-report`: pmegp 4/5, cgtmse 0/4 and stand_up_india 0/7 (sources incomplete, see §4).
+- **Rule corrections:** CGTMSE loan cap ₹5 crore → ₹10 crore; education institutions removed from the exclusion. Udyogini income caps split by category, widow/disabled exception removed, subsidy 30/50 kept. Engine gains `lt` (strictly below) and nothing else.
+- **source_kind:** `sql/010_source_kind.sql`. Verified status counts only pdf-kind sources; web pages are never evidence (tested).
+- **Snapshot cleaner:** `skip_text` per scheme in web.yaml, leading 1-3-word lines dropped. All three snapshots re-exported.
+
 - **Official web fallback (`app/web`):** curated pages in `rulebook/sources/<id>/web.yaml` (stand_up_india, mudra, udyogini_ka). Safe fetcher (https 443, allowlist, public IPs only, pinned, redirects re-checked, robots.txt, 8 s, 1 retry, 1 req/s per host, 1 MB, text only). `web_cache` table (`sql/009_web_cache.sql`), TTL 24 h, stale copies, committed snapshots in `rulebook/sources/<id>/web/*.txt`. `answer_question` uses web text only for schemes with no PDF text; fixed source sentence added in code. `/admin/web`. `make warm-web` (`python -m app.web.warm --export-only`).
 - **Live snapshot run (this machine):** udyogini_ka status 200, 12000 characters, new (the second run: unchanged); stand_up_india 200 (12000 and 2024 characters); mudra 200, 1364 characters.
 - **Overclaim guard:** "qualify for everything" / "you will qualify" are now banned in the output scan (app/guard/scanner.py).
@@ -307,6 +312,15 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 
 106a. **Web fallback decisions:** the migration is `009_web_cache.sql`, because 008 is taken by the chunk index; the table also has a `scheme_id` column (for the admin page and the allowlist). "No PDF text" means no `pages/*.txt` files on disk (not "no retrieval hit"). Snapshot files carry the title as a `Title:` line at the top of the body, and the body's sha256 is in the header. Robots: 404 or non-text/plain means no rules; a network error on robots.txt refuses the fetch. Redirects are followed by hand (max 3), each hop checked. Pinning sends the real host as `Host` and as TLS SNI to the validated IP. The fetch reads 1 MB at most and keeps 12,000 characters; the answer uses 6,000 per page. Tests never reach the network: an autouse fixture in `tests/conftest.py` refuses any request and any DNS lookup.
 
+107a. **Decisions made in this pass:**
+- CGTMSE `loan_cap`: 50000000 → 100000000 because page 5 says "not exceeding ₹10 crore (Public Sector Banks, Private Sector Banks, Foreign Banks, select Financial Institutions)". The row is `unverified` because the same page caps SFB/RRB/co-operative banks at ₹2 crore and MFIs at ₹50 lakh, and the rule has no lender field.
+- CGTMSE `sector_excluded`: `education_institution` removed (page 6: "Educational / Training Institution also made eligible activity"). The SHG exclusion has no passage in the document, so the row stays unverified.
+- CGTMSE `enterprise_size` kept as micro/small: page 2 defines "Eligible borrower" as "new or existing Micro and Small Enterprises…". Row verified.
+- Udyogini `income_cap`: SC/ST below Rs.2.00 lakh; general and special category below Rs.1.50 lakh (English KSWDC page, Income and Caste Certificate section). The widow/disabled exception is not on the page, so it is removed; the subsidy's widow/disabled 50% branch goes with it. The engine gained `lt` so "below" is strict.
+- Stand-Up India `loan_range` row verified (page 3, "facilitate bank loans between `10 lakh and `1 Crore"; the backtick is how the text layer prints ₹).
+- Stand-Up `applicant` and `sector`: unverified. Page 3 is two-column, and the passages around them are interleaved, so no full sentence can be quoted.
+- Web pages are `source_kind: web` and never evidence; the Stand-Up web page is in source.yaml to show that.
+
 ## 4. TODO / verify list
 
 ### Curator: guideline verification (unchanged from v0.2)
@@ -364,6 +378,15 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 - **T39:** on the VPS: set `WEB_FETCH_ENABLED=false` in `.env`, `git pull`, rebuild, then check `/admin/web` shows the snapshot dates. The server cannot fetch live.
 - **T40:** the `--export` path (warm with the database) is not exercised by a test; only `--export-only` ran live.
 
+- **T41:** CGTMSE: the document prints no URL. Give the official URL (and the retrieval date if different). Until then no CGTMSE rule counts as verified.
+- **T42:** Stand-Up India: the brochure prints no version or issuing authority, so the source is incomplete. Give the version/issuing body, or accept that the rules stay unverified.
+- **T43:** CGTMSE loan cap by lender type (₹10 crore / ₹2 crore / ₹50 lakh). The rule has no lender field; add one, or decide which cap the app should show.
+- **T44:** CGTMSE SHG exclusion: no passage in the document. Find the clause or remove the exclusion.
+- **T45:** Stand-Up sector: the brochure names manufacturing, services and trading; the web page also names agri-allied. The rule keeps agri-allied. Decide.
+- **T46:** Stand-Up pages 1, 2, 7 and 8 have under 200 characters of text (likely scanned or image-only). Their content was not read, so rules that might rest on them stay unverified. Page 3's applicant and sector passages need a visual check.
+- **T47:** Udyogini: no guideline PDF is in the repo (the scanned Kannada document was not found under rulebook/sources or in the Downloads folder). Rules stay unverified and rest on the English page.
+- **T48:** CGTMSE pages 04 and 32 have under 200 characters; not read.
+
 ## 5. What is left, and what the next prompt should ask for
 
 **Next prompt:** check the retrieval recall (T33) and the URL decision (T34), then rename the other schemes' PDFs to `guidelines.pdf` and extract them (T36).
@@ -388,6 +411,7 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 | v0.10 (email sign-in) | **$0.00** | No model involved; tests use aiosmtpd and the fakes. |
 | Retrieval + PMEGP evidence | **$0.00** | No model call; all retrieval tests use FakeClaude. Full suite 636 passed, 2 skipped, 1 xfailed (deselected Windows script test). |
 | Web fallback | **$0.00** | No model call. Live fetch from this machine for the snapshots only. Tests use fake transports. |
+| Rule checks (CGTMSE, Stand-Up, Udyogini) | **$0.00** | No model call. Live snapshot re-export from this machine. |
 | PMEGP audit | **$0.00** | Tests and file edits only; no API call. Full suite: 605 passed, 2 skipped (Postgres on port 52356, `PYTHONUTF8=1`). |
 
 Projected spend from here: one live vision rehearsal (T19) ≈ $0.02 per image; one full persona journey ≈ $0.36; one demo run-through ≈ $0.17.
