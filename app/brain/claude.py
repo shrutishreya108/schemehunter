@@ -48,12 +48,11 @@ class AnthropicClient:
 
     def __init__(self, api_key: str):
         import anthropic
-        import httpx
-
         s = get_settings()
+        # A plain number: the SDK rejects httpx.Timeout objects (it uses its own httpx2 types).
         self.raw = anthropic.Anthropic(
             api_key=api_key,
-            timeout=httpx.Timeout(s.CLAUDE_TIMEOUT_S, connect=5.0),
+            timeout=float(s.CLAUDE_TIMEOUT_S),
             max_retries=s.CLAUDE_MAX_RETRIES,
         )
 
