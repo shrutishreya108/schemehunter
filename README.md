@@ -77,6 +77,10 @@ Ravi's timeline and his chase firing on the demo clock, the draft in Needs-you, 
 with Ravi copied, a forwarded SMS moving an application to QUERY_RAISED, Meena's report and pack and the "press
 submit" gate, and `/contact`.
 
+## Guideline retrieval
+
+The answers and explanations look up guideline pages with full-text search over `rulebook/sources/<scheme>/pages/`. Retrieval only finds pages; it never decides eligibility. See [rulebook/README.md](rulebook/README.md) for `make extract-pages`, `make rulebook-suggest` and `make rulebook-report`.
+
 ## Sign in
 
 There is no personal link and no PIN. Everyone signs in with an email address:

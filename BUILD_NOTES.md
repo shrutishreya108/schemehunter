@@ -5,6 +5,12 @@ briefs. v0.3 = Part A (decisions confirmed) + Part B (GoDaddy/Titan/$100-credit 
 
 ## 0. What changed since v0.2, and why
 
+- **Retrieval (RAG, no model, no embeddings):** `guidelines.pdf` for pmegp, per-page text from `make extract-pages` (`scripts/extract_pages.py`, pdftotext -layout, pypdf fallback). `sql/008_source_chunks.sql` + `app/rag` (chunk, index, search, curator). `sync_sources` rebuilds the index, so `make seed` and `demo-reset` keep it current.
+- **explain_match** sends verified-evidence pages, then retrieved pages (max 4); fallback first 6 pages. Page numbers go to the `TOOL_CALLED` payload (numbers only). **answer_question** guideline sources are retrieved chunks (4 per scheme), labelled verified only with complete source + evidence page.
+- **Curator:** `make rulebook-suggest SCHEME=pmegp`, `make rulebook-report` (read only). **PMEGP evidence:** 4 rules verified with verbatim passages (age p5, new_only p6, cost_cap p5, education p6), retrieval date 2026-11-19.
+
+- **PMEGP audit against the official guideline (PDF, O.M. 07.12.2023):** subsidy table read from the rendered page; special-category fact added; EDP block, rural certificate and bank/scheme document split added; age wording kept as `gte 18` (open). Before/after report: `docs/PMEGP_AUDIT.md`. Nothing is verified yet.
+
 | Change | Why |
 |---|---|
 | **Resend deleted → SMTP via Titan** (`app/mouth/email.py`, smtplib, STARTTLS 587 → SSL 465 fallback) | Organizer checklist requires a mailbox on our domain and SMTP sending; one provider, no extra account |
@@ -291,6 +297,10 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 105. **Tests:** `tests/discovery/test_discovery.py` uses mocked transports and the test values above. No test reaches the network. Full suite: 580 passed, 2 skipped (the known Windows-only script test deselected).
 106. **To go live:** confirm the official documentation, then set `DISCOVERY_MODE=live` and every `MYSCHEME_*` value on the server. No code change is needed unless the response shape differs from the envelope assumed in `normalize_live`.
 
+104a. **PMEGP audit decisions:** age stays `gte 18` although the guideline says "above 18" (open, curator decides). Financial values unchanged (table read from PDF page 4). Special category uses `pmegp_special_category` (female, SC, ST, OBC, disabled) so other schemes are untouched. Passbook and quotation are kept as bank papers, not scheme papers. Rural certificate is required for rural projects (our inference). EDP certificate is due after sanction, so it no longer gates DOCS_READY.
+
+105a. **Retrieval decisions:** the `page:` hints in scheme YAML files are left in place and ignored by explain_match (retrieval and evidence rows decide pages). Search is AND first, OR when nothing matches (keyword search, no synonyms). Chunks are about 900 characters with 100 overlap, per page, so a chunk never crosses a page. `app/fetch` was not created: no web fetching is in scope. Only `guidelines.pdf` is extracted by `make extract-pages`; the other schemes' PDFs are not renamed or indexed yet. The rule `verified:` flags in the YAML stay `false`; verification status shown to users comes from `rule_evidence`, so PMEGP's verified rules now show as verified and benefit still keeps the result preliminary. Eligibility results are unchanged. The known retrieval miss in `tests/rag/test_retrieval.py` is a strict `xfail` with its reason, not a silent skip.
+
 ## 4. TODO / verify list
 
 ### Curator: guideline verification (unchanged from v0.2)
@@ -332,7 +342,20 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 - ~~**T26**~~ dropped: Telegram removed (§3 item 74).
 - **T27:** host cron lines on the VPS: `scripts/backup.sh` nightly and `make retention-cleanup` daily (examples are in each script's header).
 
+- **T28:** PMEGP source: the curator records the retrieval date in `rulebook/sources/pmegp/source.yaml`. Until then no PMEGP rule counts as verified.
+- **T29:** PMEGP curator review of `rulebook/sources/pmegp/evidence.yaml` rows (page, quote, status) and the open items in `docs/PMEGP_AUDIT.md`. Biggest gap: minorities, ex-servicemen, transgender and area-based special categories cannot be expressed in the profile yet, so those applicants may get the general subsidy.
+- **T30:** the "above 18" vs `>= 18` age decision.
+
+- **T31:** `make extract-pages` writes empty files for scanned pages (under 200 characters). Nothing reads them yet. Scanned guidelines need OCR, which is out of scope for now.
+- **T32:** table text extracts badly (`25c70`, mangled columns). The subsidy table is verified by the image only; it is not an evidence row. Pages containing tables should be quoted from the image before they are used as verified evidence.
+- **T33:** retrieval recall: 9 of 10 labelled queries in the top 3. The miss is "minimum age of applicant" (page 5 says "above 18 years of age"). Synonym handling is the next step if it matters.
+- **T34:** conflicts found in the PMEGP check: the rule uses `age >= 18`, the guideline says "above 18" (kept, open). The guideline prints no URL; `official_url` is the portal, as instructed, while the PDF was downloaded from the msme.gov.in link. Decide which one to cite.
+- **T35:** `make rulebook-suggest` and `make rulebook-report` run through `$(RUN_WEB)` (docker). They were run directly against a scratch database, not inside the container.
+- **T36:** the four new PDFs (CGTMSE, MUDRA, Stand Up India x2) are not `guidelines.pdf` yet. Stand Up India's brochure page 1 has 60 characters, so it is likely scanned.
+
 ## 5. What is left, and what the next prompt should ask for
+
+**Next prompt:** check the retrieval recall (T33) and the URL decision (T34), then rename the other schemes' PDFs to `guidelines.pdf` and extract them (T36).
 
 **Curator (VPS steps for email sign-in):**
 1. `git pull --ff-only` in `/srv/schemehunter`.
@@ -342,7 +365,7 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 
 **Live checks (about $2 of Claude credit, when the key is set):** T16 three phrasings of Meena's answers (≈ $0.30); T19 the 20 specimen images through real vision (≈ $0.40); T19b the 15 portal messages (≈ $0.01); T14 Ravi's explanation with citations (≈ $0.03); one `demo-reset` rehearsal with `DEMO_CLOCK_SCALE=1440`.
 
-**Next prompt:** run the live checks above, then build T24 (the cost-sheet questionnaire) if real users come next.
+**Earlier next prompt (superseded for PMEGP, T28 is now done):** run the live checks above, then build T24 (the cost-sheet questionnaire) if real users come next.
 
 ## 6. Cost log
 
@@ -352,6 +375,8 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 
 | v0.9 (slices 6–9 + PIN, admin, docs) | **$0.00** | Same: FakeClaude only, no API call made. |
 | v0.10 (email sign-in) | **$0.00** | No model involved; tests use aiosmtpd and the fakes. |
+| Retrieval + PMEGP evidence | **$0.00** | No model call; all retrieval tests use FakeClaude. Full suite 636 passed, 2 skipped, 1 xfailed (deselected Windows script test). |
+| PMEGP audit | **$0.00** | Tests and file edits only; no API call. Full suite: 605 passed, 2 skipped (Postgres on port 52356, `PYTHONUTF8=1`). |
 
 Projected spend from here: one live vision rehearsal (T19) ≈ $0.02 per image; one full persona journey ≈ $0.36; one demo run-through ≈ $0.17.
 

@@ -7,11 +7,34 @@ explains the engine's answer and cites the guideline page.
 ## Adding a scheme
 
 1. Put the official PDF at `sources/<id>/guidelines.pdf` and run `make extract-pages`
-   (writes `sources/<id>/pages/01.txt …`; needs `pdftotext` from poppler-utils on the host).
+   (writes `sources/<id>/pages/01.txt …`; uses `pdftotext -layout` when it is on PATH, else `pypdf`).
 2. Write `schemes/<id>.yaml`. The file name must equal `id`.
 3. Add test profiles to `tests/rules/profiles.yaml` covering PASS, FAIL and UNKNOWN for every new rule,
    with expected results worked out by hand. `pytest tests/rules` must stay at 100%.
-4. When you have checked a rule against the PDF, set `verified: true` and add `page:`.
+4. When you have checked a rule against the PDF, add a row to `sources/<id>/evidence.yaml` with the page and a
+   verbatim passage, and `status: verified`. The test `tests/rules/test_evidence_passages.py` fails if the passage
+   is not on that page. The `verified` flag in the scheme file is separate (see below).
+
+## Retrieval (RAG): finds pages, never decides
+
+`app/rag` indexes the extracted page text (`sources/<id>/pages/NN.txt`) in the `source_chunks` table, rebuilt by
+every sync (`make seed`, `make demo-reset`). It uses Postgres full-text search, with no embeddings and no model.
+
+- `explain_match` sends at most 4 pages: the pages of verified evidence rows first, then the pages search ranks for
+  the result (the scheme name, the deciding rule, and each failing or unknown rule's note and fact names). If search
+  finds nothing, the first 6 pages are sent. The page hints in the scheme files are ignored.
+- `answer_question` gets up to 4 chunks per scheme. A chunk is labelled verified only when its source is complete and
+  its page carries a verified evidence passage; otherwise it is an estimate.
+- Search needs every word of the query first; if nothing matches, any word may match.
+
+Curator commands (read only; they need a synced database):
+
+- `make rulebook-suggest SCHEME=pmegp`: for each material rule without verified evidence, the top 3 candidate pages
+  with a 300-character excerpt. It writes nothing.
+- `make rulebook-report`: per scheme, verified / total material rules, and each verified rule with its page and passage.
+
+Limits: scanned pages (under 200 characters) are written empty and are not read; table text can extract badly
+(the PMEGP subsidy table is checked against the rendered page image, not the text).
 
 ## File shape
 
