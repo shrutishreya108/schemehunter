@@ -32,7 +32,7 @@ def test_meena_three_turns(meena_client, conn, fake_claude) -> None:
     fake_claude.load("meena_onboarding")
 
     r1 = say(client, case_id, "नमस्ते, मुझे सिलाई का काम शुरू करने के लिए पैसे चाहिए")
-    assert r1.status_code == 200 and "आप कितने रुपये का लोन लेना चाहती हैं?" in r1.text
+    assert r1.status_code == 200 and "How much loan do you want?" in r1.text
     page = client.get("/chat").text
     assert 'name="key" value="loan_amount"' in page  # /answers fallback offers the open question
 
@@ -47,8 +47,8 @@ def test_meena_three_turns(meena_client, conn, fake_claude) -> None:
     r3 = say(client, case_id, "क्यों? नियम दिखाइए")
     assert "किशोर" in r3.text
     schemes = client.get("/schemes").text
-    assert "स्रोत बाकी" in schemes and "नियम देखें" not in schemes  # grey "source pending" badge, no link
-    assert "आप PMEGP के लिए आवेदन करने के योग्य हैं" in schemes
+    assert "source pending" in schemes and "नियम देखें" not in schemes  # grey "source pending" badge, no link
+    assert "You qualify to apply for PMEGP" in schemes
 
     runs = conn.execute(
         "select status, steps, estimated_cost_usd from brain_runs where case_id = %s order by started_at",

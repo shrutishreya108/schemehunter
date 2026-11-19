@@ -40,7 +40,7 @@ def weasyprint_available() -> bool:
     return True
 
 
-def render_html(template: str, context: dict[str, Any], lang: str = "hi") -> tuple[str, str]:
+def render_html(template: str, context: dict[str, Any], lang: str = "en") -> tuple[str, str]:
     """Returns (html, language_used). Hindi falls back to English if the Devanagari font is missing."""
     used = lang if lang == "en" or font_usable() else "en"
     if used != lang:
@@ -54,7 +54,7 @@ def render_html(template: str, context: dict[str, Any], lang: str = "hi") -> tup
     return html, used
 
 
-def render(template: str, context: dict[str, Any], lang: str = "hi") -> tuple[bytes, bool]:
+def render(template: str, context: dict[str, Any], lang: str = "en") -> tuple[bytes, bool]:
     """Returns (pdf_bytes, fell_back_to_english)."""
     html, used = render_html(template, context, lang)
     try:

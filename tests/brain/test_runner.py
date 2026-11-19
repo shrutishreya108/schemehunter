@@ -135,7 +135,7 @@ def test_api_failure_is_recorded_politely(seeded, conn, fake_claude) -> None:
 
     fake_claude.create = down
     result = run_brain(seeded["meena"], "x", "chat", conn=conn)
-    assert result.status == "ERROR" and result.user_message.startswith("मैं थोड़ी देर")
+    assert result.status == "ERROR" and result.user_message.startswith("I'll get back")
     assert run_row(conn, result.run_id)["error"] == "ConnectionError"
 
 

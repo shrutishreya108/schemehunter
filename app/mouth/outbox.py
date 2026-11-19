@@ -20,7 +20,7 @@ def notify_user(
 ) -> None:
     """Write the message to the web chat and log one event."""
     case = conn.execute("select language from cases where id = %s", (case_id,)).fetchone()
-    lang = (case or {}).get("language") or "hi"
+    lang = (case or {}).get("language") or "en"
     body = text.get(lang) or text["en"]
     conn.execute(
         "insert into messages (case_id, direction, channel, body, attachments, processed) "

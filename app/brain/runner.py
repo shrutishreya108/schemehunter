@@ -225,7 +225,7 @@ def run_brain(
     case = conn.execute("select id, language, state_code from cases where id = %s", (case_id,)).fetchone()
     if not case:
         raise LookupError(f"case {case_id} not found")
-    lang = case["language"] or "hi"
+    lang = case["language"] or "en"
     reason = deferral_reason(conn, case_id, deadline_related)
     if reason:
         return defer(conn, case_id, task, trigger, reason, lang)

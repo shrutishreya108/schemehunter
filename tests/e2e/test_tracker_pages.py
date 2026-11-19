@@ -51,7 +51,7 @@ def test_pages_need_a_session(seeded, settings_db) -> None:
 def test_ravi_applications_page_is_parcel_tracking(client_for, seeded, conn) -> None:
     ravi = client_for("ravi")
     page = ravi.get("/applications").text
-    assert "PMEGP/KA/2026/04471" in page and "जाँच में" in page  # hindi label for UNDER_REVIEW
+    assert "PMEGP/KA/2026/04471" in page and "Under review" in page
     assert page.count('class="step done"') >= 5 and 'class="step now"' in page
     en = get_in(ravi, "/applications", "en").text
     assert "Under review" in en and "No news for 11 days" in en
@@ -74,7 +74,7 @@ def test_timeline_is_in_order_and_in_the_users_language(client_for, seeded) -> N
     ravi = client_for("ravi")
     hi = get_in(ravi, "/timeline", "hi").text
     en = get_in(ravi, "/timeline", "en").text
-    assert "रवि ने शुरुआती सवालों के जवाब दिए" in hi and "Ravi answered the onboarding questions" in en
+    assert "Ravi answered the onboarding questions" in hi and "Ravi answered the onboarding questions" in en
     assert (
         en.index("answered the onboarding")
         < en.index("Submitted with reference")

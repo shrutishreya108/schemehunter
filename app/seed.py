@@ -98,7 +98,7 @@ def insert_case(conn: psycopg.Connection, persona: dict, now: datetime) -> UUID:
         (
             case_id,
             persona.get("display_name"),
-            persona.get("language", "hi"),
+            persona.get("language", "en"),
             persona.get("state_code"),
             persona.get("email"),
             state,

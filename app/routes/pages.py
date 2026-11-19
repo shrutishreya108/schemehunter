@@ -59,7 +59,7 @@ def safe_back(referer: str | None) -> str:
 @router.get("/lang/{lang}")
 def set_language(lang: str, request: Request) -> RedirectResponse:
     """Hindi/English toggle: cookie for the UI; also the case's language so Claude replies in it."""
-    lang = lang if lang in LANGS else "hi"
+    lang = lang if lang in LANGS else "en"
     from app.access import optional_case_id
 
     case_id = optional_case_id(request)

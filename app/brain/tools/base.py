@@ -17,7 +17,7 @@ class Ctx:
     case_id: str
     conn: psycopg.Connection
     schemes: list[dict]
-    language: str = "hi"
+    language: str = "en"
     state_code: str | None = None
     run_id: str | None = None
     meter: UsageMeter = field(default_factory=UsageMeter)

@@ -12,7 +12,7 @@ from app.i18n import LANGS, t
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
 
 
-def lang_for(request: Request, case_language: str | None = None, default: str = "hi") -> str:
+def lang_for(request: Request, case_language: str | None = None, default: str = "en") -> str:
     lang = request.cookies.get(LANG_COOKIE) or case_language or default
     return lang if lang in LANGS else default
 

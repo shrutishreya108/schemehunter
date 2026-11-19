@@ -148,7 +148,7 @@ def resolve_case(conn: psycopg.Connection, challenge: dict) -> str | None:
     case = conn.execute(
         "insert into cases (language, email, state, consent_version, consent_at) "
         "values (%s, %s, 'ONBOARDING', %s, now()) returning id",
-        (challenge["lang"] or "hi", email, CONSENT_VERSION),
+        (challenge["lang"] or "en", email, CONSENT_VERSION),
     ).fetchone()
     won = conn.execute(
         "insert into identities (case_id, kind, value_norm, verified_at) values (%s, 'email', %s, now()) "

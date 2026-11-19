@@ -52,7 +52,7 @@ def assemble_case_file(
 ) -> dict[str, Any]:
     """Pure assembly from rows (unit-testable without Postgres)."""
     now = now or datetime.now(UTC)
-    lang = case.get("language") or "hi"
+    lang = case.get("language") or "en"
     missing = sorted({f for m in matches for f in (m.get("missing_facts") or [])})
     return {
         "today": now.date().isoformat(),

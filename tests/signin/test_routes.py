@@ -91,7 +91,7 @@ def test_new_person_signs_up_with_consent_and_gets_one_case(app_client, seeded, 
     c = app_client()
     start(c, "fresh.person@example.in")
     assert c.get("/signin/code").status_code == 200
-    assert "agree" in c.get("/signin/code").text.lower() or "सहमत" in c.get("/signin/code").text
+    assert "agree" in c.get("/signin/code").text.lower()
     code = last_code(app_client.server)
     refused = c.post("/signin/code", data={"code": code})  # no consent ticked
     assert (
@@ -123,7 +123,7 @@ def test_five_wrong_codes_end_the_challenge(app_client, seeded, conn) -> None:
     for _ in range(5):
         assert c.post("/signin/code", data={"code": wrong, "consent": "yes"}).status_code == 400
     r = c.post("/signin/code", data={"code": code, "consent": "yes"})  # the right one is dead now
-    assert r.status_code == 400 and "didn't work" in r.text or "सही नहीं" in r.text
+    assert r.status_code == 400 and "Check the newest email" in r.text
 
 
 def test_resend_within_cooldown_sends_nothing_new(app_client, seeded) -> None:

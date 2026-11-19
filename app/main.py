@@ -49,7 +49,7 @@ async def friendly_http_errors(request: Request, exc: HTTPException):
     if wants_html and exc.status_code in (401, 403, 404) and not request.url.path.startswith("/admin"):
         from app.routes.render import render
 
-        return render(request, "error.html", "hi", message=str(exc.detail), status_code=exc.status_code)
+        return render(request, "error.html", "en", message=str(exc.detail), status_code=exc.status_code)
     return await http_exception_handler(request, exc)
 
 
@@ -61,7 +61,7 @@ async def friendly_server_error(request: Request, exc: Exception):
     if wants_html and not request.url.path.startswith("/admin"):
         from app.routes.render import render
 
-        return render(request, "error.html", "hi", status_code=500)
+        return render(request, "error.html", "en", status_code=500)
     return JSONResponse({"error": "something went wrong"}, status_code=500)
 
 

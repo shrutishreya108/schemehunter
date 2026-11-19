@@ -63,7 +63,7 @@ def test_upload_shows_green_tick_and_masks(web, seeded, conn, fake_claude) -> No
     meena = web("meena")
     vision(fake_claude)
     r = post_file(meena, seeded["meena"], "aadhaar_clear_1.jpg", "aadhaar")
-    assert r.status_code == 200 and 'class="chip ok"' in r.text and "बिल्कुल ठीक है" in r.text
+    assert r.status_code == 200 and 'class="chip ok"' in r.text and "Looks good." in r.text
     assert "1234 5678 9012" not in r.text
     run = conn.execute(
         "select trigger, status, estimated_cost_usd from brain_runs where case_id = %s", (seeded["meena"],)
@@ -75,7 +75,7 @@ def test_blurry_upload_asks_for_a_retake_with_a_reason(web, seeded, fake_claude)
     meena = web("meena")
     vision(fake_claude, quality_issues=["blur"])
     r = post_file(meena, seeded["meena"], "aadhaar_blurry.jpg", "aadhaar")
-    assert 'class="chip retake"' in r.text and "धुंधली है" in r.text
+    assert 'class="chip retake"' in r.text and "blurry" in r.text
 
 
 def test_non_htmx_upload_redirects_back(web, seeded, fake_claude) -> None:
@@ -103,7 +103,7 @@ def test_bad_upload_shows_a_friendly_error(web, seeded) -> None:
         files={"file": ("a.gif", b"GIF89a", "image/gif")},
         headers={"X-CSRF-Token": csrf_token(seeded["meena"]), "HX-Request": "true"},
     )
-    assert r.status_code == 200 and "JPEG, PNG या PDF" in r.text
+    assert r.status_code == 200 and "JPEG, PNG or PDF" in r.text
 
 
 def test_download_decrypts_in_memory_with_no_store(web, seeded, conn, fake_claude) -> None:
@@ -151,4 +151,4 @@ def test_over_budget_stores_the_paper_but_defers_the_vision_check(
 def test_documents_page_lists_needed_papers_for_active_applications(web, seeded, conn) -> None:
     ravi = web("ravi")
     page = ravi.get("/documents").text
-    assert "PMEGP" in page and "आधार" in page and "चाहिए" in page
+    assert "PMEGP" in page and "Aadhaar" in page and "Needed" in page
