@@ -29,3 +29,12 @@ def test_no_template_or_text_mentions_the_personal_link_or_pin() -> None:
             if needle in text:
                 hits.append((str(f.relative_to(APP)), needle))
     assert not hits, hits
+
+
+def test_consent_text_matches_what_the_app_does() -> None:
+    from app.routes.signin import CONSENT_TEXT
+
+    en, hi = CONSENT_TEXT["en"], CONSENT_TEXT["hi"]
+    assert "delete them at any time" not in en.lower()  # deletion is not built
+    assert "encrypted" in en and "90 days" in en and "Anthropic" in en
+    assert "एन्क्रिप्टेड" in hi and "90 दिन" in hi and "Anthropic" in hi

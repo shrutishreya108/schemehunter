@@ -51,8 +51,19 @@ MSG = {
     },
 }
 CONSENT_TEXT = {
-    "en": "I agree that Scheme Hunter keeps my details and papers to help with my applications. I can delete them at any time.",
-    "hi": "मैं सहमत हूँ कि Scheme Hunter मेरी जानकारी और कागज़ात मेरे आवेदनों में मदद के लिए रखेगा। मैं इन्हें कभी भी हटवा सकता हूँ।",
+    "en": (
+        "I agree that Scheme Hunter stores my answers and the papers I upload, so it can help with my applications. "
+        "Uploaded papers are stored in encrypted form. They are kept while my case is open; if my case is closed, "
+        "they are removed after 90 days. Photos of my Aadhaar or passbook are sent to an AI service (Anthropic) "
+        "only if I allow it for that upload. I cannot delete my papers in the app yet, but I can ask "
+        "support@schemehunter.com to delete them."
+    ),
+    "hi": (
+        "मैं सहमत हूँ कि Scheme Hunter मेरे जवाब और मेरे अपलोड किए गए कागज़ मेरे आवेदनों में मदद के लिए रखेगा। "
+        "अपलोड किए गए कागज़ एन्क्रिप्टेड रूप में रखे जाते हैं। मेरा केस खुला है तो वे रहेंगे; केस बंद होने पर "
+        "90 दिन बाद हटा दिए जाते हैं। आधार या पासबुक की फ़ोटो AI सेवा (Anthropic) को तभी भेजी जाती है जब मैं उस "
+        "अपलोड के लिए अनुमति दूँ। अभी मैं ऐप में कागज़ नहीं हटा सकता, पर support@schemehunter.com से हटाने के लिए कह सकता हूँ।"
+    ),
 }
 
 
