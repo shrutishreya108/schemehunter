@@ -51,6 +51,8 @@ def test_at_most_four_pages_and_under_a_quarter_of_the_text(seeded, conn, fake_c
     ]
     assert 1 <= len(docs) <= em.MAX_PAGES
     sent_chars = sum(len(d["source"]["data"]) for d in docs)
+    whole = _whole_document_chars()
+    print(f"\nexplain_match sent {len(docs)} pages, {sent_chars} chars of {whole} ({sent_chars / whole:.1%})")
     assert sent_chars < 0.25 * _whole_document_chars(), (sent_chars, _whole_document_chars())
     assert out["pages"] == sorted(out["pages"]) and len(out["pages"]) == len(docs)
 
