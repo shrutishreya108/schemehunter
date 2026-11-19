@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
-from app.routes import admin, approvals, cases, chat, contact, documents, pages
+from app.routes import admin, approvals, cases, chat, contact, documents, pages, signin
 
 log = structlog.get_logger()
 
@@ -30,7 +30,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(title="Scheme Hunter", lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
-for module in (pages, chat, contact, documents, approvals, cases, admin):
+for module in (pages, signin, chat, contact, documents, approvals, cases, admin):
     app.include_router(module.router)
 
 
@@ -38,6 +38,14 @@ for module in (pages, chat, contact, documents, approvals, cases, admin):
 async def friendly_http_errors(request: Request, exc: HTTPException):
     """Browsers get a readable page for 401/403/404 on user pages; APIs and /admin keep the default."""
     wants_html = "text/html" in request.headers.get("accept", "")
+    if wants_html and exc.status_code == 401 and not request.url.path.startswith("/admin"):
+        from fastapi.responses import RedirectResponse
+
+        from app.access import SESSION_COOKIE
+
+        resp = RedirectResponse("/signin", status_code=303)  # anonymous or stale session: sign in again
+        resp.delete_cookie(SESSION_COOKIE)
+        return resp
     if wants_html and exc.status_code in (401, 403, 404) and not request.url.path.startswith("/admin"):
         from app.routes.render import render
 

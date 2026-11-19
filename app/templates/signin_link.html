@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("link_title") }}</h1>
+{% if error %}
+  <p class="error">{{ error }}</p>
+  <p><a href="/signin">{{ t("link_new") }}</a></p>
+{% else %}
+  <p>{{ t("link_continue_as") }} <b>{{ email }}</b></p>
+  {% if switch %}<p class="notice">{{ switch_text }}</p>{% endif %}
+  <form class="card upload" method="post" action="/signin/link">
+    <input type="hidden" name="t" value="{{ token }}">
+    {% if consent_needed %}
+    <label class="consent"><input type="checkbox" name="consent" value="yes"> {{ consent_text }}</label>
+    {% endif %}
+    <button type="submit">{{ t("link_continue") }}</button>
+  </form>
+{% endif %}
+{% endblock %}

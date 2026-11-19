@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("signin_title") }}</h1>
+<p>{{ t("signin_intro") }}</p>
+<ul class="signin-points">
+  <li>{{ t("signin_point_1") }}</li>
+  <li>{{ t("signin_point_2") }}</li>
+  <li>{{ t("signin_point_3") }}</li>
+</ul>
+<p class="muted">{{ t("signin_no_promise") }}</p>
+
+<form class="card upload" method="post" action="/signin" autocomplete="on">
+  <label>{{ t("signin_email_label") }}
+    <input type="email" name="email" value="{{ email }}" autocomplete="email" inputmode="email" required maxlength="254" autofocus>
+  </label>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <input type="hidden" name="form_token" value="{{ token }}">
+  <label class="hp" aria-hidden="true">Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+  <button type="submit">{{ t("signin_send_code") }}</button>
+</form>
+<p class="muted">{{ t("signin_no_password") }}</p>
+{% endblock %}

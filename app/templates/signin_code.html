@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("code_title") }}</h1>
+<p>{{ t("code_sent_to") }} <b>{{ masked }}</b>.</p>
+<p class="muted">{{ t("code_check_spam") }}</p>
+
+<form class="card upload" method="post" action="/signin/code">
+  <label>{{ t("code_label") }}
+    <input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,8}" maxlength="8" required autofocus>
+  </label>
+  {% if consent_needed %}
+  <label class="consent"><input type="checkbox" name="consent" value="yes"> {{ consent_text }}</label>
+  {% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <button type="submit">{{ t("code_open") }}</button>
+</form>
+
+<div class="row-actions">
+  <form method="post" action="/signin/resend" class="inline-form">
+    <button type="submit" class="secondary">{{ t("code_resend") }}</button>
+  </form>
+  <a href="/signin/start-over">{{ t("code_wrong_email") }}</a>
+</div>
+{% endblock %}

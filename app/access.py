@@ -103,15 +103,23 @@ def rotate_link(conn: psycopg.Connection, case_id: str) -> str:
     return token
 
 
+def case_exists(case_id: str) -> bool:
+    from app.db import connect
+
+    with connect() as conn:
+        return conn.execute("select 1 from cases where id = %s", (case_id,)).fetchone() is not None
+
+
 def current_case_id(request: Request) -> str:
     case_id = read_session(request.cookies.get(SESSION_COOKIE))
-    if not case_id:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Please open your personal Scheme Hunter link.")
+    if not case_id or not case_exists(case_id):  # a cookie for a deleted case is just signed out
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Please sign in.")
     return case_id
 
 
 def optional_case_id(request: Request) -> str | None:
-    return read_session(request.cookies.get(SESSION_COOKIE))
+    case_id = read_session(request.cookies.get(SESSION_COOKIE))
+    return case_id if case_id and case_exists(case_id) else None
 
 
 # ---------------------------------------------------------------- CSRF
