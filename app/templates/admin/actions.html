@@ -4,6 +4,11 @@
 <body class="admin">
 {% include "admin/nav.html" %}
 <h1>Pending actions</h1>
+<form method="post" action="/admin/cases/" class="adminform" onsubmit="this.action='/admin/cases/'+this.case_id.value.trim()+'/signin-link'">
+  <p class="muted">Break-glass: issue a one-time sign-in link for a case (someone who lost email access).</p>
+  <input type="text" name="case_id" placeholder="case id" required pattern="[0-9a-fA-F-]{36}">
+  <button type="submit">Issue link</button>
+</form>
 <h2>Needs the curator (failed sends and blocked drafts)</h2>
 <table>
   <thead><tr><th>Created</th><th>Case</th><th>Kind</th><th>Status</th><th>Tries</th><th>Error</th></tr></thead>
@@ -17,6 +22,14 @@
   <thead><tr><th>Created</th><th>Case</th><th>Kind</th><th>Code</th></tr></thead>
   <tbody>
   {% for a in waiting %}<tr><td>{{ a.created_at.strftime("%Y-%m-%d %H:%M") }}</td><td>{{ (a.case_id|string)[:8] }}</td><td>{{ a.kind }}</td><td>{{ a.short_code }}</td></tr>
+  {% else %}<tr><td colspan="4">None.</td></tr>{% endfor %}
+  </tbody>
+</table>
+<h2>Sign-in emails that failed (last 7 days)</h2>
+<table>
+  <thead><tr><th>Created</th><th>Purpose</th><th>Address</th><th>Error</th></tr></thead>
+  <tbody>
+  {% for f in sign_in_failures %}<tr class="error"><td>{{ f.created_at.strftime("%Y-%m-%d %H:%M") }}</td><td>{{ f.purpose }}</td><td>{{ f.masked }}</td><td>{{ f.send_error }}</td></tr>
   {% else %}<tr><td colspan="4">None.</td></tr>{% endfor %}
   </tbody>
 </table>

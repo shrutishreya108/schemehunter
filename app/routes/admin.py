@@ -1,12 +1,18 @@
 """Curator pages behind basic auth. /admin/runs: per-run cost, running total, today vs DAILY_BUDGET_USD."""
 
-from fastapi import APIRouter, Depends, Request
+from uuid import UUID
 
-from app.access import require_admin
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+
+from app.access import rate_limit, require_admin
 from app.brain.runner import day_start
 from app.config import get_settings
 from app.db import connect
+from app.events import log_event
+from app.i18n import bilingual
 from app.routes.render import render
+from app.signin import challenges as signin_challenges
+from app.signin.emailnorm import mask_email
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin)])
 
@@ -80,4 +86,57 @@ def actions(request: Request):
             "select created_at, from_addr, body from messages where channel = 'web' and direction = 'in' "
             "and case_id is null and processed = false order by created_at desc limit 100"
         ).fetchall()
-    return render(request, "admin/actions.html", "en", problems=problems, waiting=waiting, unsent=unsent)
+        sign_in_failures = conn.execute(
+            "select created_at, purpose, email_norm, send_error from login_challenges "
+            "where send_error is not null and created_at > now() - interval '7 days' "
+            "order by created_at desc limit 100"
+        ).fetchall()
+    failures = [{**r, "masked": mask_email(r["email_norm"])} for r in sign_in_failures]
+    return render(
+        request,
+        "admin/actions.html",
+        "en",
+        problems=problems,
+        waiting=waiting,
+        unsent=unsent,
+        sign_in_failures=failures,
+    )
+
+
+@router.post("/cases/{case_id}/signin-link")
+def issue_signin_link(request: Request, case_id: str, background: BackgroundTasks):
+    """Break-glass for someone who lost email access: a one-time link, valid 60 minutes (LLD signin §6).
+
+    The link is shown once on this page. If the case has an address, it is also emailed in the background.
+    """
+    from app.routes.signin import _send_later
+
+    try:
+        UUID(case_id)
+    except ValueError:
+        raise HTTPException(404, "case not found") from None
+    with connect() as conn:
+        case = conn.execute("select email from cases where id = %s", (case_id,)).fetchone()
+        if not case:
+            raise HTTPException(404, "case not found")
+        if not rate_limit(conn, "admin:signin-link", 10, 3600):
+            raise HTTPException(429, "too many links; wait an hour")
+        email_norm = case["email"] or "no-email@invalid.example"
+        row, _, token = signin_challenges.create_challenge(conn, email_norm, "admin", "en", case_id=case_id)
+        log_event(
+            conn,
+            case_id,
+            "system",
+            "ADMIN_SIGNIN_LINK",
+            bilingual(
+                "A one-time sign-in link was issued by the curator", "क्यूरेटर ने एक बार का साइन-इन लिंक जारी किया"
+            ),
+            payload={"challenge_id": str(row["id"])},  # ids only: no token, no address
+        )
+    if case["email"]:
+        background.add_task(_send_later, row["id"], case["email"], None, token, "en")
+    link = f"{get_settings().APP_BASE_URL.rstrip('/')}/signin/link?t={token}"
+    shown = mask_email(case["email"]) if case["email"] else "(no email on file)"
+    resp = render(request, "admin/case_link.html", "en", link=link, shown=shown)
+    resp.background = background
+    return resp

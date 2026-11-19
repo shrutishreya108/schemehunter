@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Sign-in link: Scheme Hunter admin</title>
+<link rel="stylesheet" href="/static/app.css"></head>
+<body class="admin">
+{% include "admin/nav.html" %}
+<h1>One-time sign-in link</h1>
+<p>Case email: <b>{{ shown }}</b>. Valid for 60 minutes, usable once. Copy it now: it is not shown again.</p>
+<p><code>{{ link }}</code></p>
+<p class="muted">If the case has an email, the same link was sent there too.</p>
+</body></html>
