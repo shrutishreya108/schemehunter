@@ -3,7 +3,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.access import csrf_token, demo_link_token
+from app.access import SESSION_COOKIE, csrf_token, sign_session
 
 pytestmark = pytest.mark.db
 
@@ -16,7 +16,7 @@ def meena_client(seeded, settings_db, tmp_path, monkeypatch):
     monkeypatch.setenv("RULEBOOK_SOURCES_DIR", str(tmp_path))  # no guideline pages → "source pending"
     get_settings.cache_clear()
     with TestClient(app) as client:
-        assert client.get(f"/c/{demo_link_token('meena')}", follow_redirects=False).status_code == 303
+        client.cookies.set(SESSION_COOKIE, sign_session(seeded["meena"]))
         yield client, seeded["meena"]
     get_settings.cache_clear()
 
@@ -96,9 +96,8 @@ def test_chat_requires_session_and_csrf(seeded, settings_db) -> None:
 
     with TestClient(app) as client:
         assert client.post("/chat", data={"text": "hi"}).status_code == 401
-        client.get(f"/c/{demo_link_token('meena')}")
+        client.cookies.set(SESSION_COOKIE, sign_session(seeded["meena"]))
         assert client.post("/chat", data={"text": "hi"}, headers={"X-CSRF-Token": "wrong"}).status_code == 403
-        assert client.get("/c/not-a-real-token").status_code == 404
 
 
 def test_answers_fallback_costs_nothing(meena_client, conn, fake_claude) -> None:

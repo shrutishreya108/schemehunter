@@ -327,3 +327,5 @@ button.secondary { background: var(--paper); color: var(--ink); border: 1px soli
 .card h3 { margin: 0 0 .3rem; font-size: 1.05rem; }
 .benefit { font-weight: 600; }
 @media (max-width: 30rem) { .summary { grid-template-columns: 1fr; } }
+
+.linklike { background: none; border: 0; box-shadow: none; color: var(--accent); padding: .3rem .65rem; font-size: .9rem; font-weight: 600; }

@@ -6,26 +6,7 @@ from urllib.parse import urlsplit
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
-from app.access import (
-    LANG_COOKIE,
-    PIN_COOKIE,
-    PIN_PENDING_MINUTES,
-    PIN_TRIES,
-    SESSION_COOKIE,
-    SESSION_DAYS,
-    case_for_token,
-    check_csrf,
-    check_pin,
-    client_ip,
-    current_case_id,
-    rate_limit,
-    read_pin_pending,
-    set_pin,
-    sign_pin_pending,
-    sign_session,
-    valid_pin_format,
-)
-from app.config import get_settings
+from app.access import LANG_COOKIE, current_case_id
 from app.db import connect
 from app.i18n import LANGS
 from app.routes.render import lang_for, render
@@ -66,102 +47,6 @@ def dashboard(request: Request, case_id: Annotated[str, Depends(current_case_id)
         open_apps=open_apps,
         waiting=waiting,
     )
-
-
-@router.get("/c/{token}")
-def open_link(token: str, request: Request):
-    with connect() as conn:
-        if not rate_limit(conn, f"link:{client_ip(request)}", 20, 60):
-            return render(
-                request,
-                "error.html",
-                "hi",
-                message="Too many attempts. Try again in a minute.",
-                status_code=429,
-            )
-        case = case_for_token(conn, token)
-    if not case:
-        return render(
-            request, "error.html", "hi", message="This link is not valid any more.", status_code=404
-        )
-    if case.get("pin_hash"):  # a PIN is set: no session until it is entered on this device
-        resp = RedirectResponse("/pin", status_code=303)
-        resp.set_cookie(
-            PIN_COOKIE,
-            sign_pin_pending(str(case["id"])),
-            max_age=PIN_PENDING_MINUTES * 60,
-            httponly=True,
-            secure=get_settings().APP_BASE_URL.startswith("https"),
-            samesite="lax",
-        )
-        return resp
-    return start_session(str(case["id"]))
-
-
-def start_session(case_id: str, to: str = "/") -> RedirectResponse:
-    resp = RedirectResponse(to, status_code=303)
-    resp.set_cookie(
-        SESSION_COOKIE,
-        sign_session(case_id),
-        max_age=SESSION_DAYS * 86400,
-        httponly=True,
-        secure=get_settings().APP_BASE_URL.startswith("https"),
-        samesite="lax",
-    )
-    resp.delete_cookie(PIN_COOKIE)
-    return resp
-
-
-@router.get("/pin")
-def pin_page(request: Request):
-    case_id = read_pin_pending(request.cookies.get(PIN_COOKIE))
-    if not case_id:
-        raise HTTPException(401, "Please open your personal Scheme Hunter link.")
-    return render(request, "pin.html", lang_for(request), None, error=False, locked=False)
-
-
-@router.post("/pin")
-def pin_submit(request: Request, pin: Annotated[str, Form()] = ""):
-    case_id = read_pin_pending(request.cookies.get(PIN_COOKIE))
-    if not case_id:
-        raise HTTPException(401, "Please open your personal Scheme Hunter link.")
-    with connect() as conn:
-        ok = check_pin(conn, case_id, pin.strip())
-        locked = (
-            not ok
-            and conn.execute(
-                "select count from rate_limits where key = %s order by window_start desc limit 1",
-                (f"pin:{case_id}",),
-            ).fetchone()
-        )
-    if ok:
-        return start_session(case_id)
-    return render(
-        request,
-        "pin.html",
-        lang_for(request),
-        None,
-        error=True,
-        locked=bool(locked and locked["count"] >= PIN_TRIES),
-        status_code=403,
-    )
-
-
-@router.post("/pin/set")
-def pin_set(
-    request: Request,
-    case_id: Annotated[str, Depends(current_case_id)],
-    pin: Annotated[str, Form()] = "",
-    csrf: Annotated[str | None, Form()] = None,
-):
-    """Set a 4-digit PIN, or clear it by sending an empty value."""
-    check_csrf(case_id, request.headers.get("x-csrf-token") or csrf)
-    pin = pin.strip()
-    if pin and not valid_pin_format(pin):
-        raise HTTPException(422, "PIN must be 4 digits")
-    with connect() as conn:
-        set_pin(conn, case_id, pin or None)
-    return RedirectResponse(safe_back(request.headers.get("referer")), status_code=303)
 
 
 def safe_back(referer: str | None) -> str:
@@ -313,8 +198,6 @@ def application_detail(
 ):
     from uuid import UUID
 
-    from fastapi import HTTPException
-
     from app.tracker.store import state_label
 
     try:
@@ -373,8 +256,6 @@ def user_move(
 ):
     """The user's own buttons: "I pressed submit" and "I sent the papers". Same guarded transition as the agent's."""
     from uuid import UUID
-
-    from fastapi import HTTPException
 
     from app.access import check_csrf
     from app.tracker.states import IllegalTransition, transition

@@ -5,7 +5,7 @@ from uuid import UUID
 import pytest
 from fastapi.testclient import TestClient
 
-from app.access import csrf_token, demo_link_token
+from app.access import SESSION_COOKIE, csrf_token, sign_session
 from app.config import get_settings
 from app.guard import actions
 
@@ -24,7 +24,7 @@ def web(seeded, settings_db):
         c = TestClient(app)
         c.__enter__()
         clients.append(c)
-        assert c.get(f"/c/{demo_link_token(persona)}", follow_redirects=False).status_code == 303
+        c.cookies.set(SESSION_COOKIE, sign_session(seeded[persona]))
         return c
 
     yield login

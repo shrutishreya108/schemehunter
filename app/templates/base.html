@@ -11,7 +11,8 @@
 <body {% if csrf %}hx-headers='{"X-CSRF-Token": "{{ csrf }}"}'{% endif %}>
   <header>
     <a class="brand" href="/">{{ t("app_name") }}</a>
-    {% if case_id %}<nav><a href="/">{{ t("nav_home") }}</a> · <a href="/chat">{{ t("nav_chat") }}</a> · <a href="/schemes">{{ t("nav_schemes") }}</a> · <a href="/documents">{{ t("nav_docs") }}</a> · <a href="/applications">{{ t("nav_apps") }}</a> · <a href="/approvals">{{ t("nav_approvals") }}</a> · <a href="/timeline">{{ t("nav_timeline") }}</a></nav>{% endif %}
+    {% if case_id %}<nav><a href="/">{{ t("nav_home") }}</a> · <a href="/chat">{{ t("nav_chat") }}</a> · <a href="/schemes">{{ t("nav_schemes") }}</a> · <a href="/documents">{{ t("nav_docs") }}</a> · <a href="/applications">{{ t("nav_apps") }}</a> · <a href="/approvals">{{ t("nav_approvals") }}</a> · <a href="/timeline">{{ t("nav_timeline") }}</a>
+      <form class="inline-form" method="post" action="/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" class="linklike">{{ t("logout") }}</button></form></nav>{% endif %}
     <span class="lang-toggle">
       {% if lang == "hi" %}<a href="/lang/en">English</a>{% else %}<a href="/lang/hi">हिन्दी</a>{% endif %}
     </span>
