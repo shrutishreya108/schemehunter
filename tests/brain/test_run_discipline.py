@@ -295,3 +295,38 @@ def test_a_promise_in_fallback_text_is_replaced_by_the_safe_sentence(seeded, con
     assert conn.execute(
         "select count(*) as n from messages where case_id = %s and body = %s", (seeded["meena"], promise)
     ).fetchone()["n"] == 0
+
+
+def test_a_waiting_message_keeps_the_page_pending_even_before_any_run_row_exists(seeded, conn) -> None:
+    """Regression: the page went quiet while a message waited for the case lock, before its run row existed."""
+    from app.routes.chat import gave_up, is_pending, load_chat
+
+    case = seeded["meena"]
+    conn.execute(
+        "insert into messages (case_id, direction, channel, body, processed) values (%s, 'in', 'web', 'Why does PMEGP fit me?', true)",
+        (case,),
+    )
+    conn.commit()
+    msgs = load_chat(conn, case)
+    assert is_pending(conn, case, msgs) is True and gave_up(conn, case, msgs) is False
+
+
+def test_form_answers_do_not_start_the_wait(seeded, conn) -> None:
+    from app.routes.chat import is_pending, load_chat
+
+    case = seeded["meena"]
+    conn.execute(
+        "insert into messages (case_id, direction, channel, body, processed, attachments) "
+        "values (%s, 'in', 'web', 'Yes', true, '{\"kind\": \"answer\"}')",
+        (case,),
+    )
+    conn.commit()
+    assert is_pending(conn, case, load_chat(conn, case)) is False
+
+
+def test_markdown_symbols_are_not_shown_to_the_user() -> None:
+    from app.routes.plain import plain_text
+
+    assert plain_text("**PMEGP** fits, and *four schemes* too.") == "PMEGP fits, and four schemes too."
+    assert plain_text("Price 5*3 = 15, a_b_c stay.") == "Price 5*3 = 15, a_b_c stay."
+    assert plain_text("## Heading\n- one\n- two") == "Heading\n• one\n• two"

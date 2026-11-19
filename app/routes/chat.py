@@ -24,6 +24,7 @@ from app.config import get_settings
 from app.db import connect, jsonb
 from app.events import log_event
 from app.i18n import bilingual
+from app.routes.plain import plain_text
 from app.routes.render import lang_for, render
 from app.rules.loader import load_schemes
 
@@ -31,7 +32,6 @@ router = APIRouter()
 # one thread per waiting run; a few cases can be busy at once without starving the others
 _runs = ThreadPoolExecutor(max_workers=4, thread_name_prefix="chat-brain")
 MAX_TEXT = 1000
-RECENT_IN_S = 20  # a user message this young counts as pending even before a run row exists
 POLL_EXTRA_S = 15  # the page keeps polling this long beyond the run deadline
 
 
@@ -41,6 +41,7 @@ def load_chat(conn, case_id: str) -> list[dict]:
         "and channel = 'web' order by created_at desc limit 50",
         (case_id,),
     ).fetchall()
+    rows = [dict(r, body=plain_text(r["body"])) if r["direction"] == "out" else r for r in rows]
     return list(reversed(rows))
 
 
@@ -61,37 +62,31 @@ def _age(msg: dict) -> float:
     return (datetime.now(UTC) - msg["created_at"]).total_seconds()
 
 
-def _run_open(conn, case_id: str) -> bool:
-    """A run for this case has no end time and started within the run deadline (plus a margin)."""
-    window = get_settings().CHAT_RUN_DEADLINE_S + POLL_EXTRA_S
-    row = conn.execute(
-        "select 1 from brain_runs where case_id = %s and ended_at is null "
-        "and started_at > now() - make_interval(secs => %s) limit 1",
-        (case_id, window),
-    ).fetchone()
-    return row is not None
+def _unanswered(msgs: list[dict]) -> dict | None:
+    """The newest message, if it is the user's chat message and nothing came after it. Form answers do not count."""
+    if not msgs:
+        return None
+    last = msgs[-1]
+    if last["direction"] != "in" or (last.get("attachments") or {}).get("kind") == "answer":
+        return None
+    return last
+
+
+def _window_s() -> float:
+    return get_settings().CHAT_RUN_DEADLINE_S + POLL_EXTRA_S
 
 
 def is_pending(conn, case_id: str, msgs: list[dict]) -> bool:
-    """Keep polling: a run is open, or the newest message is the user's and was just sent."""
-    if _run_open(conn, case_id):
-        return True
-    return bool(msgs) and msgs[-1]["direction"] == "in" and _age(msgs[-1]) < RECENT_IN_S
+    """Keep polling while the user's last message is still waiting for its reply (in the queue, in the lock, or in a
+    run). The message itself is the signal, so the page never goes quiet before a run row exists."""
+    last = _unanswered(msgs)
+    return last is not None and _age(last) < _window_s()
 
 
 def gave_up(conn, case_id: str, msgs: list[dict]) -> bool:
-    """The newest message is the user's, the wait is over, no run is open, and a chat run did start for it but
-    nothing was written back. The page then says so, instead of staying silent."""
-    if not msgs or msgs[-1]["direction"] != "in":
-        return False
-    window = get_settings().CHAT_RUN_DEADLINE_S + POLL_EXTRA_S
-    if _age(msgs[-1]) < window or _run_open(conn, case_id):
-        return False
-    row = conn.execute(
-        "select 1 from brain_runs where case_id = %s and trigger = 'chat' and started_at >= %s limit 1",
-        (case_id, msgs[-1]["created_at"]),
-    ).fetchone()
-    return row is not None
+    """The user's last message waited the whole window and nothing was written back: say so, do not stay silent."""
+    last = _unanswered(msgs)
+    return last is not None and _age(last) >= _window_s()
 
 
 def case_lang(conn, case_id: str) -> str | None:
@@ -175,9 +170,9 @@ def post_answers(
                 pending=False, gave_up=False,
             )
         conn.execute(
-            "insert into messages (case_id, direction, channel, body, processed) "
-            "values (%s, 'in', 'web', %s, true)",
-            (case_id, value),
+            "insert into messages (case_id, direction, channel, body, processed, attachments) "
+            "values (%s, 'in', 'web', %s, true, %s)",
+            (case_id, value, jsonb({"kind": "answer"})),
         )
         conn.execute(
             "insert into profile_answers (case_id, key, value, source) values (%s, %s, %s, 'typed') "
