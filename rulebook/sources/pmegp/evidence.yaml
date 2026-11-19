@@ -1,9 +1,49 @@
-# Evidence that a rule matches the official document. A rule counts as verified only when a row says
-# status: verified AND the source in source.yaml is complete. Nothing here yet.
-evidence: []
-#  - rule_id: age
-#    source_id: pmegp-guidelines-<year>
-#    page: 3
-#    passage: "<the sentence copied from the document>"
-#    status: verified
-#    last_verified: 2000-01-01
+# Evidence for PMEGP rules. Page = PDF page number of guidelines.pdf (printed page numbers are different).
+# A row is "verified" only when its passage is a verbatim quote of that page (checked by tests/rules/test_evidence_passages.py)
+# and the source in source.yaml is complete. Passages are copied from the extracted page text, whitespace collapsed.
+evidence:
+  - rule_id: age
+    source_id: pmegp-om-2023-12-07
+    page: 5
+    passage: "1. Any individual, above 18 years of age"
+    status: verified
+    last_verified: 2026-11-19
+  - rule_id: new_only
+    source_id: pmegp-om-2023-12-07
+    page: 6
+    passage: "Assistance under the scheme is available only for new projects sanctioned specifically under the PMEGP."
+    status: verified
+    last_verified: 2026-11-19
+  - rule_id: cost_cap
+    source_id: pmegp-om-2023-12-07
+    page: 5
+    passage: "The maximum cost of the project/unit admissible for Margin Money subsidy under Manufacturing sector is Rs. 50 lakhs."
+    status: verified
+    last_verified: 2026-11-19
+  - rule_id: education
+    source_id: pmegp-om-2023-12-07
+    page: 6
+    passage: "For setting up of project costing above Rs.10 lakh in the Manufacturing sector and above Rs. 5 lakh in the Business /Service sector, the beneficiaries should possess at least VIII standard pass educational qualification."
+    status: verified
+    last_verified: 2026-11-19
+  # Not verified: the subsidy table text extracts with its columns mangled (page 4); it was read from the image, not quoted.
+  - rule_id: benefit
+    source_id: pmegp-om-2023-12-07
+    page: 4
+    passage: "Table 3.2(i) (rendered page): General Category - beneficiary's contribution 10%, subsidy Urban 15%, Rural 25%. Special Category (including SC, ST, OBC, Minorities, Women, Ex-Servicemen, Transgenders, Differently abled, NER, Aspirational Districts, Hill and Border areas) - beneficiary's contribution 05%, subsidy Urban 25%, Rural 35%."
+    status: unverified
+  - rule_id: edp
+    source_id: pmegp-om-2023-12-07
+    page: 18
+    passage: "EDP training is mandatory for claiming the Margin Money (subsidy). ... No EDP training will be mandatory for projects up to Rs. 2 Lakh."
+    status: unverified
+  - rule_id: edp
+    source_id: pmegp-om-2023-12-07
+    page: 9
+    passage: "The applicants, who have already undergone training of at least 10 Days (for offline mode)/ 60 hours (for online mode) under Entrepreneurship Development Programme (EDP) / Skill Development Programme (SDP) / Entrepreneurship cum Skill Development Programme (ESDP) or Vocational Training (VT) need not undergo EDP training again."
+    status: unverified
+  - rule_id: documents
+    source_id: pmegp-om-2023-12-07
+    page: 11
+    passage: "11.5 Applicant's Aadhaar number is mandatory and is authenticated with UIDAI database. 11.6 ... a. Caste Certificate b. Special Category Certificate, wherever required c. Rural Area certificate d. Project Report e. Education/ EDP/Skill Development training certificate"
+    status: unverified
