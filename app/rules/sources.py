@@ -58,10 +58,12 @@ def upsert_source(conn: psycopg.Connection, scheme_id: str, doc: dict, scheme_di
     local = doc.get("local_path")
     sha = file_sha256(scheme_dir / local) if local else None
     values = [doc["id"], scheme_id] + [doc.get(f) for f in META_FIELDS] + [sha]
+    kind = doc.get("source_kind") or "pdf"  # "web" pages are never evidence (see verified_rule_ids)
     conn.execute(
         "insert into source_documents (id, scheme_id, title, official_url, issuing_authority, publication_date, "
-        "effective_date, retrieval_date, version, local_path, sha256, synced_at) "
-        "values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now()) on conflict (id) do update set "
+        "effective_date, retrieval_date, version, local_path, sha256, source_kind, synced_at) "
+        "values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now()) on conflict (id) do update set "
+        "source_kind = excluded.source_kind, "
         "scheme_id = excluded.scheme_id, title = excluded.title, official_url = excluded.official_url, "
         "issuing_authority = excluded.issuing_authority, publication_date = excluded.publication_date, "
         "effective_date = excluded.effective_date, retrieval_date = excluded.retrieval_date, "
@@ -78,6 +80,7 @@ def upsert_source(conn: psycopg.Connection, scheme_id: str, doc: dict, scheme_di
             values[8],
             values[9],
             values[10],
+            kind,
         ),
     )
 
@@ -131,7 +134,7 @@ def verified_rule_ids(conn: psycopg.Connection, scheme_id: str) -> set[str]:
     required = " and ".join(f"d.{f} is not null" for f in SOURCE_REQUIRED)
     rows = conn.execute(
         f"select e.rule_id from rule_evidence e join source_documents d on d.id = e.source_id "
-        f"where e.scheme_id = %s and e.status = 'verified' and {required}",
+        f"where e.scheme_id = %s and e.status = 'verified' and d.source_kind = 'pdf' and {required}",
         (scheme_id,),
     ).fetchall()
     return {r["rule_id"] for r in rows}
