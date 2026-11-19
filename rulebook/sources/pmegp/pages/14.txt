@@ -1,0 +1,41 @@
+11.17 Bank will release the first instalment of the loan either in full or partly and submit the
+claim for Margin Money subsidy online through the on-line portal of Nodal Bank/KVIC
+Portal
+11.18 The Financing Bank shall generate the Margin Money Claim subject to fulfillment of the
+following :
+i. Date of release of first instalment is prior to the date of filing of Margin
+Money(subsidy) claim
+ii. EDP training is completed by the applicant and updated on the portal
+iii. Applicant has deposited own contribution
+iv. The disbursement of first installment equal to or more than the eligible Margin
+Money.
+The Financing Banks shall ensure that the activity proposed is as per the scheme
+guidelines and not covered under the negative list of activities before generating the
+claim. KVIC will verify and validate the Margin Money claims and forward to the Nodal
+Bank for onward releasing of the Margin Money to the Financing Bank within 3
+working days if the claims are in order. In case any shortcomings/ deficiencies found
+in the Margin Money claims, the same shall be returned back to the Financing Banks/
+IAs for rectification and re-submission.
+11. 79 Nodal Bank will transfer the Margin Money subsidy claim amount validated by KVIC to
+the respective Financing Bank branch within 24 hours of the receipt of validation.
+If the Financing Bank branch certifies that all the facts furnished in the claim are true
+and the above activity of the unit is not under the negative list of PMEGP scheme and
+is as per the norms and guidelines of PMEGP, validation by KVIC could be dispensed
+with and the MM claim will be sent directly to Nodal Bank portal for disbursement
+online by the Financing Bank branches.
+1 1 .20 Once the Margin Money (subsidy) is received in the Financing Banks on behalf of the
+beneficiary, within 24 hours it should be kept in the Term Deposit Receipt
+(TDFR)/Subsidy Reserve Fund (SRF) for three years at branch level in the name of the
+beneficiary. No interest will be paid on the TDR/SRF, and no interest will be charged
+on loan disbursed for the corresponding amount of TDR/SRF. Banks shall ensure to
+update the TDR/SRF details such as TDR/SRF number and date on the PMEGP
+portal. Financing Banks shall upload the details of subsequent loan installments and
+rate of interest on the PMEGP portal.
+1 1.21 SMS/e-mail alerts to the applicant will be automatically sent by the system at each of
+the above stages.
+1 1.22 In case the Bank’s advance goes “bad” before the three-year period, due to any reason
+whatsoever, beyond the control of the beneficiary, the Margin Money (subsidy) will be
+returned to KVIC. In case any recovery is affected subsequently by the Bank from any
+source whatsoever, such recovery will be utilized by the Bank for liquidating their
+outstanding dues.
+12

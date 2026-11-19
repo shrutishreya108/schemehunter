@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.2", "ruff>=0.17,<0.18", "aiosmtpd>=1.4"]  # ruff 0.17 defaults are the lint baseline
+dev = ["pytest>=8.2", "ruff>=0.17,<0.18", "aiosmtpd>=1.4", "pypdf>=5.0"]  # ruff 0.17 defaults are the lint baseline
 
 [build-system]
 requires = ["setuptools>=69"]
