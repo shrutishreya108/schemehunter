@@ -323,6 +323,15 @@ def _failed_before_run(conn: psycopg.Connection, case_id: UUID | str, task: str,
     return RunResult(run_id, "ERROR", 0, LATER.get(lang, LATER["en"]), 0.0, error)
 
 
+def _asked_since(conn: psycopg.Connection, case_id: UUID | str, since: Any) -> bool:
+    """True if the Brain posted anything to the user since the run started (a question counts as an answer)."""
+    row = conn.execute(
+        "select 1 from messages where case_id = %s and direction = 'out' and created_at >= %s limit 1",
+        (case_id, since),
+    ).fetchone()
+    return row is not None
+
+
 def run_brain(
     case_id: UUID | str,
     task: str,
@@ -391,6 +400,7 @@ def _locked(
     system = claude.build_system_blocks(claude.prompt("system.md"), claude.rulebook_summary(schemes))
     tools = claude.cached_tools(TOOLS)
     deadline_s = s.CHAT_RUN_DEADLINE_S if trigger == "chat" else s.CLAUDE_JOB_DEADLINE_S
+    run_started = conn.execute("select now() as t").fetchone()["t"]
     try:
         out = run_loop(
             ctx, task, system, tools, use_history=trigger == "chat", deadline=time.monotonic() + deadline_s
@@ -403,8 +413,13 @@ def _locked(
         return RunResult(run_id, "ERROR", 0, LATER.get(lang, LATER["en"]), ctx.meter.cost, type(exc).__name__)
 
     if ctx.finished:
-        end_run(conn, run_id, out.steps, "DONE", ctx.meter, error=out.path)
-        return RunResult(run_id, "DONE", out.steps, ctx.user_message, ctx.meter.cost)
+        if ctx.user_message.strip() or _asked_since(conn, case_id, run_started):
+            end_run(conn, run_id, out.steps, "DONE", ctx.meter, error=out.path)
+            return RunResult(run_id, "DONE", out.steps, ctx.user_message, ctx.meter.cost)
+        # finish_run came back with no text and no question was asked: never leave the user in silence
+        end_run(conn, run_id, out.steps, "DONE", ctx.meter, error="empty_finish")
+        post_notice(case_id, LATER)
+        return RunResult(run_id, "DONE", out.steps, LATER.get(lang, LATER["en"]), ctx.meter.cost, "empty_finish")
 
     if out.path == "text_fallback" and out.fallback_text:
         reply, path = _safe_reply(ctx, out.fallback_text)

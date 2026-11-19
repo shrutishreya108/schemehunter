@@ -330,3 +330,12 @@ def test_markdown_symbols_are_not_shown_to_the_user() -> None:
     assert plain_text("**PMEGP** fits, and *four schemes* too.") == "PMEGP fits, and four schemes too."
     assert plain_text("Price 5*3 = 15, a_b_c stay.") == "Price 5*3 = 15, a_b_c stay."
     assert plain_text("## Heading\n- one\n- two") == "Heading\n• one\n• two"
+
+
+def test_an_empty_finish_run_sends_the_notice_instead_of_silence(seeded, conn) -> None:
+    """Regression: finish_run with no text and no question left the user waiting with no reply."""
+    fake = SlowFake(0.0, {"loop": [{"content": [{"tool": "finish_run", "input": {"user_message": ""}}]}]})
+    result = run_brain(seeded["meena"], "t", "chat", conn=conn, client=fake)
+    assert result.status == "DONE" and result.reason == "empty_finish"
+    assert result.user_message == runner.LATER["en"]
+    assert notices(conn, seeded["meena"])[-1] == runner.LATER["en"]
