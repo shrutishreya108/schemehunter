@@ -23,6 +23,7 @@ OPS = {
     "not_in": lambda a, b: a not in b,
     "gt": lambda a, b: a > b,
     "gte": lambda a, b: a >= b,
+    "lt": lambda a, b: a < b,
     "lte": lambda a, b: a <= b,
     "gte_level": lambda a, b: EDU_ORDER.index(a) >= EDU_ORDER.index(b),
 }

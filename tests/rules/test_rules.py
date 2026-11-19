@@ -1,4 +1,4 @@
-"""Rules engine vs hand-labelled expectations (tests/rules/profiles.yaml). Must be 30/30."""
+"""Rules engine vs hand-labelled expectations (tests/rules/profiles.yaml). Must be 31/31."""
 
 from datetime import date
 from pathlib import Path
@@ -26,8 +26,8 @@ def facts_for(profile: dict) -> dict:
 
 
 def test_thirty_profiles() -> None:
-    assert len(DOC["profiles"]) == 30
-    assert len({p["key"] for p in DOC["profiles"]}) == 30
+    assert len(DOC["profiles"]) == 31
+    assert len({p["key"] for p in DOC["profiles"]}) == 31
 
 
 @pytest.mark.parametrize("profile", DOC["profiles"], ids=[p["key"] for p in DOC["profiles"]])
@@ -97,9 +97,8 @@ def test_irrelevant_unknowns_not_asked() -> None:
         ({}, [], "mudra", {"mudra_category": "Tarun Plus"}),
         ({}, ["loan_amount"], "mudra", {"mudra_category": None}),
         ({"category": "SC"}, [], "udyogini_ka", {"subsidy_percent": 50}),
-        ({"special_circumstance": "disabled"}, [], "udyogini_ka", {"subsidy_percent": 50}),
+        ({"special_circumstance": "disabled"}, [], "udyogini_ka", {"subsidy_percent": 30}),  # no exception on the page
         ({}, [], "udyogini_ka", {"subsidy_percent": 30}),
-        ({}, ["special_circumstance"], "udyogini_ka", {"subsidy_percent": None}),
         ({}, [], "cgtmse", {}),
     ],
 )
@@ -109,17 +108,13 @@ def test_benefit(overrides: dict, unset: list, scheme_id: str, expected: dict) -
     assert evaluate(scheme, facts)["benefit"] == expected
 
 
-def test_unknown_when_asks_for_when_fact_not_then_fact() -> None:
-    """Udyogini income_cap: when (category, special_circumstance) then family_income.
-
-    With special_circumstance unknown the `when` is UNKNOWN, so only that fact is asked; family_income
-    (the `then` fact) is not, even though it is also missing.
-    """
-    profile = {"set": {"loan_amount": 250000}, "unset": ["special_circumstance", "family_income"]}
+def test_unknown_category_asks_for_the_category_before_the_income_limit() -> None:
+    """Udyogini income_cap: SC/ST below 2 lakh, or other categories below 1.5 lakh. Without category, both
+    branches need it, so it is the fact asked for."""
+    profile = {"set": {"loan_amount": 250000}, "unset": ["category", "family_income"]}
     udy = next(r for r in evaluate_all(SCHEMES, facts_for(profile)) if r["scheme_id"] == "udyogini_ka")
     assert udy["result"] == "NEEDS_INFO" and udy["deciding_rule"] == "income_cap"
-    assert "special_circumstance" in udy["missing_facts"]
-    assert "family_income" not in udy["missing_facts"]
+    assert "category" in udy["missing_facts"]
 
 
 def test_then_fact_asked_once_when_passes() -> None:

@@ -198,7 +198,7 @@ profiles:
       pmegp: [NO_FIT, cost_cap]
       stand_up_india: [NO_FIT, sector]
       mudra: [NO_FIT, sector]
-      cgtmse: [NO_FIT, sector_excluded]
+      cgtmse: [FIT, null]  # education institutions are an eligible activity (guideline p6)
       udyogini_ka: [NO_FIT, loan_cap]
 
   - key: p18_shg_small
@@ -276,9 +276,9 @@ profiles:
       udyogini_ka: [NO_FIT, loan_cap]
 
   - key: p26_size_unknown_loan_6cr_sc
-    set: { loan_amount: 60000000, category: SC }
+    set: { loan_amount: 120000000, category: SC }
     unset: [enterprise_size]
-    note: "CGTMSE: size unknown but loan_cap fails, so NO_FIT; SC skips Udyogini income cap"
+    note: "CGTMSE: 12 crore is over the 10 crore cap (guideline p5), so NO_FIT; SC skips Udyogini income cap"
     expect:
       pmegp: [FIT, null]
       stand_up_india: [NO_FIT, loan_range]
@@ -307,17 +307,29 @@ profiles:
 
   - key: p29_widow_no_cap
     set: { special_circumstance: widow, family_income: 500000, loan_amount: 250000, project_cost: 300000 }
+    note: "Udyogini: the widow exception is not on the official page, so the income cap applies"
     expect:
       pmegp: [FIT, null]
       stand_up_india: [NO_FIT, loan_range]
       mudra: [FIT, null]
       cgtmse: [FIT, null]
-      udyogini_ka: [FIT, null]
+      udyogini_ka: [NO_FIT, income_cap]
 
   - key: p30_circumstance_unknown
     set: { family_income: 200000, loan_amount: 250000, project_cost: 300000 }
     unset: [special_circumstance]
-    note: "income over cap, but the cap may not apply: ask about special circumstances"
+    note: "income over the general cap; the circumstance no longer changes the cap (Udyogini)"
+    expect:
+      pmegp: [FIT, null]
+      stand_up_india: [NO_FIT, loan_range]
+      mudra: [FIT, null]
+      cgtmse: [FIT, null]
+      udyogini_ka: [NO_FIT, income_cap]
+
+  - key: p31_category_unknown_income_180k
+    set: { family_income: 180000, loan_amount: 250000, project_cost: 300000 }
+    unset: [category]
+    note: "Udyogini: whether the SC/ST cap (2 lakh) or the general cap (1.5 lakh) applies is unknown"
     expect:
       pmegp: [FIT, null]
       stand_up_india: [NO_FIT, loan_range]

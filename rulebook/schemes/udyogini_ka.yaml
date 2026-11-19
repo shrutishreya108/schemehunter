@@ -5,8 +5,8 @@ level: state
 state: KA
 benefit:
   type: subsidy
-  text: { en: "Loan up to ₹3 lakh with a subsidy: 30% general, 50% for SC/ST, widows and women with disabilities.",
-          hi: "₹3 लाख तक का लोन, सब्सिडी के साथ: सामान्य 30%, SC/ST, विधवा और दिव्यांग महिलाओं के लिए 50%।" }
+  text: { en: "Loan up to ₹3 lakh with a subsidy: 30% general and special category, 50% for SC/ST.",
+          hi: "₹3 लाख तक का लोन, सब्सिडी के साथ: सामान्य और विशेष श्रेणी 30%, SC/ST के लिए 50%।" }
   max_loan: 300000
   verified: false
   source_note: "Curator public-rule list (v0.2 brief)"
@@ -24,14 +24,18 @@ eligibility:
       all:
         - { fact: age, op: gte, value: 18 }
         - { fact: age, op: lte, value: 55 }
+    # English KSWDC page (web snapshot, not a guideline): annual income below Rs.1.50 lakhs for General / Special
+    # Category, below Rs.2.00 lakhs for SC / ST. The widow / disabled exception is not on the page, so it is removed.
     - id: income_cap
       verified: false
-      source_note: "Curator public-rule list (v0.2 brief): family income <= 1,50,000 unless SC/ST or widow/disabled"
-      when:
-        all:
-          - { fact: category, op: not_in, value: [SC, ST] }
-          - { fact: special_circumstance, op: not_in, value: [widow, disabled] }
-      then: { fact: family_income, op: lte, value: 150000 }
+      source_note: "Official web page (KSWDC, Income and Caste Certificate section): income below Rs.1.50 lakhs General/Special; below Rs.2.00 lakhs SC/ST. Widow/disabled exception removed: not on the page."
+      any:
+        - all:
+            - { fact: category, op: in, value: [SC, ST] }
+            - { fact: family_income, op: lt, value: 200000 }
+        - all:
+            - { fact: category, op: not_in, value: [SC, ST] }
+            - { fact: family_income, op: lt, value: 150000 }
     - { id: loan_cap, fact: loan_amount, op: lte, value: 300000,
         verified: false, source_note: "Curator public-rule list (v0.2 brief): loan up to 3,00,000" }
 
@@ -40,11 +44,7 @@ benefit_calc:
     - when: { fact: category, op: in, value: [SC, ST] }
       value: 50
       verified: false
-      source_note: "Curator public-rule list (v0.2 brief): 50% for SC/ST"
-    - when: { fact: special_circumstance, op: in, value: [widow, disabled] }
-      value: 50
-      verified: false
-      source_note: "Curator public-rule list (v0.2 brief): 50% for special circumstances"
+      source_note: "Official web page (KSWDC): 50% subsidy for SC / ST category women."
     - default: 30
       verified: false
-      source_note: "Curator public-rule list (v0.2 brief): 30% general"
+      source_note: "Official web page (KSWDC): 30% subsidy for General and Special category women."
