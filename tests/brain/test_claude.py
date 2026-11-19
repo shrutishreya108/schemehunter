@@ -26,6 +26,7 @@ def test_cached_tools_marks_only_last_and_copies() -> None:
     assert [("cache_control" in t) for t in cached] == [False] * (len(TOOLS) - 1) + [True]
     assert all("cache_control" not in t for t in TOOLS)
     assert [t["name"] for t in TOOLS] == [
+        "answer_question",
         "update_profile",
         "match_schemes",
         "explain_match",

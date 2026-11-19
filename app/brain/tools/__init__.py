@@ -10,6 +10,7 @@ from types import ModuleType
 from typing import Any
 
 from app.brain.tools import (
+    answer_question,
     ask_user,
     build_project_report,
     check_document,
@@ -32,6 +33,7 @@ log = logging.getLogger(__name__)
 
 # All 15 tools from LLD §8.
 ENABLED: list[ModuleType] = [
+    answer_question,
     update_profile,
     match_schemes,
     explain_match,

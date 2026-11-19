@@ -266,6 +266,13 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 84. **Migration 006** drops `cases.access_token_hash`, `cases.pin_hash` and `cases.telegram_chat_id`, and creates `identities` and `login_challenges`. Housekeeping deletes challenges older than 24 hours (added to the worker, see §4).
 85. **Demo personas** have email addresses in `seed/personas.yaml`, written as `YOURNAME+<key>@gmail.com` placeholders. They must be replaced with inboxes you can read before the demo; `demo-reset` prints them.
 
+86. **Conversation (v0.11):** each chat turn sends the last 8 messages (cut to 1000 characters each) as real user/assistant turns, merged so roles alternate. The latest user message is in the final instruction only, not twice. The case file's `recent_messages` summary is dropped for chat runs.
+87. **Intent, not onboarding:** the forced "Continue onboarding" text is gone. The task tells the model to answer every question first, and to ask at most one profile question after that. The system prompt has no fixed question order.
+88. **Q&A tool `answer_question`:** sources are gathered in code (guideline pages when loaded, rule files marked as estimates, privacy facts that point to code, the person's own masked papers, and subsidy figures computed in code). The model may cite only source ids it was given; unsupported "verified" answers become "unknown"; promises are replaced by the safe wording.
+89. **Document reminders:** only in DOCS_PENDING; skipped (retried in 60 minutes) while the person has written in the last 30 minutes; at most one a day; they stop when nothing is missing.
+90. **Limits:** guideline text is not loaded yet, so PMEGP document and eligibility answers are "unknown" or "estimate" until the PDFs are added. The model writes the final reply from the labelled answers, so a wrong wording is still possible; the Guard scan covers promises and invented scheme names only.
+91. **Tests:** `tests/e2e/test_scenarios.py` covers scenarios A–G; `tests/brain/test_conversation.py` covers history and the chat task. Suite: 527 passed, 2 skipped (the known Windows-only script test deselected).
+
 ## 4. TODO / verify list
 
 ### Curator: guideline verification (unchanged from v0.2)

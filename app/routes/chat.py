@@ -41,6 +41,19 @@ def load_chat(conn, case_id: str) -> list[dict]:
     return list(reversed(rows))
 
 
+CHAT_TASK = (
+    "The user's latest message is the last user turn of this conversation. Work out what they want: a question, "
+    "profile information, a document, a correction to an earlier answer, a request about the application, or moving "
+    "forward. Answer every question they asked, numbered if there are several, before anything else. Only then, if "
+    "still needed, ask at most one profile question. Do not repeat document-upload instructions unless documents "
+    "came up in this conversation."
+)
+
+
+def chat_task(latest: str) -> str:
+    return f"{CHAT_TASK}\n\nLatest user message: «{latest}»"
+
+
 PENDING_SECONDS = 120  # keep polling for a reply this long after the user's message
 
 
@@ -104,9 +117,7 @@ def post_chat(
                 )
     notice = None
     if text:
-        future = _runs.submit(
-            run_brain, case_id, f"The user sent a chat message: «{text}». Continue onboarding.", "chat"
-        )
+        future = _runs.submit(run_brain, case_id, chat_task(text), "chat")
         try:
             # Answer quickly: the user's message is already saved. A slow reply arrives by polling.
             result = future.result(timeout=0.5)

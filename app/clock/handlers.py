@@ -169,13 +169,36 @@ def missing_docs(conn, case_id: str, app) -> list[str]:
     ]
 
 
+CONVERSATION_QUIET_MINUTES = 30  # never interrupt a conversation that is still going
+NUDGE_RETRY_MINUTES = 60
+
+
 def doc_nudge(conn, job: dict) -> None:
+    """A paper reminder: only while DOCS_PENDING, never during a live conversation, at most one a day, and it
+    stops as soon as nothing is missing."""
     app = load_job_app(conn, job)
-    if not app or app.state not in ("DOCS_PENDING", "QUERY_RAISED", "ELIGIBLE"):
-        return
+    if not app or app.state != "DOCS_PENDING":
+        return  # not waiting for papers any more: no reminder and no further alarm
     missing = missing_docs(conn, app.case_id, app)
     if not missing:
         return  # everything is OK: stop nudging
+    last_message = conn.execute(
+        "select created_at from messages where case_id = %s and channel = 'web' and direction = 'in' "
+        "order by created_at desc limit 1",
+        (app.case_id,),
+    ).fetchone()
+    if (
+        last_message
+        and elapsed_days(last_message["created_at"]) * 1440 / scale() < CONVERSATION_QUIET_MINUTES
+    ):
+        schedule(
+            conn,
+            "doc_nudge",
+            app.case_id,
+            app.id,
+            at=datetime.now(UTC) + timedelta(minutes=NUDGE_RETRY_MINUTES),
+        )
+        return  # the user is talking to us right now: try again later, do not interrupt
     recent = conn.execute(
         "select created_at from events where application_id = %s and type = 'REMINDER_SENT' "
         "and payload->>'kind' = 'doc_nudge' order by created_at desc limit 1",

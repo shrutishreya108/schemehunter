@@ -21,6 +21,7 @@ import psycopg
 
 from app.brain import claude
 from app.brain.casefile import build_case_file
+from app.brain.history import conversation
 from app.brain.tools import TOOLS, dispatch
 from app.brain.tools.base import Ctx
 from app.config import get_settings
@@ -166,8 +167,14 @@ def first_message(task: str, case_file: dict) -> dict:
     }
 
 
-def run_loop(ctx: Ctx, task: str, system: list[dict], tools: list[dict]) -> int:
-    messages = [first_message(task, build_case_file(ctx.case_id, ctx.conn))]
+def run_loop(ctx: Ctx, task: str, system: list[dict], tools: list[dict], use_history: bool = False) -> int:
+    case_file = build_case_file(ctx.case_id, ctx.conn)
+    if use_history:  # chat: the real turns go in as messages, so the summary of them is dropped
+        case_file.pop("recent_messages", None)
+        instruction = f"TASK: {task}\n\nCASE FILE:\n{json.dumps(case_file, ensure_ascii=False)}"
+        messages = conversation(ctx.conn, ctx.case_id, instruction)
+    else:
+        messages = [first_message(task, case_file)]
     steps = 0
     for _ in range(get_settings().MAX_STEPS_PER_RUN):
         steps += 1
@@ -245,7 +252,7 @@ def run_brain(
     tools = claude.cached_tools(TOOLS)
     steps = 0
     try:
-        steps = run_loop(ctx, task, system, tools)
+        steps = run_loop(ctx, task, system, tools, use_history=trigger == "chat")
     except Exception as exc:  # noqa: BLE001 - API/network failure: record, tell the user politely
         conn.rollback()
         log.warning("run %s failed: %s", run_id, type(exc).__name__)

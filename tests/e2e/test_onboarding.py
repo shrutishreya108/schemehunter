@@ -66,7 +66,9 @@ def test_meena_three_turns(meena_client, conn, fake_claude) -> None:
         "select 1 from events where case_id = %s and type = 'RUN_STUCK'", (case_id,)
     ).fetchone()
     assert not fake_claude.queues["loop"] and not fake_claude.queues["explain"]  # script fully consumed
-    second_turn = fake_claude.calls_for("loop")[3]["messages"][0]["content"]
+    second_turn = fake_claude.calls_for("loop")[3]["messages"][-1][
+        "content"
+    ]  # the instruction, with the case file
     assert '"open_question": {"expected_fact": "loan_amount"' in second_turn  # Brain sees what it asked
 
 
