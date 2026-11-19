@@ -13,7 +13,8 @@ import unicodedata
 from collections.abc import Callable, Iterable
 
 BANNED = [
-    r"\bguarantee",
+    # a promise. A disclaimer ("no guarantee", "not guaranteed", "without any guarantee") is allowed.
+    r"(?<!no )(?<!not )(?<!not a )(?<!without )(?<!without any )\bguarantee",
     r"\bqualify for (everything|all|every|any)\b",  # overclaim: the strongest allowed is "you qualify to apply"
     r"\byou (will|would|definitely|surely) qualify\b",
     r"\bwill be approved",

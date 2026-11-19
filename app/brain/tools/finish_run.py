@@ -16,6 +16,16 @@ from app.i18n import bilingual
 FALLBACK = {"hi": "मैं जाँच करके आपको जल्दी बताऊँगी।", "en": "Let me check and get back to you shortly."}
 
 
+import re
+
+_SOURCE_TAG = re.compile(r"\[(?:verified|estimate|unknown)[^\]\n]*\]", re.IGNORECASE)
+
+
+def strip_source_tags(text: str) -> str:
+    """Remove the model's copied source tags such as [verified, guideline:pmegp:p5:3]."""
+    return _SOURCE_TAG.sub("", text).replace("  ", " ").strip()
+
+
 class Input(BaseModel):
     user_message: str = ""
     internal_note: str = ""
@@ -49,6 +59,7 @@ def handle(data: Input, ctx: Ctx) -> dict[str, Any]:
                 payload={"tool": "finish_run", "ok": False, "guard": check},
             )
             message = FALLBACK.get(ctx.language, FALLBACK["en"])
+        message = strip_source_tags(message)  # internal ids (e.g. [verified, guideline:...]) never reach the user
         if ctx.cited:  # after the promise check: the citation is code-written and always kept
             lines = [f"Source: {c['title']}, version {c['version']}, page {c['page']}." for c in ctx.cited]
             message = message + "\n" + "\n".join(dict.fromkeys(lines))

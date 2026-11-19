@@ -165,8 +165,11 @@ def generate(scheme: dict, match: dict, ctx: Ctx) -> dict:
     files = page_files(scheme["id"])
     pages, how = select_pages(ctx.conn, scheme, match, files) if files else ([], "none")
     if pages:
-        out = claude.citations_call(pages, scheme["name"]["en"], text, ctx.meter, client=ctx.client)
-        return {**out, "source_status": "cited", "pages": [n for n, _ in pages], "page_selection": how}
+        try:
+            out = claude.citations_call(pages, scheme["name"]["en"], text, ctx.meter, client=ctx.client)
+            return {**out, "source_status": "cited", "pages": [n for n, _ in pages], "page_selection": how}
+        except claude.ClaudeError:  # the cited reply did not have the EN:/HI: layout: explain without citations
+            pass
     system = [{"type": "text", "text": claude.prompt("explain_match.md"), "cache_control": claude.EPHEMERAL}]
     out = claude.forced_tool_call(
         EXPLANATION_TOOL,
