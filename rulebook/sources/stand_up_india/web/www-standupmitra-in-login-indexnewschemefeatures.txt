@@ -1,5 +1,5 @@
 https://www.standupmitra.in/Login/IndexNewSchemeFeatures
-fetched_at: 2026-11-19T16:18:50+00:00
+fetched_at: 2026-11-19T17:39:01+00:00
 sha256: 9f35417453f2763040d6913035a42a73144286c2e2aa02c7429dfe3ae85b9801
 Title: StandupIndia
 1. SC/ST and/or woman entrepreneurs, above 18 years of age.

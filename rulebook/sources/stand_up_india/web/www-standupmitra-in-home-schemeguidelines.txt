@@ -1,5 +1,5 @@
 https://www.standupmitra.in/Home/SchemeGuidelines
-fetched_at: 2026-11-19T16:18:48+00:00
+fetched_at: 2026-11-19T17:38:58+00:00
 sha256: be490dd1501d25d49b725bcb851fae9ea3ea4efb2c20bf50f7920a1d4a377921
 Title: StandupIndia
 The objective of the Stand-Up India scheme is to facilitate bank loans between 10 lakh and 1 Crore to at least one Scheduled Caste (SC) or Scheduled Tribe (ST) borrower and at least one woman borrower per bank branch for setting up a greenfield enterprise. This enterprise may be in manufacturing, services, agri-allied activities or the trading sector. In case of non-individual enterprises at least 51% of the shareholding and controlling stake should be held by either an SC/ST or Woman entrepreneur.

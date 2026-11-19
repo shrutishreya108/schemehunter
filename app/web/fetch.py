@@ -198,7 +198,26 @@ def _is_hidden(tag) -> bool:
     return bool(_HIDDEN_STYLE.search(tag.get("style") or ""))
 
 
-def html_to_text(html: str) -> tuple[str, str]:
+def clean_lines(lines: list[str], skip_text: tuple[str, ...] | list[str] = ()) -> list[str]:
+    """Drop menu and boilerplate lines, then short leading lines before the first real sentence.
+
+    skip_text entries match a whole line, or the start of a line for long boilerplate (case-insensitive).
+    A line of 1-3 words before the first line of 6+ words is dropped (menu labels in plain divs).
+    """
+    skips = [_clean(x).casefold() for x in skip_text if _clean(x)]
+
+    def skipped(line: str) -> bool:
+        low = line.casefold()
+        return any(low == k or (len(k) > 25 and low.startswith(k)) for k in skips)
+
+    kept = [line for line in lines if not skipped(line)]
+    first_long = next((i for i, line in enumerate(kept) if len(line.split()) >= 6), None)
+    if first_long is not None:
+        kept = [line for line in kept[:first_long] if len(line.split()) > 3] + kept[first_long:]
+    return kept
+
+
+def html_to_text(html: str, skip_text: tuple[str, ...] | list[str] = ()) -> tuple[str, str]:
     """(title, text). Headings, paragraphs, list items and table rows become lines. Nothing is executed."""
     soup = BeautifulSoup(html, "lxml")
     title = _clean(soup.title.get_text(" ")) if soup.title else ""
@@ -219,10 +238,18 @@ def html_to_text(html: str) -> tuple[str, str]:
             lines.append(line)
     if not lines:
         lines = [x for x in (_clean(line) for line in soup.get_text("\n").splitlines()) if x]
-    return title, "\n".join(lines)[:MAX_TEXT]
+    return title, "\n".join(clean_lines(lines, skip_text))[:MAX_TEXT]
 
 
-def fetch_page(url: str, allowed_hosts: set[str], *, resolver=None, clock=time.monotonic, sleep=time.sleep) -> Page:
+def fetch_page(
+    url: str,
+    allowed_hosts: set[str],
+    *,
+    skip_text: tuple[str, ...] | list[str] = (),
+    resolver=None,
+    clock=time.monotonic,
+    sleep=time.sleep,
+) -> Page:
     """Fetch one curated page under every rule above. Raises FetchError on any refusal or failure."""
     deadline = clock() + TOTAL_TIMEOUT_S
     host = check_url(url, allowed_hosts)
@@ -235,9 +262,10 @@ def fetch_page(url: str, allowed_hosts: set[str], *, resolver=None, clock=time.m
         raise FetchError(f"refused: content type {ctype or 'missing'}")
     raw = body.decode("utf-8", errors="replace")
     if ctype == "text/html":
-        title, text = html_to_text(raw)
+        title, text = html_to_text(raw, skip_text)
     else:
-        title, text = "", "\n".join(x for x in (_clean(line) for line in raw.splitlines()) if x)[:MAX_TEXT]
+        lines = [x for x in (_clean(line) for line in raw.splitlines()) if x]
+        title, text = "", "\n".join(clean_lines(lines, skip_text))[:MAX_TEXT]
     if not text:
         raise FetchError("no readable text on the page")
     return Page(

@@ -35,6 +35,15 @@ def web_pages(scheme_id: str, root: Path | None = None) -> list[dict]:
     return out
 
 
+def skip_text_for(scheme_id: str, root: Path | None = None) -> list[str]:
+    """Menu and boilerplate lines listed for this scheme in web.yaml (skip_text)."""
+    path = (root or SOURCES_DIR) / scheme_id / "web.yaml"
+    if not path.exists():
+        return []
+    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    return [str(x) for x in raw.get("skip_text") or []]
+
+
 def allowed_hosts(pages: list[dict]) -> set[str]:
     return {(urlsplit(p["url"]).hostname or "").lower() for p in pages}
 
@@ -113,7 +122,7 @@ def get_page(conn: psycopg.Connection, scheme_id: str, url: str) -> dict | None:
         return _fallback(row)
     hosts = allowed_hosts(web_pages(scheme_id))
     try:
-        page = fetch_page(url, hosts)
+        page = fetch_page(url, hosts, skip_text=skip_text_for(scheme_id))
     except FetchError as exc:
         record_failure(conn, scheme_id, url, str(exc))
         return _fallback(row)
@@ -142,7 +151,7 @@ def refresh_many(conn: psycopg.Connection, scheme_id: str, urls: list[str], budg
         return results
     hosts = allowed_hosts(web_pages(scheme_id))
     executor = ThreadPoolExecutor(max_workers=FETCH_WORKERS)
-    futures = {executor.submit(fetch_page, url, hosts): (url, row) for url, row in pending}
+    futures = {executor.submit(fetch_page, url, hosts, skip_text=skip_text_for(scheme_id)): (url, row) for url, row in pending}
     done, _ = wait(futures, timeout=budget_s)
     for future, (url, row) in futures.items():
         if future not in done:

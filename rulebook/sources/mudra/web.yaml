@@ -2,3 +2,8 @@
 pages:
   - url: https://financialservices.gov.in/pradhan-mantri-mudra-yojana-pmmy
     title: "Pradhan Mantri MUDRA Yojana (financialservices.gov.in)"
+skip_text:
+  - "Home"
+  - "View Website"
+  - "Select Language"
+  - "This website uses cookies"

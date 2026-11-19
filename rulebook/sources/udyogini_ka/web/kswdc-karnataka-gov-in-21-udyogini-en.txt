@@ -1,19 +1,9 @@
 https://kswdc.karnataka.gov.in/21/udyogini/en
-fetched_at: 2026-11-19T16:18:53+00:00
-sha256: d960b34a557b72090bc77e2e34c4c35123868b497979803c0072d7cd1c43cd93
+fetched_at: 2026-11-19T17:39:21+00:00
+sha256: b91f58a06d117976cd49f0e83b0623d39f4d70ef19349089275cce193fffacf4
 Title: Karnataka State Women’s Development Corporation - Udyogini
 Karnataka State Women’s Development Corporation
 Department of Women & Child Development & Empowerment of Differently Abled & Senior Citizens
-Loading
-Skip to content
-Accessibility
-ಕನ್ನಡ
-Login
-A
-About Us
-Board of Directors
-RTI
-Contact Us
 WELFARE PROGRAMMES INFORMATION
 This scheme intends to uplift women belonging to economically weaker section and empower them with financially assistance women who are willing to become self-employed in business and service sector are provided with subsidy through Karnataka State Women Development Corporation for the loan provide by the bank to take up financial activities and make them economically independent.
 Under Udyogini scheme, women can avail a loan from Rs.1.00 Lakhs to Rs.3.00 Lakhs from banks for which subsidy of 30% is provided to General and Special category women and Subsidy of 50% is provided to SC / ST category women.
@@ -25,7 +15,6 @@ Residential certificate / Voter ID / Ration Card
 Project Report pertaining to activity
 Aadhar seeding is the beneficiaries bank account is mandatory
 Income and Caste Certificate provided by concerned Tahsildars (Annual Income limit for General / Special Category below Rs.1.50 lakhs , SC / ST Category below Rs.2.00 lakhs)
-Screen Reader Access
 The website complies with World Wide Web Consortium (W3C) Web Content Accessibility Guidelines (WCAG) 2.0 level AA. This will enable people with visual impairments access the website using assistive technologies, such as screen readers. The information of the website is accessible with different screen readers, such as JAWS, NVDA, SAFA, Supernova and Window-Eyes.
 Following table lists the information about different screen readers:
 Sl.No | Screen Reader | Website | Free/ Commercial
@@ -34,25 +23,12 @@ Sl.No | Screen Reader | Website | Free/ Commercial
 3 | Window-Eyes | http://www.gwmicro.com (External website that opens in a new window) | Commercial
 4 | System Access To Go | http://www.satogo.com/ (External website that opens in a new window) | Free
 5 | WebAnywhere | http://webinsight.cs.washington.edu/ (External website that opens in a new window) | Free
-Disclaimer
 Please note that this page also provides links to the websites / web pages of Govt. Ministries/Departments/Organisations. The content of these websites are owned by the respective organisations and they may be contacted for any further information or suggestion
-Website Policies and Guidelines
-Copyright Policy
-Hyperlinking Policy
-Security Policy
-Terms & Conditions
-Privacy Policy
-Accessibility Resources
-Sitemap
-Help
-Screen Reader Access
-Guidelines
 Last Updated: 12 Nov 2026
-Visitors Counter: 266836
+Visitors Counter: 266852
 Version: CeG/KRN 4.0
 Content Owned and maintained by: Karnataka State Women’s Development Corporation, Department of Women & Child Development & Empowerment of Differently Abled & Senior Citizens
 Designed , Developed & Hosted by: Centre for e-governance - Webportal karnataka government © 2026, All Rights Reserved.
-Copyright Policy
 Copyright policy (if the published information is available free of any charge)
 1)Information featured on this website can be re-published in any media form free of any charge only with prior permission from us(CeG) or concerned respective authority which is owning the website, through email.
 2)Information can be republished as it is available and not to be used in a distorted or misleading manner.
@@ -61,7 +37,6 @@ Copyright policy (if the published information is available free of any charge)
 Copyright policy (if there is a provision to reuse published information)
 1)The information published on the website comes under copyright policy and obtaining authorization for their republish is a pre-requisite.
 2)To get permission one can mail to ………………..@.........
-Hyperlinking Policy
 (in case the respective department doesn’t need any permission to hyperlink in their website)
 1)We do not object to you linking directly to the information that is hosted on our site and no prior permission is required for the same.
 2)we do not permit our pages to be loaded into frames on other sites. Our Department’s pages must load into a newly opened browser window of the user.
@@ -69,11 +44,9 @@ Hyperlinking Policy
 1)to provide any link or its form on this website, it is compulsory to procure permission.
 2)permission can be obtained from the Centre for e-governance by requesting to this email. pd.webportal@karnataka.gov.in
 3)Before leaving this government website note: this contact button will lead to another website, to get more information on such new opened site, one must contact the concerned contacts registered on that website.
-Security Policy
 1) For site security purposes and to ensure that this service remains available to all users, this Government computer system employs commercial software programs to monitor network traffic to identify unauthorized attempts to upload or change information, or otherwise cause damage.
 2) Except for authorized law enforcement investigations, no other attempts are made to identify individual users or their usage habits. Raw data logs are used for no other purposes and are scheduled for regular deletion.
 3) Unauthorized attempts to upload information or change information on this service are strictly prohibited and may be punishable under the Indian IT Act (2000).
-Terms & Conditions
 1)This website is designed, developed, and maintained by the center for e-governance.
 2) Though all efforts have been made to ensure the accuracy and currency of the content on this website, the same should not be construed as a statement of law or used for any legal purposes. In case of any ambiguity or doubts, users are advised to verify/check with the Department(s) and/or other source(s) and to obtain appropriate professional advice.
 3) ) Under no circumstances will this Department be liable for any expense, loss or damage including, without limitation, indirect or consequential loss or damage, or any expense, loss or damage whatsoever arising from use, or loss of use, of data, arising out of or in connection with the use of this website.
@@ -110,4 +83,8 @@ website security
 1)to make the information available to all, to prevent unauthorized user entry, to stop harming or distorting information and keeping the security of the website in mind, also to handle user traffic, commercial software programs are used.
 2)Except for official law institutions, no attempts are made to personally identify the visitor or user.
 3)Visitor information is subject to regular deletion
-4)unauthorized users shall not add or change information 
+4)unauthorized users shall not add or change information available which can have legal consequences and may be subjected to fine under IT act (2000).
+INFORMATION SEARCH:
+to help users access information within the website, a “search here” option is been provided. here, the option to type in Kannada is made available. while searching, usage of Unicode font is compulsory. option to search in English is also provided.
+INTERNET ACCESSIBILITY
+i

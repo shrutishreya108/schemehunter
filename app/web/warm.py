@@ -22,6 +22,7 @@ from app.web.cache import (
     fetching_enabled,
     parse_snapshot,
     record_failure,
+    skip_text_for,
     snapshot_path,
     store_page,
     web_pages,
@@ -55,7 +56,7 @@ def run_export_only(scheme: str | None, root: Path | None = None) -> int:
         for item in pages:
             url = item["url"]
             try:
-                page = fetch_page(url, hosts)
+                page = fetch_page(url, hosts, skip_text=skip_text_for(scheme_id))
             except FetchError as exc:
                 failures += 1
                 _report(scheme_id, url, f"error: {exc}")
@@ -80,7 +81,7 @@ def run_warm(scheme: str | None, export: bool) -> int:
             for item in pages:
                 url = item["url"]
                 try:
-                    page: Page = fetch_page(url, hosts)
+                    page: Page = fetch_page(url, hosts, skip_text=skip_text_for(scheme_id))
                 except FetchError as exc:
                     failures += 1
                     record_failure(conn, scheme_id, url, str(exc))

@@ -3,3 +3,27 @@
 pages:
   - url: https://kswdc.karnataka.gov.in/21/udyogini/en
     title: "Udyogini (Karnataka State Women's Development Corporation)"
+# Menu and boilerplate lines in plain divs on this site (not inside nav or header tags). Matched whole-line, case-insensitive.
+skip_text:
+  - "Loading"
+  - "Skip to content"
+  - "Accessibility"
+  - "Login"
+  - "A"
+  - "About Us"
+  - "Board of Directors"
+  - "RTI"
+  - "Contact Us"
+  - "Screen Reader Access"
+  - "Disclaimer"
+  - "Website Policies and Guidelines"
+  - "Copyright Policy"
+  - "Hyperlinking Policy"
+  - "Security Policy"
+  - "Terms & Conditions"
+  - "Privacy Policy"
+  - "Accessibility Resources"
+  - "Sitemap"
+  - "Help"
+  - "Guidelines"
+  - "ಕನ್ನಡ"
