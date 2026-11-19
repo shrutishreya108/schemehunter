@@ -6,6 +6,7 @@ The model may only cite source ids it was given. Citations to anything else are 
 valid source is labelled unknown. Every question gets an answer.
 """
 
+from collections import Counter
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -13,12 +14,13 @@ from pydantic import BaseModel, Field
 from app.brain import claude
 from app.brain.tools.base import Ctx, ToolError, scan_text, tool_schema
 from app.brain.tools.build_project_report import load_artifact, percentages
-from app.brain.tools.explain_match import page_files
+from app.brain.tools.explain_match import verified_pages
 from app.finance.project_report import compute, inputs_from, inr
+from app.rag.search import search
 from app.rules.loader import load_schemes
 from app.rules.sources import is_complete
 
-MAX_GUIDELINE_CHARS = 1500
+GUIDELINE_CHUNKS = 4  # per scheme
 MAX_QUESTIONS = 8
 LABELS = ("verified", "estimate", "unknown")
 
@@ -84,12 +86,25 @@ SCHEMA = tool_schema(
 )
 
 
-def guideline_sources(ctx: Ctx, scheme_ids: list[str]) -> list[dict]:
-    """Guideline text is cited as VERIFIED only when a complete source document (title, URL, authority, version,
-    retrieval date, sha256) exists for the scheme. Otherwise the text is labelled as an estimate with the gap stated."""
-    out = []
+def guideline_sources(ctx: Ctx, scheme_ids: list[str], questions: list[str]) -> list[dict]:
+    """Up to GUIDELINE_CHUNKS retrieved chunks per scheme, ranked for the questions (app/rag).
+
+    A chunk is labelled verified only when its source document is complete AND the page carries a verified
+    evidence passage; otherwise it is an estimate. Nothing retrieved means unknown. The model may cite only these ids.
+    """
+    query = " ".join(questions)
+    out: list[dict] = []
     for sid in scheme_ids:
-        pages = page_files(sid)
+        hits = search(ctx.conn, query, [sid], k=GUIDELINE_CHUNKS)
+        if not hits:
+            out.append(
+                {
+                    "id": f"guideline:{sid}:none",
+                    "label": "unknown",
+                    "text": f"No guideline text for {sid} matched these questions.",
+                }
+            )
+            continue
         docs = [
             d
             for d in ctx.conn.execute(
@@ -97,39 +112,18 @@ def guideline_sources(ctx: Ctx, scheme_ids: list[str]) -> list[dict]:
             ).fetchall()
             if is_complete(d)
         ]
-        if not pages:
-            out.append(
-                {
-                    "id": f"guideline:{sid}:none",
-                    "label": "unknown",
-                    "text": f"No official guideline text is loaded for {sid} yet.",
-                }
-            )
-            continue
-        if not docs:
-            out.append(
-                {
-                    "id": f"guideline:{sid}:unavailable",
-                    "label": "estimate",
-                    "text": f"Guideline text for {sid} is loaded, but its source document details are not recorded, so it is not cited as verified.",
-                }
-            )
-            continue
-        doc = docs[0]
-        budget = MAX_GUIDELINE_CHARS
-        for num, path in pages[:6]:
-            text = path.read_text(encoding="utf-8")[:budget]
-            budget -= len(text)
+        doc = docs[0] if docs else None
+        verified = set(verified_pages(ctx.conn, sid)) if doc else set()
+        if doc:
             cite = f"{doc['title']}, version {doc['version']}, retrieved {doc['retrieval_date']}, sha256 {doc['sha256'][:12]}"
-            out.append(
-                {
-                    "id": f"guideline:{sid}:p{num}",
-                    "label": "verified",
-                    "text": f"{text}\n(Source: {cite}, page {num})",
-                }
-            )
-            if budget <= 0:
-                break
+        else:
+            cite = f"{sid} guideline; source details not recorded, so not cited as verified"
+        per_page = Counter(h["page"] for h in hits)
+        for h in hits:
+            page = h["page"]
+            ref = f"guideline:{sid}:p{page}" + (f":{h['ord']}" if per_page[page] > 1 else "")
+            label = "verified" if doc and page in verified else "estimate"
+            out.append({"id": ref, "label": label, "text": f"{h['text']}\n(Source: {cite}, page {page})"})
     return out
 
 
@@ -199,7 +193,7 @@ def subsidy_source(ctx: Ctx, schemes_fit: list[str]) -> list[dict]:
     ]
 
 
-def gather_sources(ctx: Ctx) -> list[dict]:
+def gather_sources(ctx: Ctx, questions: list[str]) -> list[dict]:
     schemes = load_schemes()
     matches = ctx.conn.execute(
         "select scheme_id, result from matches where case_id = %s", (ctx.case_id,)
@@ -207,7 +201,7 @@ def gather_sources(ctx: Ctx) -> list[dict]:
     fit = [m["scheme_id"] for m in matches if m["result"] == "FIT"]
     relevant = [m["scheme_id"] for m in matches] or [s["id"] for s in schemes]
     sources = [{"id": pid, "label": "verified", "text": text} for pid, text in PRIVACY_FACTS]
-    sources += guideline_sources(ctx, relevant)
+    sources += guideline_sources(ctx, relevant, questions)
     sources += rule_sources([s for s in schemes if s["id"] in relevant])
     sources += paper_sources(ctx)
     sources += subsidy_source(ctx, fit)
@@ -238,7 +232,7 @@ def check_answers(raw: list[dict], questions: list[str], valid_ids: set[str], ct
 
 
 def handle(data: Input, ctx: Ctx) -> dict[str, Any]:
-    sources = gather_sources(ctx)
+    sources = gather_sources(ctx, data.questions)
     valid_ids = {s["id"] for s in sources}
     listing = "\n\n".join(f"[{s['id']}] ({s['label']}) {s['text']}" for s in sources)
     questions = "\n".join(f"{i}. {q}" for i, q in enumerate(data.questions, 1))
