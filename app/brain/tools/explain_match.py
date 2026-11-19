@@ -97,14 +97,19 @@ def select_pages(
     for n in verified_pages(conn, scheme["id"]):
         if n in on_disk and n not in chosen and len(chosen) < MAX_PAGES:
             chosen.append(n)
+    from_evidence = len(chosen)
     for n in pages_for(conn, retrieval_query(scheme, match), scheme["id"], max_pages=MAX_PAGES):
         if n in on_disk and n not in chosen and len(chosen) < MAX_PAGES:
             chosen.append(n)
-    if chosen:
-        how = "retrieved"
-    else:
+    if not chosen:
         chosen = [n for n, _ in files[:FALLBACK_PAGES]]
         how = "fallback"
+    elif from_evidence and len(chosen) > from_evidence:
+        how = "evidence+retrieved"
+    elif from_evidence:
+        how = "evidence"
+    else:
+        how = "retrieved"
     return [(n, on_disk[n].read_text(encoding="utf-8")) for n in sorted(chosen)], how
 
 

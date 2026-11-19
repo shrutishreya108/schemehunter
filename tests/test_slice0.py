@@ -50,6 +50,7 @@ def test_migration_files_in_order() -> None:
         "005_pending_attempts.sql",
         "006_email_signin.sql",
         "007_source_metadata.sql",
+        "008_source_chunks.sql",
     ]
 
 
@@ -65,6 +66,7 @@ def test_migrations_apply_once(settings_db: str) -> None:
         "005_pending_attempts",
         "006_email_signin",
         "007_source_metadata",
+        "008_source_chunks",
     ]
     assert first in ([], all_versions)
     with connect(settings_db) as conn:

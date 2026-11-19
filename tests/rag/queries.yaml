@@ -1,0 +1,23 @@
+# Labelled retrieval queries for pmegp. Each page list was read from the extracted text (pages/NN.txt),
+# not from the page hints in the scheme file. PDF page numbers.
+queries:
+  - query: "minimum age of applicant"
+    pages: [5]
+  - query: "maximum cost of project manufacturing sector"
+    pages: [5]
+  - query: "educational qualification VIII pass"
+    pages: [6]
+  - query: "Udyam registration mandatory before physical verification"
+    pages: [1, 7]
+  - query: "rural area certificate"
+    pages: [11]
+  - query: "EDP training mandatory for claiming margin money subsidy"
+    pages: [18]
+  - query: "EDP certificate 30 working days sanction letter"
+    pages: [13]
+  - query: "new projects sanctioned specifically under PMEGP"
+    pages: [6]
+  - query: "Aadhaar number mandatory applicant"
+    pages: [11]
+  - query: "bank loan balance without government subsidy"
+    pages: [5]

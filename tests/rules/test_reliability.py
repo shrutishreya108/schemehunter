@@ -7,6 +7,7 @@ next to them, and that an unverified or incomplete source is never cited as veri
 import pytest
 
 from app.brain.tools import answer_question as qa
+from app.rag.index import index_scheme
 from app.rules import verification as v
 from app.rules.loader import load_schemes
 from app.rules.sources import is_complete, sync_sources, verified_rule_ids
@@ -49,6 +50,12 @@ def test_warnings_exist_in_both_languages() -> None:
 
 
 # ---------------------------------------------------------------- source metadata (database)
+
+
+def clean_pmegp(conn) -> None:
+    """The real pmegp rules are verified now; these tests need an empty pmegp source state of their own."""
+    conn.execute("delete from rule_evidence where scheme_id = 'pmegp'")
+    conn.execute("delete from source_documents where scheme_id = 'pmegp'")
 
 
 def write_sources(root, pdf_bytes: bytes | None, source_yaml: str, evidence_yaml: str) -> None:
@@ -103,6 +110,7 @@ evidence:
     last_verified: 2026-01-02
 """
     write_sources(tmp_path, None, COMPLETE_SOURCE, evidence)  # no file, so no hash, so not complete
+    clean_pmegp(conn)
     sync_sources(conn, root=tmp_path)
     assert verified_rule_ids(conn, "pmegp") == set()
 
@@ -123,6 +131,7 @@ evidence:
     status: unverified
 """
     write_sources(tmp_path, b"%PDF-1.4 test", COMPLETE_SOURCE, evidence)
+    clean_pmegp(conn)
     sync_sources(conn, root=tmp_path)
     assert verified_rule_ids(conn, "pmegp") == {"age"}
 
@@ -137,38 +146,58 @@ evidence:
     status: verified
 """
     write_sources(tmp_path, b"%PDF-1.4 test", COMPLETE_SOURCE, evidence)
+    clean_pmegp(conn)
     counts = sync_sources(conn, root=tmp_path)
     assert counts["skipped_evidence"] == 1 and verified_rule_ids(conn, "pmegp") == set()
 
 
-def test_guideline_text_without_source_details_is_an_estimate_never_verified(
-    seeded, conn, tmp_path, monkeypatch
-) -> None:
-    page = tmp_path / "01.txt"
-    page.write_text("Age must be 18 years or more.", encoding="utf-8")
-    monkeypatch.setattr(qa, "page_files", lambda sid, root=None: [(1, page)])
+def test_guideline_text_without_source_details_is_an_estimate_never_verified(seeded, conn, tmp_path) -> None:
+    (tmp_path / "01.txt").write_text("Age must be 18 years or more.", encoding="utf-8")
+    clean_pmegp(conn)  # no source document for pmegp at all
+    index_scheme(conn, "pmegp", tmp_path)
     from app.brain.tools.base import Ctx
 
     ctx = Ctx(case_id=seeded["meena"], conn=conn, schemes=load_schemes(), language="en")
-    sources = qa.guideline_sources(ctx, ["pmegp"])
+    sources = qa.guideline_sources(ctx, ["pmegp"], ["age 18 years"])
     assert sources and all(s["label"] != "verified" for s in sources)
     assert "not cited as verified" in sources[0]["text"]
 
 
-def test_guideline_text_with_complete_source_is_cited_with_version_and_hash(
-    seeded, conn, tmp_path, monkeypatch
+def test_guideline_text_with_complete_source_and_evidence_page_is_cited_with_version(
+    seeded, conn, tmp_path
 ) -> None:
-    page = tmp_path / "01.txt"
-    page.write_text("Age must be 18 years or more.", encoding="utf-8")
-    write_sources(tmp_path / "root", b"%PDF-1.4 test", COMPLETE_SOURCE, "evidence: []\n")
+    (tmp_path / "01.txt").write_text("Age must be 18 years or more.", encoding="utf-8")
+    evidence = """
+evidence:
+  - rule_id: age
+    source_id: pmegp-test-doc
+    page: 1
+    passage: "Age must be 18 years or more."
+    status: verified
+"""
+    write_sources(tmp_path / "root", b"%PDF-1.4 test", COMPLETE_SOURCE, evidence)
+    clean_pmegp(conn)
     sync_sources(conn, root=tmp_path / "root")
-    monkeypatch.setattr(qa, "page_files", lambda sid, root=None: [(1, page)])
+    index_scheme(conn, "pmegp", tmp_path)
     from app.brain.tools.base import Ctx
 
     ctx = Ctx(case_id=seeded["meena"], conn=conn, schemes=load_schemes(), language="en")
-    sources = qa.guideline_sources(ctx, ["pmegp"])
+    sources = qa.guideline_sources(ctx, ["pmegp"], ["age 18 years"])
     assert sources[0]["label"] == "verified"
     assert "Test guideline, version 1.0" in sources[0]["text"] and "page 1" in sources[0]["text"]
+
+
+def test_guideline_page_without_evidence_is_an_estimate_even_with_a_complete_source(seeded, conn, tmp_path) -> None:
+    (tmp_path / "01.txt").write_text("Age must be 18 years or more.", encoding="utf-8")
+    write_sources(tmp_path / "root", b"%PDF-1.4 test", COMPLETE_SOURCE, "evidence: []\n")
+    clean_pmegp(conn)
+    sync_sources(conn, root=tmp_path / "root")
+    index_scheme(conn, "pmegp", tmp_path)
+    from app.brain.tools.base import Ctx
+
+    ctx = Ctx(case_id=seeded["meena"], conn=conn, schemes=load_schemes(), language="en")
+    sources = qa.guideline_sources(ctx, ["pmegp"], ["age 18 years"])
+    assert sources[0]["label"] == "estimate"
 
 
 @pytest.mark.parametrize(
