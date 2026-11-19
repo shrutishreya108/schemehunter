@@ -1,0 +1,36 @@
+Therefore, no fee will be calculated, and case will be closed
+Claim Limit
+Case closed
+Scenario 4
+Guarantee Limit
+Term Loan
+Loan Sanctioned: ₹13 Crore
+Collateral value: ₹1 Crore
+Maximum guarantee Coverage = ₹10 Crore (since ₹10 crore is the maximum guarantee
+Limit. In case of RRB, it will be ₹2 crore)
+Unsecured portion = ₹2 Crore
+Fee Calculation
+Outstanding as on December 31 is ₹12 Crore
+Amount on which fee will be calculated:
+₹12 crore (outstanding) – ₹1 crore (collateral Value) – ₹2 crore (unsecured Portion) = ₹9
+Crore
+The fee will be calculated on ₹9 Crore
+Claim Limit
+Maximum Limit would be on which fee is paid = ₹9 Crore
+Scenario 5
+Guarantee Limit
+Term Loan
+Loan Sanctioned: ₹12 crore
+Collateral value: ₹1 crore
+Maximum guarantee Coverage = ₹10 crore (since ₹10 crore is the maximum guarantee
+Limit. In case of RRB, it will be ₹2 crore)
+Unsecured portion = ₹1 crore
+Fee Calculation
+Outstanding as on December 31 is ₹2 crore
+Amount on which fee will be calculated:
+₹2 crore (outstanding) – ₹1 crore (collateral Value) – ₹1 crore (unsecured Portion) = 0
+Therefore, no fee will be calculated and case will be closed
+Claim Limit
+Case closed
+*****
+pg. 31

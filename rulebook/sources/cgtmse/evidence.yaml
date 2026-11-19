@@ -1,0 +1,20 @@
+# Evidence for CGTMSE rules. Page = PDF page number of guidelines.pdf.
+# A row is "verified" only when its passage is a verbatim quote of that page (tests/rules/test_evidence_passages.py)
+# AND the source is complete. Rows that disagree with the rule file stay unverified and are recorded in BUILD_NOTES §4.
+evidence:
+  - rule_id: enterprise_size
+    source_id: cgtmse-cgs1-2026
+    page: 2
+    passage: "means new or existing Micro and Small Enterprises to which credit facility has been provided by the lending institution without any collateral security and/or third party guarantees."
+    status: verified
+    last_verified: 2026-11-19
+  - rule_id: loan_cap
+    source_id: cgtmse-cgs1-2026
+    page: 5
+    passage: "not exceeding ₹10 crore (Public Sector Banks, Private Sector Banks, Foreign Banks, select Financial Institutions)"
+    status: unverified  # the cap depends on the lender: ₹2 crore for SFBs, RRBs and co-operative banks, ₹50 lakh for MFIs (page 5)
+  - rule_id: sector_excluded
+    source_id: cgtmse-cgs1-2026
+    page: 6
+    passage: "Educational / Training Institution also made eligible activity under Credit Guarantee Scheme of CGTMSE"
+    status: unverified  # supports removing education_institution; the SHG exclusion has no passage in this document

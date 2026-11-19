@@ -1,0 +1,34 @@
+8.3 Payment process
+CGTMSE has introduced new online payment process for receiving
+the annual guarantee fee payment through NEFT/RTGS to enable the
+Trust to further improve the guarantee coverage process. The two step
+process for fee remittance towards guarantee fee / annual fee is given
+below:
+1. System Path: Member Login >> GF Payment or ASF Payment >>
+Allocate >> Select CGPAN/DANS >> Next >> RP is created by
+System.
+2. After that, go to GF Payment or ASF Payment >> Initiate payment >>
+Select the RP >> Account Nos, Final Amount for payment & IFSC code
+is displayed for payment purpose
+MLI can cancel / Modify the RP before making the final payment if so
+required using path : System Path: Member Login >> GF Payment or
+ASF Payment >> Modify/cancel RP No or Pay_ID
+Annual Guarantee Fee (AGF) demanded by the Trust is inclusive of
+applicable GST.
+8.4 Revival of closed accounts
+If the guaranteed account gets closed due to non-payment of AGF, the
+guarantee under the scheme shall not be available and request for
+revival of accounts/ delayed payment will be considered subject to the
+following conditions:
+(i) Request for revival of account will have to be submitted within next
+financial year.
+(ii) Account should be standard and regular as on date of submission
+of request for revival and the Trust reserves the right to reject the
+claim if the account turns NPA within 180 days from the date of
+revival of account.
+(iii) Any fee due by the MLI (current and previous FY) will be
+demanded along with penal interest (@ 4% over Bank Rate, per
+annum) and additional risk premium @15% of standard rate or at
+such rates specified by the Trust from time to time, for the period
+of delay.
+pg. 14

@@ -1,0 +1,40 @@
+Annexure IV
+Under Hybrid Security Model : scenarios for fee and claim calculation
+Scenario 1
+Guarantee Limit
+Term Loan
+Loan Sanctioned: ₹2 Crore
+Collateral value: ₹1 Crore
+Maximum guarantee Coverage (₹2 crore less ₹1 Crore) = ₹1 Crore
+Fee Calculation
+Outstanding as on December 31 for Term Loan is ₹1.8 Crore
+Amount on which fee will be calculated:
+₹1.8 crore (outstanding) – ₹1 crore (collateral Value) = ₹0.8 crore
+The fee will be calculated on ₹0.8 Crore
+Claim Limit
+Maximum Limit would be on which fee is paid = ₹0.8 Crore
+Scenario 2
+Guarantee Limit
+Working Capital
+Loan Sanctioned: ₹1.8 Crore
+Collateral value: ₹1 Crore
+Maximum guarantee Coverage (₹1.8 crore less ₹1 Crore) = ₹0.8 Crore
+Fee Calculation
+Expected Outstanding in case of Working Capital is ₹1.9 Crore
+Amount on which fee will be calculated:
+₹1.9 crore (outstanding) – ₹1 crore (collateral Value) = ₹0.9 Crore crore (guarantee
+cover is ₹0.8 crore)
+The fee will be calculated on ₹0.8 Crore (subject to maximum of guarantee amount)
+Claim Limit
+Maximum Limit would be on which fee is paid = ₹0.8 Crore
+Scenario 3
+Guarantee Limit
+Term Loan
+Loan Sanctioned: ₹2 Crore
+Collateral value: ₹1 Crore
+Maximum guarantee Coverage (₹2 crore less ₹1 Crore) = ₹1 Crore
+Fee Calculation
+Outstanding as on December 31 for Term Loan is ₹1 Crore
+Amount on which fee will be calculated:
+₹1 crore (outstanding) – ₹1 crore (collateral Value) = 0
+pg. 30

@@ -1,0 +1,35 @@
+Annexure II
+Sample Scenarios for Charging of fee at different Rate/Risk Premium/Concession
+1) In case the MLI falls under the category of ‘Standard Rate plus Risk Premium of 15%
+on Standard Rate’, The fee rate for a guarantee of `10 lakh would be:
+>> In case MLI fall under the category of ‘Standard Rate plus Risk Premium of 15% on
+Standard Rate’, the applicable fee rate for a guarantee coverage of `10 lakh would be
+0.43%
+2) In case the MLI falls under the category of ‘Standard Rate plus Risk Premium of 15%
+on Standard Rate’, the fee rate for a guarantee coverage of credit facility of `10 lakh
+where the unit is having an existing credit facility already covered for `20 lakh under
+CGTMSE would be:
+>> In case MLI fall under the category of ‘Standard Rate plus Risk Premium of 15% on
+Standard Rate’, considering the total exposure of `30 lakh, the applicable fee rate for a
+guarantee coverage of `10 lakh would be 0.63%
+3) In case the MLI fall under the category of ‘Standard Rate with discount of 10% on
+Standard Rate’, the fee rate for a guarantee of `10 lakh would be:
+>> In case MLI fall under the category of ‘Standard Rate with discount of 10% on Standard
+Rate’, the applicable fee rate for a guarantee coverage of `10 lakh would be 0.33%
+4) In case the MLI fall under the category ‘Standard Rate plus Risk Premium of 15% on
+Standard Rate’, the fee rate for Women Entrepreneur for a guarantee of `10 lakh
+would be:
+>> The applicable fee rate for a guarantee coverage of `10 lakh would be 0.38%. The
+detailed Calculation is as follows
+Particulars Rate
+Guarantee Amount 10 lakh
+Standard Rate (SR) 0.37%
+MLI’s Risk rating Standard Rate plus Risk Premium of 15% on
+Standard Rate
+Additional Concession to Special Category – 10%
+Women Entrepreneur
+Applicable Fee: 0.38%
+Standard rate: 0.37
+10% concession on SR: 0.33
+Risk Premium 15% on 0.33: 0.38
+pg. 26

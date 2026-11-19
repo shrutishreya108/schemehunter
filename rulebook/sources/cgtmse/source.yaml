@@ -1,0 +1,12 @@
+# Official source documents for CGTMSE. Values copied from the document itself; a field it does not print stays out.
+# sha256 is computed by the sync from guidelines.pdf; do not type it.
+documents:
+  - id: cgtmse-cgs1-2026
+    title: "CREDIT GUARANTEE FUND SCHEME FOR MICRO AND SMALL ENTERPRISES"  # printed heading, page 1
+    issuing_authority: "Credit Guarantee Fund Trust for Micro and Small Enterprises (CGTMSE)"  # page 1, para 1
+    version: "CGS-I, updated as on April 01, 2026"  # printed on page 1, para 1(iii)
+    retrieval_date: 2026-11-19
+    local_path: guidelines.pdf
+    source_kind: pdf
+  # official_url: not printed in the document, so it is left out. The source stays incomplete, and no CGTMSE rule
+  # counts as verified until a curator supplies the official URL.

@@ -18,7 +18,7 @@ eligibility:
   all:
     - { id: enterprise_size, fact: enterprise_size, op: in, value: [micro, small],
         verified: false, source_note: "Curator public-rule list (v0.2 brief): micro or small enterprise" }
-    - { id: loan_cap, fact: loan_amount, op: lte, value: 50000000,
-        verified: false, source_note: "Curator public-rule list (v0.2 brief): loan <= 5,00,00,000" }
-    - { id: sector_excluded, fact: sector, op: not_in, value: [education_institution, shg],
-        verified: false, source_note: "Curator public-rule list (v0.2 brief): not education institutions, not SHGs" }
+    - { id: loan_cap, fact: loan_amount, op: lte, value: 100000000, page: 5,
+        verified: false, source_note: "Guideline p5: 'not exceeding ₹10 crore' for PSBs, private and foreign banks, select FIs (changed from ₹5 crore). Lender type not in this rule: SFB/RRB/co-op ₹2 crore and MFI ₹50 lakh caps are unresolved." }
+    - { id: sector_excluded, fact: sector, op: not_in, value: [shg], page: 6,
+        verified: false, source_note: "Guideline p6: educational/training institutions are an eligible activity (education_institution removed). SHG exclusion: no passage in the document; unverified." }

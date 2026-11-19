@@ -1,0 +1,44 @@
+(vi) The Trust shall pay 75 per cent of the guaranteed amount on preferring
+of eligible claim by the lending institution, within 30 days, subject to the
+claim being otherwise found in order and complete in all respects. The
+Trust shall pay to the lending institution interest on the eligible claim
+amount at the prevailing Bank Rate for the period of delay beyond 30
+days. The claim for balance 25 per cent of the guaranteed amount can
+be lodged after the completion of 3 years from the settlement of first
+claim or OTS (after the receipt of full and final OTS amount) whichever
+is earlier. On a claim being paid, the Trust shall be deemed to have
+been discharged from all its liabilities on account of the guarantee in
+force in respect of the borrower concerned. MLIs, however, should
+undertake to refund any amount received from the borrower after
+payment of full guaranteed amount by CGTMSE.
+MLIs have option for Single instalment of claim settlement with reduced
+extent of guarantee by 15% (in respect of extent of coverage of 75%,
+reduced coverage would be 60%, 80% would be 65% and likewise)
+where waiver of legal action is applicable.
+(vii) In the event of default, the lending institution shall exercise its rights, if
+any, to take over the assets of the borrowers and the amount realized,
+if any, from the sale of such assets or otherwise shall first be credited
+on pro-rata basis by the lending institutions to the Trust before it claims
+the remaining 25 per cent of the guaranteed amount.
+(viii)The lending institution shall be liable to refund the claim released by
+the Trust together with penal interest at the rate of 4% above the
+prevailing Bank Rate, if such a recall is made by the Trust in the event
+of serious deficiencies having existed in the matter of appraisal /
+renewal / follow-up / conduct of the credit facility or where lodgement
+of the claim was more than once or where there existed suppression
+of any material information on part of the lending institutions for the
+settlement of claims. The lending institution shall pay such penal
+interest, when demanded by the Trust, from the date of the initial
+release of the claim by the Trust to the date of refund of the claim.
+(ix) MLIs can update, allocate and remit the recoveries/ OTS amount
+received post settlement of first instalment of claim in the CGTMSE
+portal. In the Recovery Module, MLIs can allocate the CGPANs to
+generate RP Number and initiate payment by generating Virtual
+Account Number for remitting recovery related payment to CGTMSE.
+System Path: Receipts & Payment >> Recovery through NEFT/RTGS
+>> Update Recovery info. (Circular No.171/2020-21 and 113/ 2016-17
+dated July 03, 2020 and May 12, 2016 respectively).
+(x) While online lodgement of first claim, MLIs have to submit the
+Declaration & Undertaking (D& U) electronically along with the
+checklist displayed in the system.
+pg. 18

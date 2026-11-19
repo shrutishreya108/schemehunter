@@ -1,0 +1,39 @@
+IV. CLAIMS
+10. Invocation of guarantee
+NPA marking
+The Member Lending Institutions (MLIs) are required to inform the date
+on which the account was classified as NPA in a particular calendar
+quarter, by end of subsequent quarter using the following option in the
+online system.
+(Member Login area >> Guarantee Maintenance >> Periodic
+Information >> NPA Details)
+(i) The lending institution may invoke the guarantee in respect of credit
+facility within a maximum period of 3 years from the NPA date or lock-
+in period whichever is later (applicable for NPA date on or after 15/03/2018), if
+the following conditions are satisfied: -
+a. The guarantee in respect of that credit facility was in force at the
+time of account turning NPA.
+b. The lock-in period of 18 months for guarantee (or 9 months for
+guarantee upto ₹10 lakh with tenure upto 36 months wef December
+15, 2023) from either the date of last disbursement of the loan to the
+borrower or the guarantee start date in respect of credit facility to
+the borrower, whichever is later, has lapsed.
+c. The amount due and payable to the lending institution in respect
+of the credit facility has not been paid and the dues have been
+classified by the lending institution as Non-Performing Assets.
+Provided that the lending institution shall not make or be entitled
+to make any claim on the Trust in respect of the said credit facility
+if the loss in respect of the said credit facility had occurred owing
+to actions / decisions taken contrary to or in contravention of the
+guidelines issued by the Trust.
+d. The credit facility has been recalled and the recovery proceedings
+have been initiated under due process of law. Mere issuance of
+recall notice under SARFAESI Act 2002 cannot be construed as
+initiation of legal proceedings for purpose of preferment of claim
+under CGS. MLIs are advised to take further action as contained
+in Section 13 (4) of the SARFAESI Act 2002 wherein a secured
+creditor can take recourse to any one or more of the recovery
+measures out of the four measures indicated therein before
+submitting claims for first instalment of guaranteed amount. In
+case the MLI is not in a position to take any of the action indicated
+pg. 16

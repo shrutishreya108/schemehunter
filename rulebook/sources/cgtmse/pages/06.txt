@@ -1,0 +1,42 @@
+amount of working capital limit (irrespective of the utilization) shall be
+considered.
+Member Lending Institutions (MLIs) can apply for guarantee cover anytime
+during the tenure of Loan provided the credit facility was not restructured /
+remained in SMA2 status in last 1 year from the date of submission of
+application.
+Provided further that, as on the material date:
+(i) Credit facility is standard and regular (not SMA) as per RBI guidelines
+and / or
+(ii) The business or activity of the borrower for which the credit facility was
+granted has not ceased; and / or
+(iii) The credit facility has not wholly or partly been utilized for adjustment
+of any debt deemed bad or doubtful of recovery, without obtaining a
+prior consent in this regard from the Trust.
+Trading (Retail / Wholesale Trade) has been made eligible activity under
+CGTMSE for all MLIs (including RRBs). Also, Trading activity has been
+aligned with other activities in respect of the extent of coverage, ceiling of
+credit guarantee coverage and guarantee fee.
+Educational / Training Institution also made eligible activity under Credit
+Guarantee Scheme of CGTMSE and would attract fee, extent of coverage
+and other terms and conditions as applicable under existing normal Scheme.
+Under “Hybrid Security” product, the MLIs will be allowed to obtain collateral
+security for a part of the credit facility, whereas the remaining unsecured part
+of the credit facility, upto a maximum of ₹10 crore, can be covered under
+CGS-I. CGTMSE will, however, have notional second charge on the
+collateral security provided by the borrower for the credit facilities extended.
+Under the hybrid security product, there is no requirement for MLIs to create
+security / charge in favour of CGTMSE by way of legal documentation.
+Credit facilities extended by more than one bank and/or financial institution
+jointly and/or separately to eligible borrower up to a maximum of ₹10 crore
+per borrower subject to ceiling amount of individual MLI or such amount as
+may be specified by the Trust.
+The information on total exposure of the borrower under CGTMSE and status
+of the account (NPA/Standard) are made available to the MLIs at no cost.
+System Path to access such information: MLI Login>> Reports & MIS>>
+Search History >> Enter ITPAN number of the chief promoter of the unit.
+The guarantee cover will commence from the guarantee start date and shall
+run through the agreed tenure of the term credit in respect of term credit /
+composite credit. Where working capital alone is extended to the eligible
+borrower, the guarantee cover shall be for a period of 5 years or a block of 5
+years or for such period as may be specified by the trust in this behalf.
+pg. 6

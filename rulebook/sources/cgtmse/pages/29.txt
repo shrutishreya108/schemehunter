@@ -1,0 +1,41 @@
+13 Maximum Claim Limit Maximum eligible limit for claim shall be the
+outstanding on which fee is paid.
+14 If the TL is undisbursed/ partially disbursed, In case of undisbursed/ partially disbursed
+how is the AGF calculated? TL, fee shall be generated on Guarantee
+amount (including Hybrid case).
+No, in case of fully disbursed TL, the
+outstanding cannot be higher than
+Can Outstanding amount be Higher than outstanding updated last year.
+15 amount provided last year? However, in case of undisbursed/ partially
+disbursed Term Loans, system will allow
+feeding higher o/s amount as compared to
+last year.
+16 In case of Hybrid Model, what outstanding Actual principal outstanding as on 31st
+amount is to be updated? December without deducting the collateral
+value.
+Fee is calculated on derived outstanding by
+netting off collateral value from the
+outstanding as provided by MLI.
+17 In case of Hybrid Model, how is the fee Derived outstanding for fee generation =
+calculated?
+Actual principal outstanding as on 31st
+December less collateral value as
+mentioned at the time of guarantee
+coverage.
+18 What if the Outstanding updated / derived is Fee will be charged on Outstanding or
+greater than Guarantee amount? Guarantee Amount whichever is low.
+General
+19 Data Collection frequency MLIs are required to update outstanding
+data every year on CGTMSE portal by
+January 15th or any such date as prescribed
+by the Trust for calculation of AGF.
+In case of Working Capital, MLI can apply
+for enhancement of limit/ outstanding by
+paying additional guarantee fee for the
+20 Can Outstanding be updated or modified after enhanced limit.
+generation of AGF? In case of Term Loan, System will not allow
+any modification in Outstanding data after
+Jan 15 or any such date prescribed by the
+Trust or after generation of AGF.
+******
+pg. 29

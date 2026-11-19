@@ -1,0 +1,35 @@
+5) In case the MLI fall under the category ‘Standard Rate plus Risk Premium of 50% on
+Standard Rate’, the fee rate for Unit located in Aspirational District & ZED certified
+Unit for a guarantee of `10 lakh would be:
+>> The applicable fee rate for a guarantee coverage of `10 lakh would be 0.45%. The
+detailed Calculation is as follows
+Particulars Rate
+Guarantee Amount 10 lakh
+Standard Rate (SR) 0.37%
+MLI’s Risk rating Standard Rate plus Risk Premium of 50% on
+Standard Rate
+Additional Concession to Special Category – 20%
+Aspirational District & ZED certified Unit
+Applicable Fee: 0.45%
+Standard rate: 0.37
+20% concession on SR: 0.30
+Risk Premium 50% on 0.30: 0.45
+6) In case the MLI fall under the category ‘Standard Rate plus Risk Premium of 30% on
+Standard Rate’, the fee rate for Unit located in Aspirational District, SC/ST
+Entrepreneur & ZED certified Unit for a guarantee of `10 lakh would be:
+>> The applicable fee rate for a guarantee coverage of `10 lakh would be 0.34%. The
+detailed Calculation is as follows
+Particulars Rate
+Guarantee Amount 10 lakh
+Standard Rate (SR) 0.37%
+MLI’s Risk rating Standard Rate plus Risk Premium of 30% on
+Standard Rate
+Additional Concession to Special Category – 30%
+Unit located in Aspirational District, SC/ST
+Entrepreneur & ZED certified Unit
+Applicable Fee: 0.34%
+Standard rate: 0.37
+30% concession on SR: 0.26
+Risk Premium 30% on 0.26: 0.34
+*****
+pg. 27

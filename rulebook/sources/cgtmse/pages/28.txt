@@ -1,0 +1,52 @@
+Annexure III
+Charging of fee on outstanding for WC /TL accounts
+S No Particulars Guideline / Clarification
+1
+2 Working Capital (WC) account
+3
+4 What Outstanding is to be updated? Present / Expected Outstanding is to be
+5 updated (subject to maximum of guarantee
+6 amount). Updated Outstanding will be
+treated as Guarantee amount and Fee shall
+7 be charged on such Outstanding only.
+8 What in case outstanding is negligible / NIL? No fee will be charged for NIL outstanding
+9 and the account will be closed.
+10
+11 What in case MLI missed to update Fee shall be charged on last year’s
+12
+outstanding? outstanding / Guarantee Amount.
+What outstanding to be updated where WC is Expected Maximum Outstanding may be
+not availed in last FY? updated for calculation of fee amount.
+(subject to maximum of guarantee amount)
+Maximum Claim Limit Maximum eligible limit for claim shall be the
+outstanding on which fee is paid.
+In case of Hybrid Model, what outstanding Present / expected outstanding without
+amount is to be updated? deducting collateral value (as the collateral
+value will be deducted by our system from
+the updated outstanding for calculation of
+guarantee fee). It is subject to maximum of
+guarantee amount.
+In case of Hybrid Model, how is the fee Fee is calculated on derived outstanding by
+calculated? netting off collateral value (as provided by
+MLI) from the updated outstanding. It is
+subject to maximum of guarantee amount.
+Derived O/s for fee generation = Present /
+expected outstanding less collateral value
+mentioned at the time of guarantee
+coverage.
+What if the Outstanding updated / derived is Fee will be charged on Guarantee amount.
+greater than Guarantee amount?
+In case MLI need to avail higher guarantee,
+it can be done so by enhancing the
+guarantee limit
+Can Outstanding amount be Higher than Yes.
+amount provided last year? Claim and fee will subject to maximum of
+guarantee amount.
+Term Loan (TL) account
+What Outstanding is to be updated? Principal outstanding amount as on 31st
+December.
+What in case outstanding is negligible / NIL? No fee will be charged for NIL outstanding
+and the account will be closed.
+What in case MLI missed to update Fee shall be charged on last year’s
+outstanding? outstanding / Guarantee Amount.
+pg. 28
