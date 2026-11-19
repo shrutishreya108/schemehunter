@@ -52,7 +52,14 @@ class Settings(BaseSettings):
     EMAIL_FROM: str = ""
     CONTACT_TO: str = ""
     CURATOR_ALERT_EMAIL: str = ""
-    DEMO_PERSONA_EMAIL: str = ""  # seeded personas get this email, so official demo mail CCs your inbox
+    # Email sign-in (LLD signin §3)
+    SIGNIN_CODE_TTL_MIN: int = 10
+    SIGNIN_MAX_ATTEMPTS: int = 5
+    SIGNIN_RESEND_COOLDOWN_S: int = 60
+    SIGNIN_EMAILS_PER_EMAIL_PER_HOUR: int = 5
+    SIGNIN_EMAILS_PER_IP_PER_HOUR: int = 10
+    SIGNIN_EMAILS_PER_DAY: int = 100
+    SIGNIN_ADMIN_LINK_TTL_MIN: int = 60
 
     FEATURE_DOMAIN_OFFER: bool = False
     GODADDY_API_KEY: str = ""

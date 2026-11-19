@@ -18,7 +18,6 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 import psycopg
 import yaml
 
-from app.access import demo_link_token, hash_token
 from app.config import ROOT, get_settings
 from app.db import connect, jsonb, run_migrations
 from app.events import log_event
@@ -30,6 +29,8 @@ SEED_DIR = ROOT / "seed"
 NS = uuid5(NAMESPACE_URL, "https://schemehunter/seed")
 TABLES = [
     "artifacts",
+    "login_challenges",
+    "identities",
     "rate_limits",
     "events",
     "pending_actions",
@@ -92,21 +93,26 @@ def insert_case(conn: psycopg.Connection, persona: dict, now: datetime) -> UUID:
     case_id = case_id_for(persona["key"])
     state = "ONBOARDING" if persona.get("stage") == "fresh" else "ACTIVE"
     conn.execute(
-        "insert into cases (id, display_name, language, state_code, access_token_hash, email, state, "
-        "consent_version, consent_at, created_at) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        "insert into cases (id, display_name, language, state_code, email, state, "
+        "consent_version, consent_at, created_at) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
         (
             case_id,
             persona.get("display_name"),
             persona.get("language", "hi"),
             persona.get("state_code"),
-            hash_token(demo_link_token(persona["key"])),
-            persona.get("email") or get_settings().DEMO_PERSONA_EMAIL or None,
+            persona.get("email"),
             state,
             "demo-v0",
             now,
             now,
         ),
     )
+    if persona.get("email"):  # demo personas sign in like anyone else: a verified email identity
+        conn.execute(
+            "insert into identities (case_id, kind, value_norm, verified_at) values (%s, 'email', %s, %s) "
+            "on conflict (kind, value_norm) do nothing",
+            (case_id, persona["email"].lower(), now),
+        )
     for key, value in persona["profile"].items():
         conn.execute(
             "insert into profile_answers (case_id, key, value, source) values (%s, %s, %s, 'seed')",
@@ -245,8 +251,8 @@ def truncate_all(conn: psycopg.Connection) -> None:
     conn.execute(f"truncate {', '.join(TABLES)} restart identity cascade")
 
 
-def case_link(key: str) -> str:
-    return f"{get_settings().APP_BASE_URL.rstrip('/')}/c/{demo_link_token(key)}"
+def case_email(key: str) -> str:
+    return next(p["email"] for p in read_yaml(SEED_DIR / "personas.yaml") if p["key"] == key)
 
 
 def seed(url: str | None = None, reset: bool = False, now: datetime | None = None) -> dict[str, UUID]:
@@ -275,7 +281,9 @@ def main(argv: list[str] | None = None) -> int:
     seeded = seed(reset=args.reset)
     print(f"seeded {len(seeded)} cases in {time.monotonic() - started:.2f}s")
     for key, case_id in seeded.items():
-        print(f"  {key:<7} case {case_id}  {case_link(key)}")
+        print(
+            f"  {key:<7} case {case_id}  sign in at {get_settings().APP_BASE_URL.rstrip('/')}/signin as {case_email(key)}"
+        )
     return 0
 
 

@@ -1,0 +1,9 @@
+{% if lang == "hi" %}नमस्ते,
+
+आपके लिए एक बार का साइन-इन लिंक (60 मिनट के लिए):
+{{ link }}
+{% else %}Hello,
+
+A one-time sign-in link for you (valid 60 minutes):
+{{ link }}
+{% endif %}

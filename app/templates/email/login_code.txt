@@ -1,0 +1,17 @@
+{% if lang == "hi" %}नमस्ते,
+
+आपका Scheme Hunter कोड है: {{ code }}
+
+यह कोड 10 मिनट तक चलेगा। या नीचे दिए लिंक पर एक बार क्लिक करें:
+{{ link }}
+
+अगर आपने यह नहीं माँगा, तो इसे अनदेखा करें। कोड के बिना कोई भी साइन इन नहीं कर सकता।
+{% else %}Hello,
+
+Your Scheme Hunter code is: {{ code }}
+
+It works for 10 minutes. Or tap this link once:
+{{ link }}
+
+If you did not ask for this, ignore it. Nobody can sign in without the code.
+{% endif %}

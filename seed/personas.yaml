@@ -1,5 +1,7 @@
 # seed/personas.yaml (LLD v1.1 §21). Keys marked "added v0.2" are not in the LLD; see BUILD_NOTES.md.
-- key: meena                     # live onboarding
+- key: meena
+  email: "YOURNAME+meena@gmail.com"   # REPLACE: a real inbox you can read; demo sign-in uses it
+                      # live onboarding
   display_name: Meena
   language: hi
   state_code: KA
@@ -7,7 +9,9 @@
   profile: { name_latin: "Meena Kumari", gender: female, dob: 1991-04-12, category: OBC, sector: service,
              business_stage: new, project_cost: 500000, area: urban, education_level: "10th" }
 
-- key: ravi                      # mid-flight: UNDER_REVIEW, 11 days silent, chase due T+2 min after reset
+- key: ravi
+  email: "YOURNAME+ravi@gmail.com"   # REPLACE: a real inbox you can read; demo sign-in uses it
+                       # mid-flight: UNDER_REVIEW, 11 days silent, chase due T+2 min after reset
   display_name: Ravi
   language: hi
   state_code: KA
@@ -16,7 +20,9 @@
              business_stage: new, project_cost: 1200000, area: rural, education_level: "12th" }
   application: { scheme_id: pmegp, ref_number: "PMEGP/KA/2026/04471" }
 
-- key: fatima                    # REJECTED on fixable reason → analyze → RETRY_NEXT_CYCLE
+- key: fatima
+  email: "YOURNAME+fatima@gmail.com"   # REPLACE: a real inbox you can read; demo sign-in uses it
+                     # REJECTED on fixable reason → analyze → RETRY_NEXT_CYCLE
   display_name: Fatima
   language: en
   state_code: KA
