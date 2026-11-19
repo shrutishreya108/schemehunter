@@ -282,6 +282,15 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 97. **Personal data in model requests:** the case file no longer carries name, address, district, date of birth or contact fields; it carries `age_years` instead. Paper sources for answers carry only the type and check result, never extracted fields. Bank fields never leave the server.
 98. **Open items:** no official PMEGP source is in the repo, so every PMEGP rule is preliminary; the education threshold (LLD 10 lakh vs YAML 5 lakh for services) and the special-category definition still need checking against the guideline; local redaction of Aadhaar photos is not built; deletion is not built.
 
+99. **myScheme investigation (no confirmed API):** the API Setu SOP names only general steps (client id header `X-APISETU-CLIENTID` appears in the public guide; the second credential name is not given). No myScheme endpoint, base URL, query parameter, response field or rate limit is documented in what we could read. The community project `gaurav-start/scheme-setu` uses its own local dataset and no myScheme API. So nothing is hard-coded: every endpoint and field name is configuration (`MYSCHEME_*`).
+100. **Provider interface:** `app/discovery/providers.py` has `MySchemeApiProvider` (live, refuses to run until all `MYSCHEME_*` values are set, timeouts configured, 401/403 → AuthFailed, 429 → RateLimited with Retry-After, timeouts and 5xx → Unavailable, malformed JSON or missing list → InvalidResponse, nameless items skipped and counted) and `DemoSchemeProvider` (the rulebook, labelled "Demo data: not live from myScheme", no retrieval time).
+101. **No silent demo:** if live is configured but not set up, the page says so in a notice. A live failure shows the error; demo data appears only when `DISCOVERY_FALLBACK_TO_DEMO=true`, and then with the reason.
+102. **Matching:** exact name or alias only, against the five YAML schemes. Ambiguous matches stay unmatched. Duplicates (same key or same rulebook scheme) are shown once and counted.
+103. **Eligibility is not taken from myScheme.** Only the rules engine decides, and only for matched schemes; "Check my eligibility" re-runs `run_match`. Unmatched schemes say the rules are not there yet. Preliminary status and its warning apply as before.
+104. **Profile sent to the API:** only fields listed in `MYSCHEME_QUERY_MAP` (and only those present); never names, dates of birth or addresses (tested).
+105. **Tests:** `tests/discovery/test_discovery.py` uses mocked transports and the test values above. No test reaches the network. Full suite: 580 passed, 2 skipped (the known Windows-only script test deselected).
+106. **To go live:** confirm the official documentation, then set `DISCOVERY_MODE=live` and every `MYSCHEME_*` value on the server. No code change is needed unless the response shape differs from the envelope assumed in `normalize_live`.
+
 ## 4. TODO / verify list
 
 ### Curator: guideline verification (unchanged from v0.2)

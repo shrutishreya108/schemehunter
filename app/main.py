@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
-from app.routes import admin, approvals, cases, chat, contact, documents, pages, signin
+from app.routes import admin, approvals, cases, chat, contact, discover, documents, pages, signin
 
 log = structlog.get_logger()
 
@@ -30,7 +30,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(title="Scheme Hunter", lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
-for module in (pages, signin, chat, contact, documents, approvals, cases, admin):
+for module in (pages, signin, chat, contact, documents, approvals, cases, admin, discover):
     app.include_router(module.router)
 
 

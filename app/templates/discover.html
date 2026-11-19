@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("discover_title") }}</h1>
+<p class="muted">{{ t("discover_intro") }}</p>
+
+{% if source == "demo" or note %}
+<p class="notice"><b>{{ t("discover_demo_banner") }}</b>{% if note %} {{ note }}{% endif %}</p>
+{% endif %}
+{% if error %}<p class="error">{{ t("discover_error") }}: {{ error }}</p>{% endif %}
+{% if source == "myscheme" %}<p class="muted">{{ t("discover_live_source") }} · {{ t("discover_retrieved") }} {{ retrieved_text }}</p>{% endif %}
+{% if skipped %}<p class="muted">{{ skipped }} {{ t("discover_skipped") }}</p>{% endif %}
+{% if duplicates %}<p class="muted">{{ duplicates }} {{ t("discover_duplicates") }}</p>{% endif %}
+
+{% for r in rows %}
+<article class="card">
+  <h2><a href="/discover/{{ r.item.key }}">{{ r.item.name }}</a></h2>
+  {% if r.item.department %}<p class="muted">{{ r.item.department }}</p>{% endif %}
+  {% if r.item.description %}<p>{{ r.item.description }}</p>{% endif %}
+  {% if r.match %}
+    <p><span class="badge {{ r.match.result|lower }}">{{ t(r.label_key) }}</span></p>
+    {% if r.warning %}<p class="notice">{{ r.warning }}</p>{% endif %}
+  {% else %}
+    <p class="muted">{{ t("discover_no_rules") }}</p>
+  {% endif %}
+  <p class="muted">{{ r.item.source_label("en") }}</p>
+  <p><a href="/discover/{{ r.item.key }}">{{ t("discover_details") }}</a></p>
+</article>
+{% else %}
+<div class="card"><p>{{ t("discover_none") }}</p></div>
+{% endfor %}
+{% endblock %}

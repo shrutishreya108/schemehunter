@@ -38,6 +38,24 @@ class Settings(BaseSettings):
     SCAN_WITH_MODEL: bool = True  # outbound unknown-scheme check also asks MODEL_CHEAP
     CHAT_SYNC_TIMEOUT_S: float = 60
 
+    # Scheme discovery (myScheme, via API Setu). "demo" shows the rulebook labelled as demo data.
+    # "live" uses MySchemeApiProvider, which refuses to run until every MYSCHEME_* value below is set.
+    DISCOVERY_MODE: str = "demo"
+    DISCOVERY_FALLBACK_TO_DEMO: bool = False  # if live fails, show demo data with the reason (never silently)
+    MYSCHEME_BASE_URL: str = ""
+    MYSCHEME_SEARCH_PATH: str = ""
+    MYSCHEME_CLIENT_ID: str = ""
+    MYSCHEME_API_KEY: str = ""
+    MYSCHEME_CLIENT_ID_HEADER: str = ""  # header name for the client id: from the official documentation
+    MYSCHEME_API_KEY_HEADER: str = ""  # header name for the API key: from the official documentation
+    MYSCHEME_QUERY_MAP: str = (
+        ""  # JSON: our profile field -> the API's parameter name (only mapped fields are sent)
+    )
+    MYSCHEME_RESULTS_KEY: str = ""  # the key holding the list of schemes in the response
+    MYSCHEME_FIELD_MAP: str = ""  # JSON: our field (name, id, department, ...) -> the API's field name
+    MYSCHEME_CONNECT_TIMEOUT_S: float = 5
+    MYSCHEME_READ_TIMEOUT_S: float = 10
+
     DEMO_CLOCK_SCALE: float = 1
 
     # Email: SMTP through the Titan Business Email mailbox on our domain.

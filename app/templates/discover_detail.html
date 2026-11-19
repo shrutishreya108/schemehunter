@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+{% set it = row.item %}
+<p><a href="/discover">{{ t("discover_title") }}</a></p>
+<h1>{{ it.name }}</h1>
+{% if it.department %}<p class="muted">{{ it.department }}</p>{% endif %}
+<p class="muted">{{ it.source_label("en") }}{% if retrieved_text %} · {{ t("discover_retrieved") }} {{ retrieved_text }}{% endif %}</p>
+{% if note %}<p class="notice">{{ note }}</p>{% endif %}
+
+<div class="card">
+  <h2>{{ t("discover_benefits") }}</h2>
+  <p>{{ it.benefits or t("discover_unavailable") }}</p>
+  <h2>{{ t("discover_eligibility_summary") }}</h2>
+  <p>{{ it.eligibility_summary or t("discover_unavailable") }}</p>
+  <h2>{{ t("discover_documents") }}</h2>
+  {% if it.documents %}<ul>{% for d in it.documents %}<li>{{ d }}</li>{% endfor %}</ul>{% else %}<p>{{ t("discover_unavailable") }}</p>{% endif %}
+  <h2>{{ t("discover_official_link") }}</h2>
+  {% if it.official_url %}<p><a href="{{ it.official_url }}" rel="noopener">{{ it.official_url }}</a></p>{% else %}<p>{{ t("discover_unavailable") }}</p>{% endif %}
+</div>
+
+<div class="card">
+  <h2>{{ t("discover_our_check") }}</h2>
+  {% if row.match %}
+    <p><span class="badge {{ row.match.result|lower }}">{{ t(row.label_key) }}</span></p>
+    {% if row.warning %}<p class="notice">{{ row.warning }}</p>{% endif %}
+    <p class="muted">{{ t("discover_check_note") }}</p>
+    <form method="post" action="/discover/{{ it.key }}/check">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button type="submit" class="secondary">{{ t("discover_check_again") }}</button>
+    </form>
+  {% elif it.internal_id %}
+    <p class="muted">{{ t("discover_not_checked_yet") }}</p>
+    <form method="post" action="/discover/{{ it.key }}/check">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button type="submit">{{ t("discover_check_now") }}</button>
+    </form>
+  {% else %}
+    <p class="muted">{{ t("discover_no_rules") }}</p>
+  {% endif %}
+</div>
+{% endblock %}
