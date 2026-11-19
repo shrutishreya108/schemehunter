@@ -178,3 +178,20 @@ def test_the_age_rules_page_is_sent_even_when_keyword_search_misses_it(seeded, c
     """Regression: 'minimum age of applicant' does not match page 5 by keywords ('above 18 years of age')."""
     sources = qa.guideline_sources(ctx_for(conn, seeded["meena"], fake_claude), ["pmegp"], ["What is the minimum age of applicant?"])
     assert any(s["id"].startswith("guideline:pmegp:p5") for s in sources), [s["id"] for s in sources]
+
+
+def test_a_verified_guideline_answer_is_saved_with_its_page_citation(seeded, conn, fake_claude) -> None:
+    """The reply names the guideline and page in code: the model's text alone never carries the citation."""
+    from app.brain.tools import dispatch
+
+    ctx = ctx_for(conn, seeded["meena"], fake_claude)
+    cid = next(s["id"] for s in qa.guideline_sources(ctx, ["pmegp"], ["minimum age"]) if s["id"].startswith("guideline:pmegp:p5"))
+    fake_claude.add({"qa": [qa_reply(fact(1, "The minimum age is 18.", "verified", [cid]))]})
+    dispatch("answer_question", {"questions": ["What is the minimum age?"]}, ctx)
+    dispatch("finish_run", {"user_message": "The minimum age for PMEGP is 18 years."}, ctx)
+    body = conn.execute(
+        "select body from messages where case_id = %s and direction = 'out' order by created_at desc limit 1",
+        (seeded["meena"],),
+    ).fetchone()["body"]
+    assert body.startswith("The minimum age for PMEGP is 18 years.")
+    assert "Source: " in body and "page 5." in body

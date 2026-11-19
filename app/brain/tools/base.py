@@ -26,6 +26,7 @@ class Ctx:
     user_message: str = ""
     rewrites: int = 0
     asked: list[dict] = field(default_factory=list)
+    cited: list[dict] = field(default_factory=list)  # verified guideline pages used in this run (for the citation line)
 
     def scheme(self, scheme_id: str) -> dict:
         for s in self.schemes:

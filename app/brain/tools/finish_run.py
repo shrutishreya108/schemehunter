@@ -49,6 +49,9 @@ def handle(data: Input, ctx: Ctx) -> dict[str, Any]:
                 payload={"tool": "finish_run", "ok": False, "guard": check},
             )
             message = FALLBACK.get(ctx.language, FALLBACK["en"])
+        if ctx.cited:  # after the promise check: the citation is code-written and always kept
+            lines = [f"Source: {c['title']}, version {c['version']}, page {c['page']}." for c in ctx.cited]
+            message = message + "\n" + "\n".join(dict.fromkeys(lines))
         ctx.conn.execute(
             "insert into messages (case_id, direction, channel, body, attachments, processed) "
             "values (%s, 'out', 'web', %s, %s, true)",

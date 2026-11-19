@@ -152,7 +152,8 @@ def guideline_sources(ctx: Ctx, scheme_ids: list[str], questions: list[str]) -> 
             page = h["page"]
             ref = f"guideline:{sid}:p{page}" + (f":{h['ord']}" if per_page[page] > 1 else "")
             label = "verified" if doc and page in verified else "estimate"
-            out.append({"id": ref, "label": label, "text": f"{h['text']}\n(Source: {cite}, page {page})"})
+            meta = {"title": doc["title"], "version": doc["version"], "page": page} if label == "verified" else None
+            out.append({"id": ref, "label": label, "text": f"{h['text']}\n(Source: {cite}, page {page})", "meta": meta})
     return out
 
 
@@ -332,6 +333,18 @@ def attach_web_sources(answers: list[dict], sources: list[dict]) -> list[dict]:
     return out
 
 
+def record_citations(ctx: Ctx, answers: list[dict], sources: list[dict]) -> None:
+    """Verified guideline pages used by an answer go to the run, so finish_run can print the page (code, not model)."""
+    by_id = {s["id"]: s for s in sources}
+    for a in answers:
+        if a["label"] != "verified":
+            continue
+        for sid in a["sources"]:
+            meta = (by_id.get(sid) or {}).get("meta")
+            if meta and meta not in ctx.cited:
+                ctx.cited.append(meta)
+
+
 def handle(data: Input, ctx: Ctx) -> dict[str, Any]:
     sources = gather_sources(ctx, data.questions)
     valid_ids = {s["id"] for s in sources}
@@ -348,6 +361,7 @@ def handle(data: Input, ctx: Ctx) -> dict[str, Any]:
     )
     answers = check_answers(raw.get("answers", []), data.questions, valid_ids, ctx)
     answers = attach_web_sources(answers, sources)
+    record_citations(ctx, answers, sources)
     return {
         "answers": answers,
         "instruction": "Copy each answer into your reply, numbered, with its label and sources.",
