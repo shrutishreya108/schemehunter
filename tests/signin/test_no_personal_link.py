@@ -9,7 +9,7 @@ APP = Path(__file__).resolve().parents[2] / "app"
 
 def test_no_route_under_the_old_link_or_pin() -> None:
     paths = {getattr(r, "path", "") for r in app.routes}
-    assert not [p for p in paths if p.startswith("/c/") or p.startswith("/pin")]
+    assert not [p for p in paths if p.startswith(("/c/", "/pin"))]
 
 
 def test_no_template_or_text_mentions_the_personal_link_or_pin() -> None:
