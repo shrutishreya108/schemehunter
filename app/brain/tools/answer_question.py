@@ -14,9 +14,9 @@ from app.brain import claude
 from app.brain.tools.base import Ctx, ToolError, scan_text, tool_schema
 from app.brain.tools.build_project_report import load_artifact, percentages
 from app.brain.tools.explain_match import page_files
-from app.docs.masking import mask_fields
 from app.finance.project_report import compute, inputs_from, inr
 from app.rules.loader import load_schemes
+from app.rules.sources import is_complete
 
 MAX_GUIDELINE_CHARS = 1500
 MAX_QUESTIONS = 8
@@ -85,9 +85,18 @@ SCHEMA = tool_schema(
 
 
 def guideline_sources(ctx: Ctx, scheme_ids: list[str]) -> list[dict]:
+    """Guideline text is cited as VERIFIED only when a complete source document (title, URL, authority, version,
+    retrieval date, sha256) exists for the scheme. Otherwise the text is labelled as an estimate with the gap stated."""
     out = []
     for sid in scheme_ids:
         pages = page_files(sid)
+        docs = [
+            d
+            for d in ctx.conn.execute(
+                "select * from source_documents where scheme_id = %s order by id", (sid,)
+            ).fetchall()
+            if is_complete(d)
+        ]
         if not pages:
             out.append(
                 {
@@ -97,11 +106,28 @@ def guideline_sources(ctx: Ctx, scheme_ids: list[str]) -> list[dict]:
                 }
             )
             continue
+        if not docs:
+            out.append(
+                {
+                    "id": f"guideline:{sid}:unavailable",
+                    "label": "estimate",
+                    "text": f"Guideline text for {sid} is loaded, but its source document details are not recorded, so it is not cited as verified.",
+                }
+            )
+            continue
+        doc = docs[0]
         budget = MAX_GUIDELINE_CHARS
         for num, path in pages[:6]:
             text = path.read_text(encoding="utf-8")[:budget]
             budget -= len(text)
-            out.append({"id": f"guideline:{sid}:p{num}", "label": "verified", "text": text})
+            cite = f"{doc['title']}, version {doc['version']}, retrieved {doc['retrieval_date']}, sha256 {doc['sha256'][:12]}"
+            out.append(
+                {
+                    "id": f"guideline:{sid}:p{num}",
+                    "label": "verified",
+                    "text": f"{text}\n(Source: {cite}, page {num})",
+                }
+            )
             if budget <= 0:
                 break
     return out
@@ -115,7 +141,7 @@ def rule_sources(schemes: list[dict]) -> list[dict]:
             {
                 "id": f"rulefile:{s['id']}",
                 "label": "estimate",
-                "text": f"{s['name']['en']} rule file (not yet checked against the official guideline). Papers listed: {docs}.",
+                "text": f"{s['name']['en']} rule file (not yet checked against the official guideline; results are preliminary). Papers listed: {docs}.",
             }
         )
     return out
@@ -130,7 +156,7 @@ def paper_sources(ctx: Ctx) -> list[dict]:
         {
             "id": f"paper:{str(r['id'])[:8]}",
             "label": "verified",
-            "text": f"Your {r['doc_type'] or 'paper'}: check result {r['check_status']}. Masked fields: {mask_fields(r['extracted'] or {})}.",
+            "text": f"Your {r['doc_type'] or 'paper'}: check result {r['check_status']}.",
         }
         for r in rows
     ]

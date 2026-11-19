@@ -3,6 +3,8 @@
 The model is FakeClaude. These tests check what our code does with each reply and what it sends to the model.
 """
 
+import itertools
+
 import pytest
 
 from app.brain.runner import run_brain
@@ -171,7 +173,7 @@ def test_c_unrelated_question_is_answered_not_replaced_by_a_profile_question(
     first = fake_claude.calls_for("loop")[0]
     assert "Continue onboarding" not in str(first["messages"])
     roles = [m["role"] for m in first["messages"]]
-    assert roles[0] == "user" and all(a != b for a, b in zip(roles, roles[1:]))  # strict alternation
+    assert roles[0] == "user" and all(a != b for a, b in itertools.pairwise(roles))  # strict alternation
     assert (
         first["messages"][-1]["role"] == "user"
         and "Does PMEGP cover a shop rent?" in first["messages"][-1]["content"]

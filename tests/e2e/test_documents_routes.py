@@ -41,7 +41,7 @@ def post_file(client, case_id, name, doc_type, csrf=True, htmx=True):
         headers["HX-Request"] = "true"
     return client.post(
         "/documents",
-        data={"doc_type": doc_type},
+        data={"doc_type": doc_type, "vision_consent": "yes"},
         files={"file": (name, (FIXTURES / name).read_bytes(), "image/jpeg")},
         headers=headers,
         follow_redirects=False,

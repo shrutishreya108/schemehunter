@@ -52,7 +52,9 @@ def upload(conn, case_id, label, fake_claude, meter=None):
     data = (FIXTURES / label["file"]).read_bytes()
     if label["claimed"] in ("aadhaar", "passbook"):
         queue_vision(fake_claude, label["vision"])
-    return process_upload(conn, case_id, data, "image/jpeg", label["claimed"], meter=meter or UsageMeter())
+    return process_upload(
+        conn, case_id, data, "image/jpeg", label["claimed"], meter=meter or UsageMeter(), vision_consent=True
+    )
 
 
 def test_there_are_20_labelled_fixtures() -> None:
@@ -140,7 +142,9 @@ def test_vision_call_is_downscaled_forced_schema_and_metered(seeded, conn, vault
     Image.new("RGB", (3200, 2000), (240, 240, 230)).save(big, format="JPEG")
     queue_vision(fake_claude, LABELS[3]["vision"])
     meter = UsageMeter()
-    process_upload(conn, seeded["meena"], big.getvalue(), "image/jpeg", "aadhaar", meter=meter)
+    process_upload(
+        conn, seeded["meena"], big.getvalue(), "image/jpeg", "aadhaar", meter=meter, vision_consent=True
+    )
     call = fake_claude.calls_for("vision")[0]
     assert call["max_tokens"] == 1200 and call["model"] == get_settings().MODEL_REASON
     assert call["tool_choice"] == {"type": "tool", "name": "document_check_result"}
@@ -172,7 +176,7 @@ def test_photo_quotation_and_pdf_aadhaar_never_call_the_model(seeded, conn, vaul
 )
 def test_rejected_uploads(seeded, conn, vault_env, data, mime, fragment) -> None:
     with pytest.raises(UploadError, match=fragment):
-        process_upload(conn, seeded["meena"], data, mime, "aadhaar")
+        process_upload(conn, seeded["meena"], data, mime, "aadhaar", vision_consent=True)
     assert conn.execute("select count(*) as n from documents").fetchone()["n"] == 0
 
 
@@ -274,7 +278,13 @@ def test_tools_list_and_check(seeded, conn, vault_env, fake_claude) -> None:
     listed = dispatch("list_required_documents", {"scheme_id": "pmegp"}, ctx)
     assert {"doc_type": "aadhaar", "have": False, "status": None} in listed["documents"]
     out = process_upload(
-        conn, case_id, (FIXTURES / "aadhaar_clear_1.jpg").read_bytes(), "image/jpeg", "aadhaar", check=False
+        conn,
+        case_id,
+        (FIXTURES / "aadhaar_clear_1.jpg").read_bytes(),
+        "image/jpeg",
+        "aadhaar",
+        check=False,
+        vision_consent=True,
     )
     assert out["status"] == "PENDING"  # stored, check deferred (e.g. over budget)
     queue_vision(fake_claude, LABELS[0]["vision"])

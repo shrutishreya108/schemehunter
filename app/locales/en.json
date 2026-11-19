@@ -109,5 +109,9 @@
   "link_continue": "Continue",
   "link_new": "Request a new link or code",
   "logout": "Sign out",
-  "chat_thinking": "Thinking…"
+  "chat_thinking": "Thinking…",
+  "result_FIT_PRELIM": "Preliminary: you may qualify to apply",
+  "result_NO_FIT_PRELIM": "Preliminary: this may not fit",
+  "warning_unchecked": "Preliminary: based on rules that have not yet been checked against current official guidelines.",
+  "vision_consent_label": "For Aadhaar or passbook photos: let an AI service (Anthropic) read this photo to check it. Leave unticked to skip the AI check."
 }

@@ -7,10 +7,12 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
 from app.access import LANG_COOKIE, current_case_id
+from app.brain.tools.explain_match import fallback_text
 from app.db import connect
 from app.i18n import LANGS
 from app.routes.render import lang_for, render
 from app.rules.loader import load_schemes
+from app.rules.verification import result_label_key, warning
 
 router = APIRouter()
 
@@ -85,16 +87,24 @@ def scheme_cards(conn, case_id: str, lang: str) -> list[dict]:
         if not s:
             continue
         exp = r["explanation"] or {}
+        verification = (r["rule_results"] or {}).get("verification") or "preliminary"
         cards.append(
             {
                 "id": s["id"],
                 "name": s["name"].get(lang) or s["name"]["en"],
                 "result": r["result"],
+                "verification": verification,
+                "label_key": result_label_key(r["result"], verification),
+                "warning": warning(verification, lang),
                 "benefit_text": ((s["benefit"].get("text") or {}).get(lang)) or "",
                 "benefit": {k: v for k, v in (r["benefit"] or {}).items() if v is not None},
                 "deciding_rule": (r["rule_results"] or {}).get("deciding_rule"),
                 "missing": r["missing_facts"] or [],
-                "explanation": exp.get(lang) or exp.get("en"),
+                "explanation": (
+                    fallback_text(s, "FIT", "preliminary")[lang]
+                    if verification == "preliminary" and r["result"] == "FIT"
+                    else exp.get(lang) or exp.get("en")
+                ),
                 "citations": exp.get("citations") or [],
                 "source_status": exp.get("source_status") or ("pending" if exp else None),
             }

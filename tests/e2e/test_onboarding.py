@@ -54,7 +54,7 @@ def test_meena_three_turns(meena_client, conn, fake_claude) -> None:
     assert "किशोर" in r3.text
     schemes = client.get("/schemes").text
     assert "source pending" in schemes and "नियम देखें" not in schemes  # grey "source pending" badge, no link
-    assert "You qualify to apply for PMEGP" in schemes
+    assert "Preliminary: you may qualify to apply" in schemes
 
     runs = conn.execute(
         "select status, steps, estimated_cost_usd from brain_runs where case_id = %s order by started_at",

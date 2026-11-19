@@ -258,11 +258,31 @@ def check_stored_document(
 ) -> dict:
     """Run the check for a stored document (used by upload, and by the check_document tool)."""
     row = conn.execute(
-        "select doc_type, mime, file_path from documents where id = %s and case_id = %s", (doc_id, case_id)
+        "select doc_type, mime, file_path, vision_consent from documents where id = %s and case_id = %s",
+        (doc_id, case_id),
     ).fetchone()
     if not row:
         raise LookupError("no such document")
     expected = row["doc_type"]
+    if expected in VISION_TYPES and row["mime"] != "application/pdf" and not row["vision_consent"]:
+        # No permission for an AI check of this photo: nothing is sent to the model, and it is not marked OK.
+        reason = bilingual(
+            "Not checked yet. Tick the box to allow an AI check of this photo.",
+            "अभी जाँच नहीं हुई। इस फ़ोटो की AI जाँच की अनुमति देने के लिए बॉक्स चुनें।",
+        )
+        conn.execute(
+            "update documents set check_status = 'PENDING', check_result = %s where id = %s",
+            (jsonb({"reason": reason, "consent_needed": True}), doc_id),
+        )
+        return {
+            "document_id": doc_id,
+            "status": "PENDING",
+            "doc_type_detected": None,
+            "issues": [],
+            "reason": reason,
+            "fields_masked": {},
+            "consent_needed": True,
+        }
     if expected in VISION_TYPES and row["mime"] == "application/pdf":
         # Aadhaar and passbook must be photos we can check; an unchecked PDF is never marked OK.
         raw = {"doc_type_detected": expected, "readable": False, "quality_issues": [], "fields": {}}
@@ -286,8 +306,12 @@ def process_upload(
     meter: UsageMeter | None = None,
     client: Any = None,
     check: bool = True,
+    vision_consent: bool = False,
 ) -> dict:
-    """Store one upload and (if `check`) check it. Duplicate upload returns the existing row."""
+    """Store one upload and (if `check`) check it. Duplicate upload returns the existing row.
+
+    An Aadhaar or passbook photo is sent to the AI service only when `vision_consent` is True for this upload.
+    """
     validate_upload(data, mime)
     digest = hashlib.sha256(data).hexdigest()
     existing = conn.execute(
@@ -309,8 +333,9 @@ def process_upload(
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(vault.encrypt(clean))
     conn.execute(
-        "insert into documents (id, case_id, doc_type, file_path, sha256, mime) values (%s, %s, %s, %s, %s, %s)",
-        (doc_id, case_id, doc_type, str(path), digest, mime),
+        "insert into documents (id, case_id, doc_type, file_path, sha256, mime, vision_consent) "
+        "values (%s, %s, %s, %s, %s, %s, %s)",
+        (doc_id, case_id, doc_type, str(path), digest, mime, bool(vision_consent)),
     )
     log_event(
         conn,

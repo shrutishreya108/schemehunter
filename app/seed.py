@@ -266,6 +266,9 @@ def seed(url: str | None = None, reset: bool = False, now: datetime | None = Non
         if reset:
             truncate_all(conn)
         upsert_schemes(conn, schemes)
+        from app.rules.sources import sync_sources
+
+        sync_sources(conn)
         for key in showcase["personas"]:
             seeded[key] = seed_persona(conn, personas[key], schemes, now)
         load_artifacts(conn, seeded, schemes)

@@ -177,7 +177,10 @@ def test_explanation_failing_guard_falls_back(seeded, conn, fake_claude, tmp_pat
     ctx = db_ctx(conn, seeded["meena"], lang="en")
     dispatch("match_schemes", {}, ctx)
     out = dispatch("explain_match", {"scheme_id": "pmegp"}, ctx)
-    assert out["explanation"] == "PM Employment Generation Programme: You qualify to apply."
+    assert (
+        out["explanation"]
+        == "PM Employment Generation Programme: Preliminary: you may qualify to apply. The rules are not yet checked against official guidelines."
+    )
     get_settings.cache_clear()
 
 

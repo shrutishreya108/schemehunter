@@ -1,0 +1,9 @@
+# Evidence that a rule matches the official document. A rule counts as verified only when a row says
+# status: verified AND the source in source.yaml is complete. Nothing here yet.
+evidence: []
+#  - rule_id: age
+#    source_id: pmegp-guidelines-<year>
+#    page: 3
+#    passage: "<the sentence copied from the document>"
+#    status: verified
+#    last_verified: 2000-01-01

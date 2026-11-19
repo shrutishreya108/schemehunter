@@ -1,0 +1,13 @@
+# Official source documents for PMEGP. Empty on purpose: no document has been acquired yet.
+# Add one entry per document, with the values copied from the official publication. Leave a field out if unknown.
+# local_path is relative to this folder (for example guidelines.pdf). sha256 is computed by the sync; do not type it.
+documents: []
+#  - id: pmegp-guidelines-<year>
+#    title: "<exact title on the official document>"
+#    official_url: "<URL the file was downloaded from>"
+#    issuing_authority: "<authority named on the document>"
+#    publication_date: 2000-01-01
+#    effective_date: 2000-01-01
+#    retrieval_date: 2000-01-01
+#    version: "<version or revision on the document>"
+#    local_path: guidelines.pdf

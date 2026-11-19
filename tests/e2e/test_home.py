@@ -25,3 +25,17 @@ def test_home_for_ravi_is_his_case(seeded, settings_db) -> None:
     with TestClient(app) as client:
         client.cookies.set(SESSION_COOKIE, sign_session(seeded["ravi"]))
         assert "Ravi" in client.get("/").text
+
+
+def test_preliminary_result_never_reads_as_unconditional(seeded, settings_db, conn) -> None:
+    """The PMEGP rules are not yet checked against official guidelines: no bare 'You qualify to apply'."""
+    from app.main import app
+
+    with TestClient(app) as client:
+        client.cookies.set(SESSION_COOKIE, sign_session(seeded["ravi"]))
+        page = client.get("/").text
+        schemes = client.get("/schemes").text
+    for text in (page, schemes):
+        assert "You qualify to apply for PMEGP" not in text
+        assert "Preliminary" in text or "प्रारंभिक" in text
+    assert "not yet checked" in page or "जाँचे नहीं गए" in page

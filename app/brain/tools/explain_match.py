@@ -66,13 +66,21 @@ def instruction(scheme: dict, match: dict, language: str) -> str:
         f"Per-rule results:\n" + "\n".join(lines) + "\n"
         f"Computed benefit: {match.get('benefit') or {}}.\n"
         f"Missing facts: {match.get('missing_facts') or []}.\n"
+        f"Verification: {match['rule_results'].get('verification', 'preliminary')}. "
+        f"Rules not yet checked against official guidelines: {match['rule_results'].get('unverified') or []}. "
+        "If any are listed, say the result is preliminary; never say the person qualifies without that caveat.\n"
         f"The user's language is {'Hindi' if language == 'hi' else 'English'}.\n"
         "Explain this result. Reply as `EN:` … then `HI:` …"
     )
 
 
-def fallback_text(scheme: dict, result: str) -> dict[str, str]:
+def fallback_text(scheme: dict, result: str, verification: str = "verified") -> dict[str, str]:
     """Deterministic, promise-free text used if the generated one fails the guard scan."""
+    if verification == "preliminary" and result == "FIT":
+        return {
+            "en": f"{scheme['name']['en']}: Preliminary: you may qualify to apply. The rules are not yet checked against official guidelines.",
+            "hi": f"{scheme['name']['hi']}: प्रारंभिक: आप आवेदन कर सकते हैं। ये नियम अभी आधिकारिक दिशानिर्देशों से जाँचे नहीं गए हैं।",
+        }
     en = {
         "FIT": "You qualify to apply.",
         "NO_FIT": "You do not meet one of the rules right now.",
@@ -86,11 +94,12 @@ def fallback_text(scheme: dict, result: str) -> dict[str, str]:
     return {"en": f"{scheme['name']['en']}: {en}", "hi": f"{scheme['name']['hi']}: {hi}"}
 
 
-def is_cached(explanation: dict | None, scheme: dict, result: str) -> bool:
+def is_cached(explanation: dict | None, scheme: dict, result: str, verification: str = "verified") -> bool:
     return (
         bool(explanation)
         and explanation.get("spec_hash") == scheme["_hash"]
         and explanation.get("result") == result
+        and explanation.get("verification", "verified") == verification
     )
 
 
@@ -121,14 +130,21 @@ def handle(data: Input, ctx: Ctx) -> dict[str, Any]:
     ).fetchone()
     if not match:
         raise ToolError("no match stored for this scheme; call match_schemes first")
-    if is_cached(match["explanation"], scheme, match["result"]):
+    verification = (match["rule_results"] or {}).get("verification", "verified")
+    if is_cached(match["explanation"], scheme, match["result"], verification):
         exp, cached = match["explanation"], True
     else:
         exp, cached = generate(scheme, match, ctx), False
         check = scan_text(ctx, exp["en"], exp["hi"])
         if not check["ok"]:
-            exp = {**exp, **fallback_text(scheme, match["result"]), "scan_failed": check}
-        exp = {**exp, "spec_hash": scheme["_hash"], "result": match["result"], "generated_by": "claude"}
+            exp = {**exp, **fallback_text(scheme, match["result"], verification), "scan_failed": check}
+        exp = {
+            **exp,
+            "spec_hash": scheme["_hash"],
+            "result": match["result"],
+            "generated_by": "claude",
+            "verification": verification,
+        }
         ctx.conn.execute(
             "update matches set explanation = %s where case_id = %s and scheme_id = %s",
             (jsonb(exp), ctx.case_id, scheme["id"]),

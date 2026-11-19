@@ -11,6 +11,7 @@
     </select>
   </label>
   <input type="file" name="file" accept="image/*,application/pdf" capture="environment" required>
+  <label class="consent"><input type="checkbox" name="vision_consent" value="yes"> {{ t("vision_consent_label") }}</label>
   <button type="submit">{{ t("upload") }}</button>
 </form>
 {% for n in needed %}

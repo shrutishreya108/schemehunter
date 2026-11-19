@@ -92,6 +92,7 @@ async def upload_document(
     file: Annotated[UploadFile, File()],
     doc_type: Annotated[str, Form()] = "",
     csrf: Annotated[str | None, Form()] = None,
+    vision_consent: Annotated[str | None, Form()] = None,
 ):
     check_csrf(case_id, request.headers.get("x-csrf-token") or csrf)
     data = await file.read(MAX_BYTES + 1)  # never buffer more than one byte over the cap
@@ -108,7 +109,16 @@ async def upload_document(
             )
             status = "DONE"
             try:
-                process_upload(conn, case_id, data, mime, doc_type or None, meter=meter, check=not deferred)
+                process_upload(
+                    conn,
+                    case_id,
+                    data,
+                    mime,
+                    doc_type or None,
+                    meter=meter,
+                    check=not deferred,
+                    vision_consent=bool(vision_consent),
+                )
             except UploadError as exc:
                 error, status = {"en": exc.en, "hi": exc.hi}, "ERROR"
             except Exception:

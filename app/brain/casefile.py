@@ -58,7 +58,7 @@ def assemble_case_file(
         "today": now.date().isoformat(),
         "language": lang,
         "state_code": case.get("state_code"),
-        "profile": mask_fields({a["key"]: a["value"] for a in answers}),
+        "profile": profile_for_model(answers),
         "missing_facts": missing,
         "documents": [
             {
@@ -124,6 +124,24 @@ def open_question(messages: list[dict]) -> dict | None:
             return {"expected_fact": meta.get("expected_fact"), "question": m["body"]}
         return None
     return None
+
+
+# Personal details the model does not need to decide anything (reliability §4): never sent to the AI.
+PII_KEYS = {"name_latin", "name_native", "address_line", "district", "dob", "email", "mobile", "phone"}
+
+
+def profile_for_model(answers: list[dict]) -> dict:
+    """The profile facts the rules use, minus identifying details. Age is sent as a number, not a birth date."""
+    out = mask_fields({a["key"]: a["value"] for a in answers if a["key"] not in PII_KEYS})
+    dob = next((a["value"] for a in answers if a["key"] == "dob"), None)
+    if dob:
+        try:
+            born = date.fromisoformat(str(dob))
+            today = date.today()
+            out["age_years"] = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+        except ValueError:
+            pass
+    return out
 
 
 def build_case_file(

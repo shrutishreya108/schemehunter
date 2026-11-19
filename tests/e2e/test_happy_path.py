@@ -28,7 +28,14 @@ def tool(name: str, **inp) -> dict:
 def upload(conn, case_id, fake, filename: str, doc_type: str, vision: dict | None = None) -> dict:
     if vision:
         fake.add({"vision": [tool("document_check_result", **vision)]})
-    return process_upload(conn, case_id, (FIXTURES / filename).read_bytes(), "image/jpeg", doc_type)
+    return process_upload(
+        conn,
+        case_id,
+        (FIXTURES / filename).read_bytes(),
+        "image/jpeg",
+        doc_type,
+        vision_consent=vision is not None,
+    )
 
 
 def vision(kind: str) -> dict:

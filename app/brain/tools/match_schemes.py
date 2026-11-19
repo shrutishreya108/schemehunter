@@ -13,6 +13,8 @@ from app.events import log_event
 from app.i18n import bilingual
 from app.rules.engine import evaluate_all
 from app.rules.facts import build_facts
+from app.rules.sources import verified_rule_ids
+from app.rules.verification import status, unverified_rules
 
 
 class Input(BaseModel):
@@ -44,11 +46,18 @@ def load_facts(ctx: Ctx) -> dict:
 
 def run_match(ctx: Ctx) -> list[dict]:
     results = evaluate_all(ctx.schemes, load_facts(ctx))
+    by_id = {s["id"]: s for s in ctx.schemes}
     for r in results:
+        scheme = by_id[r["scheme_id"]]
+        verified_ids = verified_rule_ids(ctx.conn, r["scheme_id"])
+        verification = status(scheme, r["result"], verified_ids)
+        r["verification"] = verification
         rule_results = {
             "rules": r["rules"],
             "deciding_rule": r["deciding_rule"],
             "deciding_page": r["deciding_page"],
+            "verification": verification,
+            "unverified": unverified_rules(scheme, verified_ids),
         }
         ctx.conn.execute(
             UPSERT,

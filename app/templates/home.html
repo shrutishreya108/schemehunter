@@ -11,7 +11,8 @@
 <h2>{{ t("home_eligibility") }}</h2>
 {% for c in cards %}
 <article class="card {{ c.result|lower }}">
-  <h3>{{ c.name }} <span class="badge {{ c.result|lower }}">{{ t("result_" ~ c.result) }}</span></h3>
+  <h3>{{ c.name }} <span class="badge {{ c.result|lower }}">{{ t(c.label_key) }}</span></h3>
+  {% if c.warning %}<p class="notice">{{ c.warning }}</p>{% endif %}
   {% if c.benefit_text %}<p class="benefit">{{ c.benefit_text }}</p>{% endif %}
   {% if c.explanation %}<p>{{ c.explanation }}</p>{% endif %}
   {% if c.result == "NEEDS_INFO" and c.missing %}<p class="muted">{{ t("needs") }}: {{ c.missing|join(", ") }}</p>{% endif %}
