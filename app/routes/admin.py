@@ -1,5 +1,6 @@
 """Curator pages behind basic auth. /admin/runs: per-run cost, running total, today vs DAILY_BUDGET_USD."""
 
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
@@ -68,6 +69,26 @@ def jobs(request: Request):
             "order by run_at limit 100"
         ).fetchall()
     return render(request, "admin/jobs.html", "en", counts=counts, dead=dead, upcoming=upcoming)
+
+
+@router.get("/web")
+def web_pages_view(request: Request):
+    """Each curated official web page: when it was read, its last status and error, and how old the copy is."""
+    with connect() as conn:
+        rows = conn.execute(
+            "select url, scheme_id, title, fetched_at, last_status, error, "
+            "case when text is null then 0 else length(text) end as chars from web_cache order by scheme_id, url"
+        ).fetchall()
+    now = datetime.now(UTC)
+    pages = [
+        {
+            **dict(r),
+            "age_days": (now - r["fetched_at"]).days if r["fetched_at"] else None,
+            "old": bool(r["fetched_at"]) and (now - r["fetched_at"]).days > get_settings().WEB_SNAPSHOT_WARN_DAYS,
+        }
+        for r in rows
+    ]
+    return render(request, "admin/web.html", "en", pages=pages)
 
 
 @router.get("/actions")

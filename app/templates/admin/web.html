@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Web pages: Scheme Hunter admin</title>
+<link rel="stylesheet" href="/static/app.css"></head>
+<body class="admin">
+{% include "admin/nav.html" %}
+<h1>Official web pages</h1>
+<p>Read only when a scheme has no guideline PDF text. The server serves these copies; it does not fetch live when WEB_FETCH_ENABLED is false.</p>
+<table>
+  <thead><tr><th>Scheme</th><th>URL</th><th>Title</th><th>Read at</th><th>Age (days)</th><th>Last status</th><th>Error</th><th>Characters</th></tr></thead>
+  <tbody>
+  {% for p in pages %}<tr{% if p.old %} class="error"{% endif %}><td>{{ p.scheme_id }}</td><td><a href="{{ p.url }}">{{ p.url }}</a></td><td>{{ p.title or "" }}</td><td>{{ p.fetched_at.strftime("%Y-%m-%d %H:%M") if p.fetched_at else "never" }}</td><td>{{ p.age_days if p.age_days is not none else "" }}{% if p.old %} (over a month old){% endif %}</td><td>{{ p.last_status if p.last_status is not none else "" }}</td><td>{{ p.error or "" }}</td><td>{{ p.chars }}</td></tr>
+  {% else %}<tr><td colspan="8">No web pages cached yet. Run make warm-web.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</body></html>
