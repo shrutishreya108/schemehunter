@@ -28,6 +28,7 @@ def dashboard(request: Request, case_id: Annotated[str, Depends(current_case_id)
     with connect() as conn:
         case = conn.execute("select display_name, language from cases where id = %s", (case_id,)).fetchone()
         lang = lang_for(request, case["language"] if case else None)
+        person_name = (case or {}).get("display_name") or profile_name(conn, case_id)
         cards = scheme_cards(conn, case_id, lang)
         open_apps = conn.execute(
             "select count(*) as n from applications where case_id = %s and state not in "
@@ -42,7 +43,7 @@ def dashboard(request: Request, case_id: Annotated[str, Depends(current_case_id)
         "home.html",
         lang,
         case_id,
-        person_name=(case or {}).get("display_name") or profile_name(conn, case_id),
+        person_name=person_name,
         cards=cards,
         open_apps=open_apps,
         waiting=waiting,
