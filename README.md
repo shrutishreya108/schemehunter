@@ -102,6 +102,8 @@ Geo-block note: the scheme sites were not reachable from the US data centre that
 on a machine that can reach them, commit the snapshots, and set `WEB_FETCH_ENABLED=false` on the VPS. With the
 setting false the app never opens a network connection for web pages.
 
+One case, one run at a time: a message sent while a reply is being written waits for it, and a message the next run has already seen is not answered twice. Failures and time-outs are always written to the chat.
+
 ## Sign in
 
 There is no personal link and no PIN. Everyone signs in with an email address:

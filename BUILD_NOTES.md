@@ -5,6 +5,9 @@ briefs. v0.3 = Part A (decisions confirmed) + Part B (GoDaddy/Titan/$100-credit 
 
 ## 0. What changed since v0.2, and why
 
+- **Chat runs (K):** one run at a time per case (advisory lock, `pg_advisory_xact_lock(hashtextextended('brain:' || case_id, 0))`, lock_timeout 60 s). Double-texts coalesce: a chat run whose message a later chat run already saw is SKIPPED (no model call, cost 0). Every ERROR, STUCK and DEFERRED outcome posts a notice. A run that stops with text and no finish_run is asked once, then its text is used (DONE_FALLBACK) after the promise scanner. Runs are bounded by a deadline (STUCK at the deadline). Housekeeping closes runs open for 10 minutes (ERROR 'stale', one notice). /admin/runs shows duration.
+- **Observed vs precautionary:** observed by reading the code: parallel runs per case (no lock), and failures returning their notice only inside RunResult (silent). Observed on the VPS: 2 of the last 6 chat runs ended STUCK after 3 steps (plain text, no finish_run). Precautionary only: stalled API calls (no timeout in the client; now 30 s with 5 s connect).
+
 - **Rule checks against the PDFs:** CGTMSE (`guidelines.pdf`, 2026 scheme document) and Stand-Up India (`guidelines.pdf` = the brochure). Evidence rows with verbatim passages. `make rulebook-report`: pmegp 4/5, cgtmse 0/4 and stand_up_india 0/7 (sources incomplete, see §4).
 - **Rule corrections:** CGTMSE loan cap ₹5 crore → ₹10 crore; education institutions removed from the exclusion. Udyogini income caps split by category, widow/disabled exception removed, subsidy 30/50 kept. Engine gains `lt` (strictly below) and nothing else.
 - **source_kind:** `sql/010_source_kind.sql`. Verified status counts only pdf-kind sources; web pages are never evidence (tested).
@@ -321,6 +324,15 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 - Stand-Up `applicant` and `sector`: unverified. Page 3 is two-column, and the passages around them are interleaved, so no full sentence can be quoted.
 - Web pages are `source_kind: web` and never evidence; the Stand-Up web page is in source.yaml to show that.
 
+108a. **Chat run decisions:**
+- The lock rides a separate connection, not the run's own: the run commits several times, and a transaction lock on it would be released at the first commit. The lock connection is held until run_brain returns. Waiting for it is limited to LOCK_TIMEOUT_S (60 s); a timeout is the ERROR path with a notice.
+- SKIPPED: a chat run whose triggering message was already seen by a run that started after the message was saved (status RUNNING, DONE, DONE_FALLBACK, STUCK or ERROR). brain_runs.error = 'coalesced', cost 0. Skipped and deferred runs are excluded from the per-case cap; the budget sums cost, so they add nothing.
+- Settings and defaults: CLAUDE_TIMEOUT_S 30, CLAUDE_MAX_RETRIES 2, CHAT_RUN_DEADLINE_S 90, CLAUDE_JOB_DEADLINE_S 300, LOCK_TIMEOUT_S 60, STALE_RUN_MIN 10. The page keeps polling for CHAT_RUN_DEADLINE_S + 15 s, or 20 s after a new message.
+- Fixed line when nothing came back: "I couldn't finish that. Please send it again." (locale key chat_gave_up). It shows only when a chat run did start for the newest message and no run is open. /answers messages start no run, so they never show it.
+- The send no longer waits 0.5 s for the run; the reply arrives by polling. The Send button is disabled while pending ("Working on your last message…", key chat_working). The chat pool is 4 threads.
+- brain_run.error records the path: none (finish_run), 'nudged', 'text_fallback', 'text_blocked', 'deadline', 'no_reply', 'stale'.
+- Not run: the overlap test against the pre-change code, to confirm it fails there. The concurrency tests use a 0.4 s fake delay and pass on the new code.
+
 ## 4. TODO / verify list
 
 ### Curator: guideline verification (unchanged from v0.2)
@@ -387,6 +399,9 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 - **T47:** Udyogini: no guideline PDF is in the repo (the scanned Kannada document was not found under rulebook/sources or in the Downloads folder). Rules stay unverified and rest on the English page.
 - **T48:** CGTMSE pages 04 and 32 have under 200 characters; not read.
 
+- **T49:** the chat page cannot tell that a request never created a run (for example a server restart between the save and the submit). It shows no line in that case. Acceptable for now; a timestamp check on the page could cover it.
+- **T50:** check on the VPS: after deploy, /admin/runs duration and the STUCK rate. The nudge should cut STUCK; if the 'nudged' and 'text_fallback' paths are common, look at the prompt.
+
 ## 5. What is left, and what the next prompt should ask for
 
 **Next prompt:** check the retrieval recall (T33) and the URL decision (T34), then rename the other schemes' PDFs to `guidelines.pdf` and extract them (T36).
@@ -412,6 +427,7 @@ The full v0.2 reasoning is in git history: `v0.2 baseline` commit, BUILD_NOTES �
 | Retrieval + PMEGP evidence | **$0.00** | No model call; all retrieval tests use FakeClaude. Full suite 636 passed, 2 skipped, 1 xfailed (deselected Windows script test). |
 | Web fallback | **$0.00** | No model call. Live fetch from this machine for the snapshots only. Tests use fake transports. |
 | Rule checks (CGTMSE, Stand-Up, Udyogini) | **$0.00** | No model call. Live snapshot re-export from this machine. |
+| Chat run discipline (K) | **$0.00** | No model call; FakeClaude and fake delays only. |
 | PMEGP audit | **$0.00** | Tests and file edits only; no API call. Full suite: 605 passed, 2 skipped (Postgres on port 52356, `PYTHONUTF8=1`). |
 
 Projected spend from here: one live vision rehearsal (T19) ≈ $0.02 per image; one full persona journey ≈ $0.36; one demo run-through ≈ $0.17.
