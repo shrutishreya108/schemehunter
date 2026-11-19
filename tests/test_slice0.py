@@ -53,6 +53,7 @@ def test_migration_files_in_order() -> None:
         "008_source_chunks.sql",
         "009_web_cache.sql",
         "010_source_kind.sql",
+        "011_message_clock.sql",
     ]
 
 
@@ -71,6 +72,7 @@ def test_migrations_apply_once(settings_db: str) -> None:
         "008_source_chunks",
         "009_web_cache",
         "010_source_kind",
+        "011_message_clock",
     ]
     assert first in ([], all_versions)
     with connect(settings_db) as conn:

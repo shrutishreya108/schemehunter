@@ -339,3 +339,20 @@ def test_an_empty_finish_run_sends_the_notice_instead_of_silence(seeded, conn) -
     assert result.status == "DONE" and result.reason == "empty_finish"
     assert result.user_message == runner.LATER["en"]
     assert notices(conn, seeded["meena"])[-1] == runner.LATER["en"]
+
+
+def test_a_message_written_late_in_a_transaction_gets_its_real_time(seeded, conn, settings_db) -> None:
+    """Regression: created_at was the transaction start, so a reply could sort before the question it answers."""
+    import time as _time
+
+    with psycopg.connect(settings_db) as c:
+        c.execute("select now()")  # the transaction starts now
+        _time.sleep(0.3)
+        row = c.execute(
+            "insert into messages (case_id, direction, channel, body, processed) values (%s, 'out', 'web', 'late', true) "
+            "returning created_at",
+            (seeded["meena"],),
+        ).fetchone()
+        tx_start = c.execute("select transaction_timestamp()").fetchone()[0]
+        c.commit()
+    assert row[0] > tx_start
