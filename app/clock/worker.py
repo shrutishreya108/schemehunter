@@ -113,6 +113,9 @@ def housekeeping(conn: psycopg.Connection) -> None:
     try:
         actions.expire(conn)
         actions.retry_failed_sends(conn)
+        from app.brain.runner import close_stale_runs
+
+        close_stale_runs(conn)  # a run with no end time after STALE_RUN_MIN is closed, with one notice
         conn.execute("delete from rate_limits where window_start < now() - interval '1 day'")
         conn.execute("delete from login_challenges where created_at < now() - interval '24 hours'")
         conn.commit()

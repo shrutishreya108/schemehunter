@@ -51,12 +51,32 @@ def test_step_cap_writes_run_stuck_and_alerts(seeded, conn, fake_claude, monkeyp
     assert run_row(conn, result.run_id)["status"] == "STUCK"
 
 
-def test_finish_run_required(seeded, conn, fake_claude, monkeypatch) -> None:
+def test_text_without_finish_run_is_asked_once_then_used_as_the_reply(seeded, conn, fake_claude, monkeypatch) -> None:
     monkeypatch.setattr(runner, "alert_curator", lambda *a: None)
-    fake_claude.add({"loop": [{"content": [{"text": "All done, bye!"}]}]})
+    fake_claude.add({"loop": [{"content": [{"text": "All done, bye!"}]}, {"content": [{"text": "Still here."}]}]})
     result = run_brain(seeded["meena"], "hello", "chat", conn=conn)
-    assert result.status == "STUCK" and result.steps == 1
+    assert result.status == "DONE_FALLBACK" and result.steps == 2
+    assert result.user_message == "Still here."  # the last plain text is the reply
+    replies = conn.execute(
+        "select body from messages where case_id = %s and direction = 'out' and attachments->>'kind' = 'reply' "
+        "and body = 'Still here.'",
+        (seeded["meena"],),
+    ).fetchall()
+    assert len(replies) == 1  # once, never doubled
+    assert not events_of(conn, seeded["meena"], "RUN_STUCK")
+
+
+def test_no_text_and_no_finish_run_is_stuck_with_a_notice(seeded, conn, fake_claude, monkeypatch) -> None:
+    monkeypatch.setattr(runner, "alert_curator", lambda *a: None)
+    fake_claude.add({"loop": [{"content": []}, {"content": []}]})
+    result = run_brain(seeded["meena"], "hello", "chat", conn=conn)
+    assert result.status == "STUCK"
     assert events_of(conn, seeded["meena"], "RUN_STUCK")
+    notice = conn.execute(
+        "select body from messages where case_id = %s and attachments->>'kind' = 'notice' order by created_at desc limit 1",
+        (seeded["meena"],),
+    ).fetchone()
+    assert notice and notice["body"] == runner.STUCK["en"]
 
 
 def test_tool_error_returns_to_model_not_raised(seeded, conn, fake_claude) -> None:

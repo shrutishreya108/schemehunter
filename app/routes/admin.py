@@ -21,7 +21,7 @@ router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin)])
 def runs_with_running_total(conn, limit: int = 200) -> list[dict]:
     rows = conn.execute(
         "select id, case_id, trigger, status, steps, input_tokens, output_tokens, cache_read_tokens, "
-        "cache_write_tokens, estimated_cost_usd, error, started_at, "
+        "cache_write_tokens, estimated_cost_usd, error, started_at, ended_at, "
         "sum(estimated_cost_usd) over (order by started_at, id) as running_total "
         "from brain_runs order by started_at desc, id desc limit %s",
         (limit,),
@@ -31,6 +31,7 @@ def runs_with_running_total(conn, limit: int = 200) -> list[dict]:
             **r,
             "estimated_cost_usd": float(r["estimated_cost_usd"] or 0),
             "running_total": float(r["running_total"] or 0),
+            "duration_s": (r["ended_at"] - r["started_at"]).total_seconds() if r["ended_at"] and r["started_at"] else None,
         }
         for r in rows
     ]

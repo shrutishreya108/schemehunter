@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     BUDGET_TZ: str = "Asia/Kolkata"  # "today" for the budget and per-case caps
     SCAN_WITH_MODEL: bool = True  # outbound unknown-scheme check also asks MODEL_CHEAP
     CHAT_SYNC_TIMEOUT_S: float = 60
+    CLAUDE_TIMEOUT_S: float = 30  # per API call; connect is capped at 5 s
+    CLAUDE_MAX_RETRIES: int = 2
+    CHAT_RUN_DEADLINE_S: float = 90  # wall clock for one chat run; past it the run ends as STUCK with a notice
+    CLAUDE_JOB_DEADLINE_S: float = 300  # the same for worker brain_run jobs
+    LOCK_TIMEOUT_S: int = 60  # waiting for the case lock; past it the run ends as ERROR with a notice
+    STALE_RUN_MIN: int = 10  # a run row still open after this long is closed by housekeeping
 
     # Scheme discovery (myScheme, via API Setu). "demo" shows the rulebook labelled as demo data.
     # "live" uses MySchemeApiProvider, which refuses to run until every MYSCHEME_* value below is set.

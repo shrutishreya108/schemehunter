@@ -48,8 +48,14 @@ class AnthropicClient:
 
     def __init__(self, api_key: str):
         import anthropic
+        import httpx
 
-        self.raw = anthropic.Anthropic(api_key=api_key, max_retries=3)
+        s = get_settings()
+        self.raw = anthropic.Anthropic(
+            api_key=api_key,
+            timeout=httpx.Timeout(s.CLAUDE_TIMEOUT_S, connect=5.0),
+            max_retries=s.CLAUDE_MAX_RETRIES,
+        )
 
     def create(self, *, purpose: str, **kwargs: Any) -> Any:
         return self.raw.messages.create(**{k: v for k, v in kwargs.items() if v is not None})
