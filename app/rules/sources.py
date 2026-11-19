@@ -17,6 +17,7 @@ import psycopg
 import yaml
 
 from app.config import ROOT
+from app.rag.index import index_scheme
 
 SOURCES_DIR = ROOT / "rulebook" / "sources"
 META_FIELDS = (
@@ -121,6 +122,7 @@ def sync_sources(conn: psycopg.Connection, root: Path = SOURCES_DIR) -> dict[str
                 counts["evidence"] += 1
             else:
                 counts["skipped_evidence"] += 1
+        index_scheme(conn, scheme_dir.name, scheme_dir / "pages")  # retrieval index (app/rag), idempotent
     return counts
 
 

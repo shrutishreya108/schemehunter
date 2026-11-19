@@ -1,6 +1,6 @@
 """Hard rule: the code that decides truth never imports the AI.
 
-Nothing under app/rules, app/finance, app/tracker, app/guard may import `anthropic` or anything from
+Nothing under app/rules, app/finance, app/tracker, app/guard, app/signin, app/rag may import `anthropic` or anything from
 `app.brain` (absolute or relative).
 """
 
@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 APP = Path(__file__).resolve().parent.parent / "app"
-GUARDED = ["rules", "finance", "tracker", "guard", "signin"]
+GUARDED = ["rules", "finance", "tracker", "guard", "signin", "rag"]
 
 
 def imported_modules(path: Path) -> list[str]:

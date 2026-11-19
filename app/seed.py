@@ -42,6 +42,9 @@ TABLES = [
     "documents",
     "profile_answers",
     "cases",
+    "source_chunks",
+    "rule_evidence",
+    "source_documents",
     "schemes",
 ]
 UNKEYED_TABLES = ["events", "pending_actions", "messages", "jobs", "brain_runs"]  # case_id without FK
