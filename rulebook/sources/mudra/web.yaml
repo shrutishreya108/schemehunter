@@ -1,0 +1,4 @@
+# Official web pages read when no guideline PDF text exists (app/web). https only; the hosts here are the allowlist.
+pages:
+  - url: https://financialservices.gov.in/pradhan-mantri-mudra-yojana-pmmy
+    title: "Pradhan Mantri MUDRA Yojana (financialservices.gov.in)"

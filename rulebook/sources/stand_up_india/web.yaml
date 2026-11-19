@@ -1,0 +1,6 @@
+# Official web pages read when no guideline PDF text exists (app/web). https only; the hosts here are the allowlist.
+pages:
+  - url: https://www.standupmitra.in/Home/SchemeGuidelines
+    title: "Stand-Up India: scheme guidelines (standupmitra.in)"
+  - url: https://www.standupmitra.in/Login/IndexNewSchemeFeatures
+    title: "Stand-Up India: scheme features (standupmitra.in)"

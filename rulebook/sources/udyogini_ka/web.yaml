@@ -1,0 +1,5 @@
+# Official web pages read when no guideline PDF text exists (app/web). https only; the hosts here are the allowlist.
+# The KSWDC page can lag its 2026 circular.
+pages:
+  - url: https://kswdc.karnataka.gov.in/21/udyogini/en
+    title: "Udyogini (Karnataka State Women's Development Corporation)"
