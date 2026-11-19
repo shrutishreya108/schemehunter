@@ -1,0 +1,20 @@
+# Evidence for Stand-Up India rules. Page = PDF page number of guidelines.pdf. Pages 1, 2, 7 and 8 have under 200
+# characters of text (likely scanned or image-only): nothing is read from them and no row cites them.
+# The two-column layout interleaves text: a passage is only quoted where it is contiguous on the page.
+evidence:
+  - rule_id: loan_range
+    source_id: sui-guidelines-pdf
+    page: 3
+    passage: "facilitate bank loans between `10 lakh and `1 Crore"
+    status: verified
+    last_verified: 2026-11-19
+  - rule_id: applicant
+    source_id: sui-guidelines-pdf
+    page: 3
+    passage: "to at least one Scheduled Caste (SC) or Scheduled"
+    status: unverified  # the document sets a per-branch target for SC/ST and women borrowers, not the applicant rule
+  - rule_id: sector
+    source_id: sui-guidelines-pdf
+    page: 3
+    passage: "manufacturing, services or the trading sector."
+    status: unverified  # the document names manufacturing, services and trading; agri_allied is not named (BUILD_NOTES §4)

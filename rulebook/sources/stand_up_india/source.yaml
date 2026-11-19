@@ -1,0 +1,15 @@
+# Official source documents for Stand-Up India. Values copied from the document itself; a field it does not print stays out.
+# sha256 is computed by the sync from guidelines.pdf; do not type it.
+documents:
+  - id: sui-guidelines-pdf
+    title: "GUIDELINES FOR STAND UP INDIA SCHEME"  # printed heading, page 3 (the file is named "Brochure")
+    official_url: "https://www.standupmitra.in"  # printed on pages 3 and 4 as www.standupmitra.in
+    retrieval_date: 2026-11-19
+    local_path: guidelines.pdf
+    source_kind: pdf
+  # issuing_authority and version are not printed in the document, so they are left out. The source stays incomplete,
+  # and no Stand-Up India rule counts as verified until a curator supplies them.
+  - id: sui-web-guidelines
+    title: "Stand-Up India: scheme guidelines (standupmitra.in)"
+    official_url: "https://www.standupmitra.in/Home/SchemeGuidelines"
+    source_kind: web  # a web page is never evidence: no evidence row may cite it as verified (tests refuse it)
