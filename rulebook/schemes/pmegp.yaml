@@ -8,32 +8,54 @@ benefit:
   text: { en: "Margin-money subsidy on the project cost; the rest is a bank loan.",
           hi: "परियोजना लागत पर मार्जिन-मनी सब्सिडी; बाकी बैंक लोन।" }
   verified: false
-  source_note: "LLD v1.1 §6.1 example; benefit sentence written for v0.2, check wording against guidelines."
+  source_note: "Subsidy table on guideline PDF page 4 (section 3.2(i)): General 15% urban / 25% rural; Special 25% urban / 35% rural. Read from the rendered page; not yet curator-confirmed. Text wording still from LLD v1.1 §6.1."
 apply_mode: portal
 portal_url: https://www.kviconline.gov.in/pmegpeportal/
 status_mode: user_forwards
 window: rolling
-documents: [aadhaar, photo, passbook, project_report, quotation, caste_cert_if_special, education_cert_if_cost_gt_10l]
 source_pdf: guidelines.pdf
-last_verified: 2026-11-14
+source_document: pmegp-om-2023-12-07   # the document in source.yaml; PDF page numbers are used below
+# Scheme-mandated papers (guideline section 11.5 and 11.6, PDF page 11, and section 11.16, PDF page 13).
+# Conditional names: <paper>_if_<condition>; the condition is in app/docs/requirements.py.
+documents: [aadhaar, photo, caste_cert_if_special, rural_area_cert_if_rural, project_report,
+            education_cert_if_vIII_required]
+# The EDP certificate is not needed to apply: it goes to the bank within 30 working days of the sanction letter
+# (guideline PDF page 13, 11.16). It is listed in the edp block below, not here.
+# Bank-specific papers. NOT listed in the PMEGP guidelines text (checked: no passbook or quotation in the document).
+# They are kept because banks ask for them; they are shown as bank requirements, not scheme requirements.
+bank_documents: [passbook, quotation]
+
+# EDP (Entrepreneurship Development Programme) training, guideline PDF page 18 (section 13) unless stated.
+edp:
+  certificate_due: "after sanction: to the Financing Bank within 30 working days of the sanction letter (PDF page 13, 11.16)"
+  mandatory_for_subsidy: true          # "EDP training is mandatory for claiming the Margin Money (subsidy)."
+  not_mandatory_up_to_cost: 200000     # "No EDP training will be mandatory for projects up to Rs. 2 Lakh."
+  duration_days_up_to_5l: 5            # "at least 5 days for projects with project cost up to Rs.5 lakh"
+  duration_days_above_5l: 10           # "at least 10 days" for project cost above Rs.5 lakh
+  exempt_if_trained: "Applicants who have already undergone at least 10 days (offline) or 60 hours (online) of EDP / SDP / ESDP or Vocational Training need not undergo EDP again (PDF page 9, section 7)."
+  timing: "Can be undertaken any time after the application form is submitted (PDF page 13, 11.15). The EDP certificate goes to the Financing Bank with the applicant's own contribution within 30 working days of the sanction letter (PDF page 13, 11.16)."
+  verified: false
+  source_note: "Guideline PDF pages 9, 13 and 18. Figures copied from the text; not yet curator-confirmed."
 
 eligibility:
   all:
-    - { id: age, fact: age, op: gte, value: 18, page: 3,
-        verified: false, source_note: "LLD v1.1 §6.1" }
-    - { id: new_only, fact: business_stage, op: eq, value: new, page: 3,
-        verified: false, source_note: "LLD v1.1 §6.1" }
+    - { id: age, fact: age, op: gte, value: 18, page: 5,
+        verified: false,
+        source_note: "Guideline PDF page 5 (section 4.1): 'Any individual, above 18 years of age'. OPEN: the guideline says 'above 18'; the rule uses >= 18. Kept as gte 18 until the curator decides; do not change without a documented decision." }
+    - { id: new_only, fact: business_stage, op: eq, value: new, page: 6,
+        verified: false,
+        source_note: "Guideline PDF page 6: 'Assistance under the scheme is available only for new projects sanctioned specifically under the PMEGP.'" }
     - id: cost_cap
-      page: 4
+      page: 5
       verified: false
-      source_note: "LLD v1.1 §6.1: manufacturing <= 50 lakh, service <= 20 lakh"
+      source_note: "Guideline PDF page 5 (Note 1 and 2): Manufacturing sector Rs. 50 lakhs; Business/Service sector Rs. 20 lakhs maximum cost for Margin Money subsidy."
       any:
         - all: [ { fact: sector, op: eq, value: manufacturing }, { fact: project_cost, op: lte, value: 5000000 } ]
         - all: [ { fact: sector, op: eq, value: service }, { fact: project_cost, op: lte, value: 2000000 } ]
     - id: education
-      page: 4
+      page: 6
       verified: false
-      source_note: "Curator correction (v0.2 brief): 8th pass if project_cost > 10 lakh (manufacturing) or > 5 lakh (service)"
+      source_note: "Guideline PDF page 6: 'above Rs.10 lakh in the Manufacturing sector and above Rs. 5 lakh in the Business /Service sector ... at least VIII standard pass educational qualification.' Replaces the earlier curator note (service threshold 5 lakh is now sourced)."
       when:
         any:
           - all: [ { fact: sector, op: eq, value: manufacturing }, { fact: project_cost, op: gt, value: 1000000 } ]
@@ -41,27 +63,30 @@ eligibility:
       then: { fact: education_level, op: gte_level, value: "8th" }
 
 benefit_calc:
+  # Special category per guideline PDF page 4: SC, ST, OBC, minorities, women, ex-servicemen, transgender,
+  # differently abled, NER, aspirational districts, hill and border areas. The fact pmegp_special_category
+  # covers the categories the profile can express; see the audit note.
   subsidy_percent:
-    - when: { all: [ { fact: area, op: eq, value: rural }, { fact: special_category, op: eq, value: true } ] }
+    - when: { all: [ { fact: area, op: eq, value: rural }, { fact: pmegp_special_category, op: eq, value: true } ] }
       value: 35
       verified: false
-      source_note: "LLD v1.1 §6.1"
+      source_note: "Guideline PDF page 4 table: special category, rural = 35%."
     - when: { fact: area, op: eq, value: rural }
       value: 25
       verified: false
-      source_note: "LLD v1.1 §6.1"
-    - when: { fact: special_category, op: eq, value: true }
+      source_note: "Guideline PDF page 4 table: general category, rural = 25%."
+    - when: { fact: pmegp_special_category, op: eq, value: true }
       value: 25
       verified: false
-      source_note: "LLD v1.1 §6.1"
+      source_note: "Guideline PDF page 4 table: special category, urban = 25%."
     - default: 15
       verified: false
-      source_note: "LLD v1.1 §6.1"
+      source_note: "Guideline PDF page 4 table: general category, urban = 15%."
   own_contribution_percent:
-    - when: { fact: special_category, op: eq, value: true }
+    - when: { fact: pmegp_special_category, op: eq, value: true }
       value: 5
       verified: false
-      source_note: "LLD v1.1 §6.1"
+      source_note: "Guideline PDF page 4 table: beneficiary's contribution, special category = 05%."
     - default: 10
       verified: false
-      source_note: "LLD v1.1 §6.1"
+      source_note: "Guideline PDF page 4 table: beneficiary's contribution, general category = 10%."

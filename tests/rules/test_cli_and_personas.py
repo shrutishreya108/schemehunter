@@ -33,7 +33,7 @@ def test_cli_prints_table(capsys) -> None:
 def test_cli_finds_test_profiles(capsys) -> None:
     main(["--profile", "p12_service_low_education", "--today", "2026-11-16"])
     rows = {line.split()[0]: line.split()[1:] for line in capsys.readouterr().out.splitlines()[2:]}
-    assert rows["pmegp"] == ["NO_FIT", "education", "4"]
+    assert rows["pmegp"] == ["NO_FIT", "education", "6"]  # PDF page 6 of the guideline (was 4 before the audit)
 
 
 def test_personas() -> None:

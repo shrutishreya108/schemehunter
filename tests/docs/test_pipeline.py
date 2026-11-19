@@ -222,16 +222,25 @@ def test_decrypted_bytes_are_never_written_to_disk(seeded, conn, vault_env, fake
 
 def test_conditional_documents_resolve_against_facts() -> None:
     pmegp = next(s for s in load_schemes() if s["id"] == "pmegp")
+    # scheme-mandated papers first (guideline 11.5-11.6), then the bank's own papers (not in the guideline)
     assert resolve_documents(pmegp, {"category": "GEN", "project_cost": 500000}) == [
         "aadhaar",
         "photo",
-        "passbook",
         "project_report",
+        "passbook",
         "quotation",
     ]
     assert "caste_cert" in resolve_documents(pmegp, {"category": "SC", "project_cost": 500000})
-    assert "education_cert" in resolve_documents(pmegp, {"category": "GEN", "project_cost": 1200000})
+    assert "caste_cert" in resolve_documents(pmegp, {"category": "OBC", "project_cost": 500000})
     assert "caste_cert" not in resolve_documents(pmegp, {"category": "GEN", "project_cost": 1200000})
+    # VIII-pass certificate: above Rs.10 lakh in manufacturing, above Rs.5 lakh in service (guideline page 6)
+    assert "education_cert" in resolve_documents(pmegp, {"sector": "manufacturing", "project_cost": 1200000})
+    assert "education_cert" not in resolve_documents(pmegp, {"sector": "manufacturing", "project_cost": 1000000})
+    assert "education_cert" in resolve_documents(pmegp, {"sector": "service", "project_cost": 600000})
+    assert "education_cert" not in resolve_documents(pmegp, {"sector": "service", "project_cost": 500000})
+    # rural area certificate: only for rural projects (our inference; open question in the audit)
+    assert "rural_area_cert" in resolve_documents(pmegp, {"area": "rural"})
+    assert "rural_area_cert" not in resolve_documents(pmegp, {"area": "urban"})
     mudra = next(s for s in load_schemes() if s["id"] == "mudra")
     assert resolve_documents(mudra, {}) == ["aadhaar", "passbook"]  # YAML has no documents yet → default
 

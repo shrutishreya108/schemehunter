@@ -46,6 +46,10 @@ STATE_NAMES: dict[str, str] = {
 }
 
 SPECIAL_CATEGORY_CASTES = {"SC", "ST"}
+# PMEGP special category (guideline PDF page 4): SC, ST, OBC, and women. Other listed groups (minorities,
+# ex-servicemen, transgender, differently abled, NER, aspirational districts, hill and border areas) are not
+# captured by the profile yet.
+PMEGP_SPECIAL_CASTES = {"SC", "ST", "OBC"}
 
 
 def years_between(start: date | str, end: date) -> int:
@@ -67,6 +71,15 @@ def special_category(gender: str | None, category: str | None) -> bool | None:
     return False
 
 
+def pmegp_special_category(gender: str | None, category: str | None, circumstance: str | None) -> bool | None:
+    """PMEGP special category. True if any listed group the profile can show applies; None if it can't be decided."""
+    if gender == "female" or category in PMEGP_SPECIAL_CASTES or circumstance == "disabled":
+        return True
+    if gender is None or category is None:
+        return None
+    return False
+
+
 def build_facts(answers: dict[str, Any], state_code: str | None = None, today: date | None = None) -> dict:
     """Copy answers and add derived facts: age, special_category, state_code, state_name.
 
@@ -77,6 +90,7 @@ def build_facts(answers: dict[str, Any], state_code: str | None = None, today: d
     dob = f.get("dob")
     f["age"] = years_between(dob, today) if dob else None
     f["special_category"] = special_category(f.get("gender"), f.get("category"))
+    f["pmegp_special_category"] = pmegp_special_category(f.get("gender"), f.get("category"), f.get("special_circumstance"))
     code = state_code or f.get("state_code")
     f["state_code"] = code
     f["state_name"] = STATE_NAMES.get(code) if code else None
