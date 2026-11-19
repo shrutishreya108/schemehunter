@@ -22,11 +22,4 @@
 {% else %}
 <p>{{ t("nothing_waiting") }}</p>
 {% endfor %}
-<form method="post" action="/pin/set" class="card">
-  <h2>{{ t("pin_set_title") }}</h2>
-  <p class="muted">{{ t("pin_set_help") }}</p>
-  <input type="hidden" name="csrf" value="{{ csrf }}">
-  <input type="password" name="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="new-password">
-  <button type="submit">{{ t("pin_save") }}</button>
-</form>
 {% endblock %}

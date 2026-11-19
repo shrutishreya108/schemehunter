@@ -1,7 +1,7 @@
 """Access control (LLD §16.1) and rate limits.
 
 - Email sign-in (app/signin, app/routes/signin.py) → signed session cookie bound to case_id (Secure, HttpOnly,
-  SameSite=Lax, 30 days). There is no personal link and no PIN.
+  SameSite=Lax, 30 days). Sign-in is by email code or one-tap link only.
 - CSRF: per-case token (HMAC of SESSION_SECRET) in a <meta> tag; HTMX sends it as X-CSRF-Token, plain forms
   as a hidden `csrf` field.
 - Curator: /admin/* behind HTTP basic auth with ADMIN_PASSWORD.
